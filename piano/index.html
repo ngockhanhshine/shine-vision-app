@@ -2,12 +2,50 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anaglyph Piano V2 - Shine Vision</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Anaglyph Piano V2 Mobile - Shine Vision</title>
     <style>
-        body { margin: 0; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
-        canvas { background: white; box-shadow: 0 0 20px rgba(0,0,0,0.2); }
-        #ui-layer { position: absolute; background: white; padding: 25px; border-radius: 12px; display: flex; gap: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 95%; z-index: 10; }
+        body { 
+            margin: 0; 
+            padding: 0;
+            background: #000; /* Nền đen để tôn game */
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            overflow: hidden; 
+        }
+        
+        /* Canvas Responsive: Fit theo chiều dọc (100% height) và tỷ lệ 9:16 */
+        canvas { 
+            background: white; 
+            box-shadow: 0 0 30px rgba(255,255,255,0.2); 
+            height: 100vh; /* Luôn fit chiều dọc */
+            aspect-ratio: 9 / 16; /* Ép tỷ lệ 9:16 */
+            object-fit: contain; /* Đảm bảo nội dung không bị méo */
+        }
+
+        #ui-layer { 
+            position: absolute; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            display: flex; 
+            flex-direction: column; /* Mobile first: Xếp dọc */
+            gap: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            max-width: 90%; 
+            max-height: 90%;
+            overflow-y: auto; /* Thêm scroll nếu menu quá dài trên màn hình nhỏ */
+            z-index: 10; 
+        }
+        
+        /* Điều chỉnh cho PC: Nếu màn hình đủ rộng thì hiện 2 cột */
+        @media (min-width: 768px) {
+            #ui-layer { flex-direction: row; padding: 25px; gap: 30px; }
+        }
+
         .column { display: flex; flex-direction: column; min-width: 280px; }
         h2 { margin-top: 0; color: #333; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .song-list { height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; }
@@ -18,10 +56,10 @@
         .slider-group { display: flex; align-items: center; gap: 10px; margin: 3px 0; }
         .slider-group label { width: 15px; font-weight: bold; font-size: 11px; }
         input[type=range] { flex: 1; cursor: pointer; }
-        .demo-box { height: 60px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; }
+        .demo-box { height: 50px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; border-radius: 4px; }
         .start-btn { background: #d32f2f; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .start-btn:hover { background: #b71c1c; transform: translateY(-2px); }
-        input[type=number], input[type=file] { width: 100%; margin: 5px 0; padding: 5px; box-sizing: border-box; }
+        input[type=number], input[type=file] { width: 100%; margin: 5px 0; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -34,11 +72,11 @@
             <h2>2. TỰ THÊM NHẠC CỦA BẠN</h2>
             <div class="custom-upload">
                 <input type="file" id="audio-upload" accept="audio/*">
-                <label style="font-size: 12px;">Nhập BPM:</label>
+                <label style="font-size: 12px; font-weight: bold;">Nhập BPM:</label>
                 <input type="number" id="custom-bpm" value="120" min="40" max="300">
             </div>
 
-            <p style="font-size: 11px; color: #666;">Phím chơi: <b>F G H J</b> | Thoát: <b>ESC</b></p>
+            <p style="font-size: 12px; color: #666; margin: 5px 0;">Phím: <b>F G H J</b> | Chạm màn hình | Thoát: <b>ESC</b></p>
             <button class="start-btn" onclick="handleStart()">BẮT ĐẦU CHƠI</button>
         </div>
 
@@ -62,24 +100,34 @@
         </div>
     </div>
 
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="gameCanvas" width="1080" height="1920"></canvas>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
 
-        const SCREEN_WIDTH = 600, SCREEN_HEIGHT = 800, LANE_WIDTH = 150;
-        const HIT_ZONE_Y = 550, HIT_WINDOW = 400, NOTE_HEIGHT = 80;
-        canvas.width = SCREEN_WIDTH; canvas.height = SCREEN_HEIGHT;
+        // --- CẤU HÌNH MOBILE-FIRST 9:16 (Mọi thứ tính bằng %) ---
+        const WIDTH = canvas.width; // 1080
+        const HEIGHT = canvas.height; // 1920
+        const LANE_WIDTH = WIDTH / 4; // Chia đều 4 lane: 270px
+
+        // Vị trí và vùng bấm nốt nhạc (tính theo %)
+        const HIT_ZONE_Y_PCT = 0.75; // Nằm ở 75% chiều cao màn hình từ trên xuống
+        const HIT_ZONE_Y = HEIGHT * HIT_ZONE_Y_PCT;
+        
+        const HIT_WINDOW_PCT = 0.45; // Vùng bấm rộng 45% chiều cao màn hình
+        const HIT_WINDOW = HEIGHT * HIT_WINDOW_PCT;
+        
+        const NOTE_HEIGHT_PCT = 0.15; // Chiều cao nốt bằng 15% chiều cao màn hình
+        const NOTE_HEIGHT = HEIGHT * NOTE_HEIGHT_PCT;
 
         const SONGS = [
             {name: "Shape Of You (96 BPM)", bpm: 96, file: "sounds/Shape-Of-You.mp3"},
-            {name: "Monkey-Dance (98 BPM)", bpm: 98, file: "sounds/Monkey-Dance.mp3"},
+            {name: "Monkey Dance (98 BPM)", bpm: 98, file: "sounds/Monkey-Dance.mp3"},
             {name: "BabyShark (115 BPM)", bpm: 115, file: "sounds/BabyShark.mp3"},
             {name: "Counting Star (124 BPM)", bpm: 124, file: "sounds/Counting-Star.mp3"},
             {name: "Sugar (120 BPM)", bpm: 120, file: "sounds/Sugar.mp3"},
-            {name: "Trap (88 BPM)", bpm: 88, file: "sounds/Trap.mp3"},
             {name: "Beliver (125 BPM)", bpm: 125, file: "sounds/Beliver.mp3"}
         ];
 
@@ -127,7 +175,9 @@
             draw() {
                 const c = (this.lane % 2 === 0) ? colorRed : colorCyan;
                 ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
-                ctx.fillRect(this.lane * LANE_WIDTH + 10, this.y, LANE_WIDTH - 20, NOTE_HEIGHT);
+                // Căn chỉnh nốt nằm giữa lane một chút
+                const padding = LANE_WIDTH * 0.08;
+                ctx.fillRect(this.lane * LANE_WIDTH + padding, this.y, LANE_WIDTH - padding*2, NOTE_HEIGHT);
             }
         }
 
@@ -149,6 +199,7 @@
             score = 0; notes = [];
             
             const beatInterval = 60 / bpm;
+            // Tốc độ di chuyển dựa trên chiều cao màn hình Mobile (nốt đi từ trên đỉnh xuống HitZone trong 2 nhịp)
             const noteSpeed = HIT_ZONE_Y / (beatInterval * 2);
 
             for (let i = 0; i < 800; i++) {
@@ -164,26 +215,50 @@
         function gameLoop() {
             if (gameState !== 'PLAYING') return;
             let currentTime = (performance.now() - startTime) / 1000;
-            ctx.fillStyle = "white"; ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-            ctx.fillStyle = "#f8f8f8"; ctx.fillRect(0, HIT_ZONE_Y - HIT_WINDOW/2, SCREEN_WIDTH, HIT_WINDOW);
-            ctx.strokeStyle = "#eee"; ctx.beginPath(); ctx.moveTo(0, HIT_ZONE_Y); ctx.lineTo(SCREEN_WIDTH, HIT_ZONE_Y); ctx.stroke();
-
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, WIDTH, HEIGHT);
+            
+            // Vẽ vùng bấm nốt nhạc (Hitzone background)
+            ctx.fillStyle = "#fcfcfc"; ctx.fillRect(0, HIT_ZONE_Y - HIT_WINDOW/2, WIDTH, HIT_WINDOW);
+            
+            // Vẽ đường kẻ Hitzone
+            ctx.strokeStyle = "#eee"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, HIT_ZONE_Y); ctx.lineTo(WIDTH, HIT_ZONE_Y); ctx.stroke();
+            
+            // Vẽ nốt nhạc
             for (let i = notes.length - 1; i >= 0; i--) {
                 let n = notes[i]; n.update(currentTime);
                 if (!n.hit) {
                     n.draw();
+                    // Nốt đi quá vùng bấm (Miss)
                     if (n.y > (HIT_ZONE_Y + HIT_WINDOW / 2)) { failSound.cloneNode().play(); notes.splice(i, 1); }
                 } else { notes.splice(i, 1); }
             }
 
-            ['F','G','H','J'].forEach((char, i) => {
+            // Vẽ chữ FGHJ và Căn đều 4 lane
+            const chars = ['F','G','H','J'];
+            const fontSize = LANE_WIDTH * 0.45; // Font size dựa trên độ rộng lane
+            ctx.font = `bold ${fontSize}px Arial`;
+            
+            chars.forEach((char, i) => {
                 const c = (i % 2 === 0) ? colorRed : colorCyan;
-                ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`; ctx.font = "bold 50px Arial";
-                ctx.fillText(char, i * LANE_WIDTH + 55, HIT_ZONE_Y + 18);
+                ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+                
+                // Căn giữa chữ trong lane
+                const textWidth = ctx.measureText(char).width;
+                const charX = i * LANE_WIDTH + (LANE_WIDTH / 2) - (textWidth / 2);
+                
+                // Chữ nằm ngay dưới đường kẻ Hitzone một chút
+                ctx.fillText(char, charX, HIT_ZONE_Y + fontSize);
             });
 
-            ctx.fillStyle = "black"; ctx.font = "bold 30px Arial"; ctx.fillText(`Điểm: ${score}`, 20, 50);
-            if (feedbackTimer > 0) { ctx.fillStyle = "#2e7d32"; ctx.fillText(feedbackText, 220, 200); feedbackTimer--; }
+            // Vẽ Điểm số và Phản hồi
+            ctx.fillStyle = "black"; ctx.font = `bold ${HEIGHT * 0.03}px Arial`; ctx.fillText(`Điểm: ${score}`, WIDTH * 0.05, HEIGHT * 0.04);
+            if (feedbackTimer > 0) { 
+                ctx.fillStyle = "#2e7d32"; 
+                ctx.font = `bold ${HEIGHT * 0.045}px Arial`;
+                const fbW = ctx.measureText(feedbackText).width;
+                ctx.fillText(feedbackText, (WIDTH/2) - (fbW/2), HEIGHT * 0.25); 
+                feedbackTimer--; 
+            }
             requestAnimationFrame(gameLoop);
         }
 
@@ -192,6 +267,7 @@
             if (gameState !== 'PLAYING') return;
             let hit = false;
             for (let n of notes) {
+                // Kiểm tra lane và vùng bấm (Hitzone +/- Window)
                 if (n.lane === laneIdx && !n.hit && Math.abs(n.y - HIT_ZONE_Y) < HIT_WINDOW / 2) {
                     n.hit = true; hit = true; 
                     dingSound.cloneNode().play(); 
@@ -203,7 +279,7 @@
             if (!hit) failSound.cloneNode().play();
         }
 
-        // Xử lý Phím trên PC
+        // Xử lý Phím trên PC (Giữ nguyên)
         window.addEventListener('keydown', (e) => {
             if (gameState === 'PLAYING') {
                 if (e.key === 'Escape') { currentAudio.pause(); gameState = 'MENU'; uiLayer.style.display = 'flex'; return; }
@@ -212,19 +288,22 @@
             }
         });
 
-        // Xử lý Chạm trên Màn hình (Mobile/Tablet)
+        // Xử lý Chạm trên Màn hình (Mobile/Tablet) - Đã cập nhật cho 9:16
         canvas.addEventListener('touchstart', (e) => {
             if (gameState !== 'PLAYING') return;
             e.preventDefault(); // Ngăn trình duyệt cuộn/zoom khi chơi
 
-            // Lấy kích thước hiển thị thực tế của canvas trên màn hình
+            // Lấy kích thước hiển thị thực tế của canvas trên màn hình thiết bị
             const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
+            // Tỷ lệ chuyển đổi từ pixel màn hình sang pixel nội bộ của Canvas (1080)
+            const scaleX = WIDTH / rect.width;
 
             // Xử lý mọi điểm chạm mới trong danh sách changedTouches
             for (let i = 0; i < e.changedTouches.length; i++) {
                 let touch = e.changedTouches[i];
+                // Tọa độ X tương đối bên trong Canvas
                 let touchX = (touch.clientX - rect.left) * scaleX;
+                // Xác định lane dựa trên tọa độ X
                 let laneIdx = Math.floor(touchX / LANE_WIDTH);
                 
                 if (laneIdx >= 0 && laneIdx < 4) {
