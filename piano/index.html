@@ -136,6 +136,9 @@
         
         const dingSound = new Audio('sounds/Ding.wav');
         const failSound = new Audio('sounds/Fail.wav');
+        dingSound.preload = 'auto';
+        failSound.preload = 'auto';
+
         let colorRed = {r:255, g:131, b:55}, colorCyan = {r:0, g:255, b:255};
 
         // --- LƯU TRỮ & CẬP NHẬT MÀU ---
