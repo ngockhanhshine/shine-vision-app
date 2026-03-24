@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Vision Training</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      text-align: center;
+      font-family: Arial;
+    }
+
+    h1 {
+      margin-top: 60px;
+      font-size: 40px;
+    }
+
+    .btn {
+      display: block;
+      width: 260px;
+      margin: 25px auto;
+      padding: 20px;
+      font-size: 22px;
+      background: #222;
+      border: 2px solid white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      background: white;
+      color: black;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>👁 Vision Training</h1>
+
+<div class="btn" onclick="go('piano')">🎹 Piano</div>
+<div class="btn" onclick="go('rg-dot')">🔴 RG Dot</div>
+<div class="btn" onclick="go('snellen')">👁 Snellen Test</div>
+
+<script>
+function go(app) {
+  window.location.href = app + "/index.html";
+}
+</script>
+
+</body>
+</html>

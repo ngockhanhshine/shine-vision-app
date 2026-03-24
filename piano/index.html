@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anaglyph Piano V2 - Shine Vision</title>
+    <style>
+        body { margin: 0; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
+        canvas { background: white; box-shadow: 0 0 20px rgba(0,0,0,0.2); }
+        #ui-layer { position: absolute; background: white; padding: 25px; border-radius: 12px; display: flex; gap: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 95%; z-index: 10; }
+        .column { display: flex; flex-direction: column; min-width: 280px; }
+        h2 { margin-top: 0; color: #333; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .song-list { height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; }
+        .song-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
+        .selected { background: #ffebeb !important; color: #d32f2f; font-weight: bold; }
+        .custom-upload { background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 10px; }
+        .color-control { margin-bottom: 10px; padding: 10px; border: 1px solid #eee; border-radius: 8px; }
+        .slider-group { display: flex; align-items: center; gap: 10px; margin: 3px 0; }
+        .slider-group label { width: 15px; font-weight: bold; font-size: 11px; }
+        input[type=range] { flex: 1; cursor: pointer; }
+        .demo-box { height: 60px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; }
+        .start-btn { background: #d32f2f; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .start-btn:hover { background: #b71c1c; transform: translateY(-2px); }
+        input[type=number], input[type=file] { width: 100%; margin: 5px 0; padding: 5px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="column">
+            <h2>1. CHỌN BÀI HÁT</h2>
+            <div id="song-list" class="song-list"></div>
+            
+            <h2>2. TỰ THÊM NHẠC CỦA BẠN</h2>
+            <div class="custom-upload">
+                <input type="file" id="audio-upload" accept="audio/*">
+                <label style="font-size: 12px;">Nhập BPM:</label>
+                <input type="number" id="custom-bpm" value="120" min="40" max="300">
+            </div>
+
+            <p style="font-size: 11px; color: #666;">Phím chơi: <b>F G H J</b> | Thoát: <b>ESC</b></p>
+            <button class="start-btn" onclick="handleStart()">BẮT ĐẦU CHƠI</button>
+        </div>
+
+        <div class="column">
+            <h2>3. CÂN CHỈNH ANAGLYPH</h2>
+            <div class="color-control">
+                <span style="font-weight: bold; color: #d32f2f; font-size: 13px;">KÍNH TRÁI (MÀU ĐỎ)</span>
+                <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
+                <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="131"></div>
+                <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="55"></div>
+                <div id="demo1" class="demo-box">DEMO ĐỎ</div>
+            </div>
+
+            <div class="color-control">
+                <span style="font-weight: bold; color: #008b8b; font-size: 13px;">KÍNH PHẢI (MÀU XANH)</span>
+                <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
+                <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
+                <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
+                <div id="demo2" class="demo-box">DEMO XANH</div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const uiLayer = document.getElementById('ui-layer');
+
+        const SCREEN_WIDTH = 600, SCREEN_HEIGHT = 800, LANE_WIDTH = 150;
+        const HIT_ZONE_Y = 550, HIT_WINDOW = 400, NOTE_HEIGHT = 80;
+        canvas.width = SCREEN_WIDTH; canvas.height = SCREEN_HEIGHT;
+
+        const SONGS = [
+            {name: "Shape Of You (96 BPM)", bpm: 96, file: "sounds/Shape-Of-You.mp3"},
+            {name: "Monkey-Dance (98 BPM)", bpm: 98, file: "sounds/Monkey-Dance.mp3"},
+            {name: "BabyShark (115 BPM)", bpm: 115, file: "sounds/BabyShark.mp3"},
+            {name: "Counting Star (124 BPM)", bpm: 124, file: "sounds/Counting-Star.mp3"},
+            {name: "Sugar (120 BPM)", bpm: 120, file: "sounds/Sugar.mp3"},
+            {name: "Trap (88 BPM)", bpm: 88, file: "sounds/Trap.mp3"},
+            {name: "Beliver (125 BPM)", bpm: 125, file: "sounds/Beliver.mp3"}
+        ];
+
+        let selectedSongIdx = 0, gameState = 'MENU', score = 0, notes = [];
+        let startTime = 0, currentAudio = null, feedbackTimer = 0, feedbackText = "";
+        
+        const dingSound = new Audio('sounds/Ding.wav');
+        const failSound = new Audio('sounds/Fail.wav');
+        let colorRed = {r:255, g:131, b:55}, colorCyan = {r:0, g:255, b:255};
+
+        // --- LƯU TRỮ & CẬP NHẬT MÀU ---
+        function loadSavedColors() {
+            const r = localStorage.getItem('anaglyph_red'), c = localStorage.getItem('anaglyph_cyan');
+            if(r) { colorRed = JSON.parse(r); document.getElementById('r1').value = colorRed.r; document.getElementById('g1').value = colorRed.g; document.getElementById('b1').value = colorRed.b; }
+            if(c) { colorCyan = JSON.parse(c); document.getElementById('r2').value = colorCyan.r; document.getElementById('g2').value = colorCyan.g; document.getElementById('b2').value = colorCyan.b; }
+            updateUIColors();
+        }
+
+        function updateUIColors() {
+            colorRed = { r: document.getElementById('r1').value, g: document.getElementById('g1').value, b: document.getElementById('b1').value };
+            colorCyan = { r: document.getElementById('r2').value, g: document.getElementById('g2').value, b: document.getElementById('b2').value };
+            localStorage.setItem('anaglyph_red', JSON.stringify(colorRed));
+            localStorage.setItem('anaglyph_cyan', JSON.stringify(colorCyan));
+            document.getElementById('demo1').style.backgroundColor = `rgb(${colorRed.r},${colorRed.g},${colorRed.b})`;
+            document.getElementById('demo2').style.backgroundColor = `rgb(${colorCyan.r},${colorCyan.g},${colorCyan.b})`;
+        }
+
+        document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
+
+        function renderSongList() {
+            const list = document.getElementById('song-list');
+            list.innerHTML = '';
+            SONGS.forEach((song, i) => {
+                const div = document.createElement('div');
+                div.className = `song-item ${i === selectedSongIdx ? 'selected' : ''}`;
+                div.innerHTML = (i === selectedSongIdx ? "▶ " : "　") + song.name;
+                div.onclick = () => { selectedSongIdx = i; document.getElementById('audio-upload').value = ""; renderSongList(); };
+                list.appendChild(div);
+            });
+        }
+
+        class Note {
+            constructor(lane, hitTime, speed) { this.lane = lane; this.hitTime = hitTime; this.speed = speed; this.hit = false; this.y = -NOTE_HEIGHT; }
+            update(currentTime) { this.y = HIT_ZONE_Y - ((this.hitTime - currentTime) * this.speed); }
+            draw() {
+                const c = (this.lane % 2 === 0) ? colorRed : colorCyan;
+                ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+                ctx.fillRect(this.lane * LANE_WIDTH + 10, this.y, LANE_WIDTH - 20, NOTE_HEIGHT);
+            }
+        }
+
+        async function handleStart() {
+            const fileInput = document.getElementById('audio-upload');
+            let bpm, audioSrc;
+
+            if (fileInput.files.length > 0) {
+                bpm = parseInt(document.getElementById('custom-bpm').value);
+                audioSrc = URL.createObjectURL(fileInput.files[0]);
+            } else {
+                const song = SONGS[selectedSongIdx];
+                bpm = song.bpm;
+                audioSrc = song.file;
+            }
+
+            gameState = 'PLAYING';
+            uiLayer.style.display = 'none';
+            score = 0; notes = [];
+            
+            const beatInterval = 60 / bpm;
+            const noteSpeed = HIT_ZONE_Y / (beatInterval * 2);
+
+            for (let i = 0; i < 800; i++) {
+                notes.push(new Note(Math.floor(Math.random() * 4), 3.0 + i * beatInterval, noteSpeed));
+            }
+
+            currentAudio = new Audio(audioSrc);
+            currentAudio.play();
+            startTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameLoop() {
+            if (gameState !== 'PLAYING') return;
+            let currentTime = (performance.now() - startTime) / 1000;
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            ctx.fillStyle = "#f8f8f8"; ctx.fillRect(0, HIT_ZONE_Y - HIT_WINDOW/2, SCREEN_WIDTH, HIT_WINDOW);
+            ctx.strokeStyle = "#eee"; ctx.beginPath(); ctx.moveTo(0, HIT_ZONE_Y); ctx.lineTo(SCREEN_WIDTH, HIT_ZONE_Y); ctx.stroke();
+
+            for (let i = notes.length - 1; i >= 0; i--) {
+                let n = notes[i]; n.update(currentTime);
+                if (!n.hit) {
+                    n.draw();
+                    if (n.y > (HIT_ZONE_Y + HIT_WINDOW / 2)) { failSound.cloneNode().play(); notes.splice(i, 1); }
+                } else { notes.splice(i, 1); }
+            }
+
+            ['F','G','H','J'].forEach((char, i) => {
+                const c = (i % 2 === 0) ? colorRed : colorCyan;
+                ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`; ctx.font = "bold 50px Arial";
+                ctx.fillText(char, i * LANE_WIDTH + 55, HIT_ZONE_Y + 18);
+            });
+
+            ctx.fillStyle = "black"; ctx.font = "bold 30px Arial"; ctx.fillText(`Điểm: ${score}`, 20, 50);
+            if (feedbackTimer > 0) { ctx.fillStyle = "#2e7d32"; ctx.fillText(feedbackText, 220, 200); feedbackTimer--; }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Logic xử lý nhấn nốt nhạc (dùng chung cho cả phím và chạm)
+        function checkHit(laneIdx) {
+            if (gameState !== 'PLAYING') return;
+            let hit = false;
+            for (let n of notes) {
+                if (n.lane === laneIdx && !n.hit && Math.abs(n.y - HIT_ZONE_Y) < HIT_WINDOW / 2) {
+                    n.hit = true; hit = true; 
+                    dingSound.cloneNode().play(); 
+                    score += 10;
+                    feedbackText = "CHÍNH XÁC!"; feedbackTimer = 30; 
+                    break;
+                }
+            }
+            if (!hit) failSound.cloneNode().play();
+        }
+
+        // Xử lý Phím trên PC
+        window.addEventListener('keydown', (e) => {
+            if (gameState === 'PLAYING') {
+                if (e.key === 'Escape') { currentAudio.pause(); gameState = 'MENU'; uiLayer.style.display = 'flex'; return; }
+                let laneIdx = ['f', 'g', 'h', 'j'].indexOf(e.key.toLowerCase());
+                if (laneIdx !== -1) checkHit(laneIdx);
+            }
+        });
+
+        // Xử lý Chạm trên Màn hình (Mobile/Tablet)
+        canvas.addEventListener('touchstart', (e) => {
+            if (gameState !== 'PLAYING') return;
+            e.preventDefault(); // Ngăn trình duyệt cuộn/zoom khi chơi
+
+            // Lấy kích thước hiển thị thực tế của canvas trên màn hình
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+
+            // Xử lý mọi điểm chạm mới trong danh sách changedTouches
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                let touch = e.changedTouches[i];
+                let touchX = (touch.clientX - rect.left) * scaleX;
+                let laneIdx = Math.floor(touchX / LANE_WIDTH);
+                
+                if (laneIdx >= 0 && laneIdx < 4) {
+                    checkHit(laneIdx);
+                }
+            }
+        }, {passive: false});
+
+        loadSavedColors(); renderSongList();
+    </script>
+</body>
+</html>

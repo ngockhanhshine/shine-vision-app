@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snellen C Image-based - Shine Vision</title>
+    <style>
+        body { margin: 0; background: white; font-family: Arial, sans-serif; overflow: hidden; }
+        canvas { display: block; background: white; }
+        #info-layer { position: absolute; top: 20px; left: 20px; pointer-events: none; }
+        .status { font-size: 22px; font-weight: bold; margin-bottom: 5px; color: black; }
+        .locked { color: red; }
+        .input-buf { color: blue; }
+        #credit { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #505050; font-size: 14px; line-height: 1.4; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div id="info-layer">
+        <div id="scale-display" class="status">100.0%</div>
+        <div id="lock-status" class="status"></div>
+        <div id="input-display" class="status input-buf"></div>
+    </div>
+
+    <div id="credit">
+        Phần mềm được phát triển Miễn Phí bởi<br>
+        <b>Khôi phục thị lực Shine: Đơn vị đầu tiên tại VN sở hữu phương pháp tập mắt dành cho Lác Lé và Nhược Thị - 0973370148</b>
+    </div>
+
+    <canvas id="snellenCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('snellenCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const VISION_LEVELS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2];
+        let currentIndex = 0;
+        
+        // --- LOGIC GHI NHỚ TỶ LỆ SCALE ---
+        const SAVED_SCALE = localStorage.getItem('snellen_base_scale');
+        let baseScale = SAVED_SCALE ? parseFloat(SAVED_SCALE) : 1.0;
+        
+        let rotation = 0; 
+        let scaleLocked = false;
+        let inputBuffer = "";
+        let rightDownTime = 0;
+
+        // Load ảnh gốc
+        const imgC = new Image();
+        imgC.src = 'images/landolt-c.png';
+        const imgRule = new Image();
+        imgRule.src = 'images/rules-c.png';
+
+        let imagesLoaded = 0;
+        [imgC, imgRule].forEach(img => {
+            img.onload = () => { imagesLoaded++; if(imagesLoaded === 2) draw(); };
+        });
+
+        function changeRotation() {
+            rotation = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
+        }
+
+        // Lưu scale vào bộ nhớ máy tính
+        function saveScale() {
+            localStorage.setItem('snellen_base_scale', baseScale);
+        }
+
+        function draw() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (imagesLoaded < 2) return;
+
+            const vision = VISION_LEVELS[currentIndex];
+            const visionScale = 0.1 / vision;
+            const finalScale = baseScale * visionScale;
+
+            // 1. Vẽ chữ C (Xoay và Scale)
+            const cW = imgC.width * finalScale;
+            const cH = imgC.height * finalScale;
+            
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2 - 40);
+            ctx.rotate(rotation * Math.PI / 180);
+            ctx.drawImage(imgC, -cW / 2, -cH / 2, cW, cH);
+            ctx.restore();
+
+            // 2. Vẽ thước đo (Đường kẻ đỏ)
+            const rW = imgRule.width * baseScale;
+            const rH = imgRule.height * baseScale;
+            ctx.drawImage(imgRule, (canvas.width - rW) / 2, canvas.height - 180, rW, rH);
+
+            // 3. Vẽ danh sách thị lực
+            const startY = canvas.height / 2 - (VISION_LEVELS.length * 25) / 2;
+            ctx.textAlign = "right";
+            ctx.font = "bold 22px Arial";
+            VISION_LEVELS.forEach((v, i) => {
+                ctx.fillStyle = (i === currentIndex) ? "red" : "#ccc";
+                ctx.fillText(v.toFixed(1), canvas.width - 20, startY + i * 30);
+            });
+
+            document.getElementById('scale-display').innerText = (baseScale * 100).toFixed(1) + "%";
+            document.getElementById('lock-status').innerText = scaleLocked ? "LOCKED" : "";
+            document.getElementById('input-display').innerText = inputBuffer ? "Input: " + inputBuffer : "";
+        }
+
+        // --- SỰ KIỆN ---
+        window.addEventListener('wheel', (e) => {
+            if (scaleLocked) return;
+            const step = e.ctrlKey ? 0.001 : 0.01;
+            baseScale -= e.deltaY * step * 0.1;
+            baseScale = Math.max(0.2, Math.min(5.0, baseScale));
+            saveScale(); // Tự động lưu khi cuộn
+            draw();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') changeRotation();
+            if (e.key === 'ArrowDown') { currentIndex = Math.min(VISION_LEVELS.length - 1, currentIndex + 1); changeRotation(); }
+            if (e.key === 'ArrowUp') { currentIndex = Math.max(0, currentIndex - 1); changeRotation(); }
+            if (e.key === ' ') scaleLocked = !scaleLocked;
+
+            if (/^\d$/.test(e.key)) inputBuffer += e.key;
+            if (e.key === 'Enter' && inputBuffer) {
+                baseScale = parseFloat(inputBuffer) / 1000;
+                baseScale = Math.max(0.2, Math.min(5.0, baseScale));
+                inputBuffer = "";
+                saveScale(); // Tự động lưu khi nhập số
+            }
+            if (e.key === 'Backspace') inputBuffer = "";
+            draw();
+        });
+
+        window.onmousedown = (e) => {
+            if (e.button === 0) changeRotation();
+            if (e.button === 2) rightDownTime = Date.now();
+            draw();
+        };
+
+        window.onmouseup = (e) => {
+            if (e.button === 2) {
+                const hold = Date.now() - rightDownTime;
+                if (hold >= 500) { currentIndex = Math.max(0, currentIndex - 1); changeRotation(); }
+                else { currentIndex = Math.min(VISION_LEVELS.length - 1, currentIndex + 1); changeRotation(); }
+            }
+            draw();
+        };
+
+        window.oncontextmenu = (e) => e.preventDefault();
+        window.onresize = draw;
+        changeRotation();
+        draw();
+    </script>
+</body>
+</html>

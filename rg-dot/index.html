@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anaglyph RG Dot Training - Shine Vision</title>
+    <style>
+        body { margin: 0; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
+        canvas { background: #f5f5f5; box-shadow: 0 0 20px rgba(0,0,0,0.2); cursor: none; }
+        
+        #ui-layer { position: absolute; background: white; padding: 25px; border-radius: 12px; display: flex; gap: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 90%; z-index: 10; }
+        .column { display: flex; flex-direction: column; min-width: 250px; }
+        h2 { margin-top: 0; color: #333; font-size: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        .difficulty-btns { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; background: #eee; }
+        .btn:hover { background: #ddd; }
+        .btn-start { background: #d32f2f; color: white; margin-top: auto; padding: 15px; }
+        .btn-start:hover { background: #b71c1c; }
+
+        .color-control { margin-bottom: 15px; padding: 10px; border: 1px solid #eee; border-radius: 8px; }
+        .slider-group { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+        .slider-group label { width: 15px; font-weight: bold; font-size: 12px; }
+        input[type=range] { flex: 1; cursor: pointer; }
+        .demo-box { height: 60px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; border: none; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="column">
+            <h2>1. CHỌN ĐỘ KHÓ</h2>
+            <div class="difficulty-btns">
+                <button class="btn" id="diff-3" onclick="setDiff(3)">DỄ (3 Giây)</button>
+                <button class="btn" id="diff-2" onclick="setDiff(2)" style="background: #ffebeb; color: #d32f2f;">TRUNG BÌNH (2 Giây)</button>
+                <button class="btn" id="diff-1" onclick="setDiff(1)">KHÓ (1 Giây)</button>
+            </div>
+            <p style="font-size: 12px; color: #666;">
+                Dùng phím <b>+/-</b> để chỉnh kích thước.<br>
+                Gõ chữ cái xuất hiện trong vòng tròn.<br>
+                Nhấn <b>ESC</b> để quay lại Menu.
+            </p>
+            <button class="btn btn-start" onclick="startGame()">BẮT ĐẦU LUYỆN TẬP</button>
+        </div>
+
+        <div class="column">
+            <h2>2. CÂN CHỈNH MÀU (RGB)</h2>
+            <div class="color-control">
+                <span style="font-weight: bold; color: #d32f2f;">MÀU ĐỎ</span>
+                <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
+                <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="131"></div>
+                <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="55"></div>
+                <div id="demo1" class="demo-box">DEMO ĐỎ</div>
+            </div>
+
+            <div class="color-control">
+                <span style="font-weight: bold; color: #008b8b;">MÀU XANH</span>
+                <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
+                <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
+                <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
+                <div id="demo2" class="demo-box">DEMO XANH</div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const uiLayer = document.getElementById('ui-layer');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let score = 0, level = 1, timeLimit = 2;
+        let radius = 80, letterSize = 90;
+        let gameState = 'MENU';
+        let currentRound = null;
+        let roundStartTime = 0;
+
+        const dingSound = new Audio('sounds/ding.wav');
+        const failSound = new Audio('sounds/fail.wav');
+
+        let colorRed = { r: 255, g: 131, b: 55 };
+        let colorCyan = { r: 0, g: 255, b: 255 };
+
+        // --- MÀU SẮC & LƯU TRỮ ---
+        function loadSettings() {
+            const savedRed = localStorage.getItem('rg_dot_red');
+            const savedCyan = localStorage.getItem('rg_dot_cyan');
+            if (savedRed) {
+                colorRed = JSON.parse(savedRed);
+                document.getElementById('r1').value = colorRed.r;
+                document.getElementById('g1').value = colorRed.g;
+                document.getElementById('b1').value = colorRed.b;
+            }
+            if (savedCyan) {
+                colorCyan = JSON.parse(savedCyan);
+                document.getElementById('r2').value = colorCyan.r;
+                document.getElementById('g2').value = colorCyan.g;
+                document.getElementById('b2').value = colorCyan.b;
+            }
+            updateColors();
+        }
+
+        function updateColors() {
+            colorRed = { r: document.getElementById('r1').value, g: document.getElementById('g1').value, b: document.getElementById('b1').value };
+            colorCyan = { r: document.getElementById('r2').value, g: document.getElementById('g2').value, b: document.getElementById('b2').value };
+            localStorage.setItem('rg_dot_red', JSON.stringify(colorRed));
+            localStorage.setItem('rg_dot_cyan', JSON.stringify(colorCyan));
+            document.getElementById('demo1').style.backgroundColor = `rgb(${colorRed.r},${colorRed.g},${colorRed.b})`;
+            document.getElementById('demo2').style.backgroundColor = `rgb(${colorCyan.r},${colorCyan.g},${colorCyan.b})`;
+        }
+
+        document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateColors));
+
+        function setDiff(d) {
+            timeLimit = d;
+            [1, 2, 3].forEach(v => {
+                document.getElementById('diff-' + v).style.background = (v === d) ? '#ffebeb' : '#eee';
+                document.getElementById('diff-' + v).style.color = (v === d) ? '#d32f2f' : '#333';
+            });
+        }
+
+        // --- GAME LOGIC ---
+        function startGame() {
+            gameState = 'PLAYING';
+            uiLayer.style.display = 'none';
+            score = 0; level = 1;
+            nextRound();
+            gameLoop();
+        }
+
+        function nextRound() {
+            const isRed = Math.random() > 0.5;
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            currentRound = {
+                color: isRed ? colorRed : colorCyan,
+                letter: alphabet[Math.floor(Math.random() * alphabet.length)],
+                x: Math.random() * (canvas.width - 300) + 150,
+                y: Math.random() * (canvas.height - 300) + 150
+            };
+            roundStartTime = Date.now();
+        }
+
+        function gameLoop() {
+            if (gameState !== 'PLAYING') return;
+
+            const elapsed = (Date.now() - roundStartTime) / 1000;
+            if (elapsed > timeLimit) {
+                failSound.cloneNode().play();
+                score--;
+                nextRound();
+            }
+
+            ctx.fillStyle = "#f5f5f5";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Dot
+            ctx.beginPath();
+            ctx.fillStyle = `rgb(${currentRound.color.r},${currentRound.color.g},${currentRound.color.b})`;
+            ctx.arc(currentRound.x, currentRound.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw Letter (Hòa vào nền)
+            ctx.fillStyle = "#f5f5f5";
+            ctx.font = `bold ${letterSize}px Arial`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(currentRound.letter, currentRound.x, currentRound.y);
+
+            // UI
+            ctx.fillStyle = "black";
+            ctx.font = "20px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText(`Score: ${score}`, 40, 50);
+            ctx.fillText(`Level: ${level}`, 40, 80);
+            ctx.fillText(`Size: ${radius} (Phím +/-)`, 40, 110);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (gameState === 'PLAYING') {
+                if (e.key === 'Escape') {
+                    gameState = 'MENU';
+                    uiLayer.style.display = 'flex';
+                    return;
+                }
+
+                if (e.key === '+' || e.key === '=') { radius += 5; letterSize += 5; }
+                if (e.key === '-') { radius = Math.max(20, radius - 5); letterSize = Math.max(20, letterSize - 5); }
+
+                const pressed = e.key.toUpperCase();
+                if (pressed.length === 1 && pressed >= 'A' && pressed <= 'Z') {
+                    if (pressed === currentRound.letter) {
+                        dingSound.cloneNode().play();
+                        score++;
+                        level++;
+                        nextRound();
+                    } else {
+                        failSound.cloneNode().play();
+                        score--;
+                        nextRound();
+                    }
+                }
+            }
+        });
+
+        loadSettings();
+    </script>
+</body>
+</html>
