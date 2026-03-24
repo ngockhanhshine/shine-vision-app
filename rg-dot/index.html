@@ -2,63 +2,73 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Anaglyph RG Dot Training - Shine Vision</title>
     <style>
-        body { margin: 0; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
-        canvas { background: #f5f5f5; box-shadow: 0 0 20px rgba(0,0,0,0.2); cursor: none; }
+        body { margin: 0; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; touch-action: none; }
+        canvas { background: #f5f5f5; display: block; }
         
-        #ui-layer { position: absolute; background: white; padding: 25px; border-radius: 12px; display: flex; gap: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 90%; z-index: 10; }
+        #ui-layer { position: absolute; background: white; padding: 20px; border-radius: 12px; display: flex; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 95%; z-index: 10; max-height: 90vh; overflow-y: auto; }
+        
+        /* Responsive Menu cho Mobile */
+        @media (max-width: 600px) {
+            #ui-layer { flex-direction: column; gap: 10px; padding: 15px; top: 10px; }
+            .column { min-width: unset !important; width: 100%; }
+            h2 { font-size: 16px !important; margin-bottom: 5px; }
+            .btn { padding: 10px; font-size: 14px; }
+            .btn-start { padding: 12px; margin-top: 10px; }
+            p { display: none; } /* Ẩn bớt text hướng dẫn trên Mobile cho gọn */
+        }
+
         .column { display: flex; flex-direction: column; min-width: 250px; }
         h2 { margin-top: 0; color: #333; font-size: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         
-        .difficulty-btns { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        .btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; background: #eee; }
+        .difficulty-btns { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        .btn { border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; background: #eee; }
         .btn:hover { background: #ddd; }
-        .btn-start { background: #d32f2f; color: white; margin-top: auto; padding: 15px; }
-        .btn-start:hover { background: #b71c1c; }
+        .btn-start { background: #d32f2f; color: white; margin-top: auto; padding: 15px; font-size: 16px; }
 
-        .color-control { margin-bottom: 15px; padding: 10px; border: 1px solid #eee; border-radius: 8px; }
+        .color-control { margin-bottom: 10px; padding: 8px; border: 1px solid #eee; border-radius: 8px; }
         .slider-group { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
         .slider-group label { width: 15px; font-weight: bold; font-size: 12px; }
         input[type=range] { flex: 1; cursor: pointer; }
-        .demo-box { height: 60px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; border: none; }
+        .demo-box { height: 40px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
     <div id="ui-layer">
         <div class="column">
-            <h2>1. CHỌN ĐỘ KHÓ</h2>
+            <h2>1. ĐỘ KHÓ</h2>
             <div class="difficulty-btns">
                 <button class="btn" id="diff-3" onclick="setDiff(3)">DỄ (3 Giây)</button>
                 <button class="btn" id="diff-2" onclick="setDiff(2)" style="background: #ffebeb; color: #d32f2f;">TRUNG BÌNH (2 Giây)</button>
                 <button class="btn" id="diff-1" onclick="setDiff(1)">KHÓ (1 Giây)</button>
             </div>
-            <p style="font-size: 12px; color: #666;">
-                Dùng phím <b>+/-</b> để chỉnh kích thước.<br>
-                Gõ chữ cái xuất hiện trong vòng tròn.<br>
-                Nhấn <b>ESC</b> để quay lại Menu.
+            <p style="font-size: 11px; color: #666; line-height: 1.4;">
+                <b>PC:</b> Phím +/- chỉnh size. Gõ chữ cái.<br>
+                <b>Mobile:</b> Chạm trực tiếp vào vòng tròn.<br>
+                Nhấn <b>ESC</b> hoặc <b>Chạm 2 ngón</b> để Menu.
             </p>
-            <button class="btn btn-start" onclick="startGame()">BẮT ĐẦU LUYỆN TẬP</button>
+            <button class="btn btn-start" onclick="startGame()">BẮT ĐẦU</button>
         </div>
 
         <div class="column">
-            <h2>2. CÂN CHỈNH MÀU (RGB)</h2>
+            <h2>2. CÂN MÀU (RGB)</h2>
             <div class="color-control">
-                <span style="font-weight: bold; color: #d32f2f;">MÀU ĐỎ</span>
+                <span style="font-weight: bold; color: #d32f2f; font-size: 12px;">MÀU ĐỎ</span>
                 <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
                 <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="131"></div>
                 <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="55"></div>
-                <div id="demo1" class="demo-box">DEMO ĐỎ</div>
+                <div id="demo1" class="demo-box">DEMO</div>
             </div>
 
             <div class="color-control">
-                <span style="font-weight: bold; color: #008b8b;">MÀU XANH</span>
+                <span style="font-weight: bold; color: #008b8b; font-size: 12px;">MÀU XANH</span>
                 <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
                 <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
                 <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
-                <div id="demo2" class="demo-box">DEMO XANH</div>
+                <div id="demo2" class="demo-box">DEMO</div>
             </div>
         </div>
     </div>
@@ -70,22 +80,34 @@
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // Kiểm tra xem thiết bị có phải là điện thoại/máy tính bảng không
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth < 600);
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
 
         let score = 0, level = 1, timeLimit = 2;
-        let radius = 80, letterSize = 90;
+        
+        // KÍCH THƯỚC: Nếu là Mobile thì giảm một nửa so với PC
+        const baseRadius = isMobile ? 40 : 80;
+        const baseLetterSize = isMobile ? 45 : 90;
+
+        let radius = baseRadius, letterSize = baseLetterSize;
         let gameState = 'MENU';
         let currentRound = null;
         let roundStartTime = 0;
 
+        // Âm thanh (anh nhớ đặt file vào đúng thư mục sounds)
         const dingSound = new Audio('sounds/Ding.wav');
         const failSound = new Audio('sounds/Fail.wav');
 
         let colorRed = { r: 255, g: 131, b: 55 };
         let colorCyan = { r: 0, g: 255, b: 255 };
 
-        // --- MÀU SẮC & LƯU TRỮ ---
         function loadSettings() {
             const savedRed = localStorage.getItem('rg_dot_red');
             const savedCyan = localStorage.getItem('rg_dot_cyan');
@@ -123,23 +145,25 @@
             });
         }
 
-        // --- GAME LOGIC ---
         function startGame() {
             gameState = 'PLAYING';
             uiLayer.style.display = 'none';
             score = 0; level = 1;
             nextRound();
-            gameLoop();
+            requestAnimationFrame(gameLoop);
         }
 
         function nextRound() {
+            // Padding để Dot không sát mép (tránh tai thỏ mobile)
+            const padding = isMobile ? 60 : 100;
+            
             const isRed = Math.random() > 0.5;
             const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             currentRound = {
                 color: isRed ? colorRed : colorCyan,
                 letter: alphabet[Math.floor(Math.random() * alphabet.length)],
-                x: Math.random() * (canvas.width - 300) + 150,
-                y: Math.random() * (canvas.height - 300) + 150
+                x: Math.random() * (canvas.width - padding * 2) + padding,
+                y: Math.random() * (canvas.height - padding * 2) + padding
             };
             roundStartTime = Date.now();
         }
@@ -157,30 +181,60 @@
             ctx.fillStyle = "#f5f5f5";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Dot
+            // Vẽ Dot
             ctx.beginPath();
             ctx.fillStyle = `rgb(${currentRound.color.r},${currentRound.color.g},${currentRound.color.b})`;
             ctx.arc(currentRound.x, currentRound.y, radius, 0, Math.PI * 2);
             ctx.fill();
 
-            // Draw Letter (Hòa vào nền)
+            // Vẽ Letter
             ctx.fillStyle = "#f5f5f5";
             ctx.font = `bold ${letterSize}px Arial`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText(currentRound.letter, currentRound.x, currentRound.y);
 
-            // UI
+            // UI HUD (Giảm size HUD trên mobile cho đỡ vướng)
             ctx.fillStyle = "black";
-            ctx.font = "20px Arial";
+            ctx.font = isMobile ? "14px Arial" : "16px Arial";
             ctx.textAlign = "left";
-            ctx.fillText(`Score: ${score}`, 40, 50);
-            ctx.fillText(`Level: ${level}`, 40, 80);
-            ctx.fillText(`Size: ${radius} (Phím +/-)`, 40, 110);
+            ctx.fillText(`Score: ${score}`, 20, 30);
+            ctx.fillText(`Level: ${level}`, 20, 50);
 
             requestAnimationFrame(gameLoop);
         }
 
+        // --- ĐIỀU KHIỂN CHẠM (TOUCH) ---
+        canvas.addEventListener('touchstart', (e) => {
+            if (gameState !== 'PLAYING') return;
+            e.preventDefault();
+
+            // Thoát bằng 2 ngón chạm cùng lúc
+            if (e.touches.length >= 2) {
+                gameState = 'MENU';
+                uiLayer.style.display = 'flex';
+                return;
+            }
+
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
+
+            // Kiểm tra chạm trúng Dot (Pytago)
+            const dist = Math.sqrt((touchX - currentRound.x)**2 + (touchY - currentRound.y)**2);
+            // Vùng chạm trên mobile rộng hơn bán kính 1 chút (20px) cho dễ bấm
+            const hitZone = isMobile ? radius + 20 : radius;
+            
+            if (dist < hitZone) { 
+                dingSound.cloneNode().play();
+                score++;
+                level++;
+                nextRound();
+            }
+        }, { passive: false });
+
+        // --- ĐIỀU KHIỂN PHÍM (PC) ---
         window.addEventListener('keydown', (e) => {
             if (gameState === 'PLAYING') {
                 if (e.key === 'Escape') {
@@ -190,19 +244,16 @@
                 }
 
                 if (e.key === '+' || e.key === '=') { radius += 5; letterSize += 5; }
-                if (e.key === '-') { radius = Math.max(20, radius - 5); letterSize = Math.max(20, letterSize - 5); }
+                if (e.key === '-') { radius = Math.max(10, radius - 5); letterSize = Math.max(10, letterSize - 5); }
 
                 const pressed = e.key.toUpperCase();
                 if (pressed.length === 1 && pressed >= 'A' && pressed <= 'Z') {
                     if (pressed === currentRound.letter) {
                         dingSound.cloneNode().play();
-                        score++;
-                        level++;
-                        nextRound();
+                        score++; level++; nextRound();
                     } else {
                         failSound.cloneNode().play();
-                        score--;
-                        nextRound();
+                        score--; nextRound();
                     }
                 }
             }
