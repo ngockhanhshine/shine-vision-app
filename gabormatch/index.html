@@ -3,319 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Anaglyph Piano V2 Mobile - Shine Vision</title>
+    <title>Shine Vision - Gabor Sound Training</title>
     <style>
-        body { 
-            margin: 0; 
-            padding: 0;
-            background: #000; /* Nền đen để tôn game */
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            overflow: hidden; 
-        }
-        
-        /* Canvas Responsive: Fit theo chiều dọc (100% height) và tỷ lệ 9:16 */
-        canvas { 
-            background: white; 
-            box-shadow: 0 0 30px rgba(255,255,255,0.2); 
-            height: 100vh; /* Luôn fit chiều dọc */
-            aspect-ratio: 9 / 16; /* Ép tỷ lệ 9:16 */
-            object-fit: contain; /* Đảm bảo nội dung không bị méo */
-        }
-
-        #ui-layer { 
-            position: absolute; 
-            background: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            display: flex; 
-            flex-direction: column; /* Mobile first: Xếp dọc */
-            gap: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            max-width: 90%; 
-            max-height: 90%;
-            overflow-y: auto; /* Thêm scroll nếu menu quá dài trên màn hình nhỏ */
-            z-index: 10; 
-        }
-        
-        /* Điều chỉnh cho PC: Nếu màn hình đủ rộng thì hiện 2 cột */
-        @media (min-width: 768px) {
-            #ui-layer { flex-direction: row; padding: 25px; gap: 30px; }
-        }
-
-        .column { display: flex; flex-direction: column; min-width: 280px; }
-        h2 { margin-top: 0; color: #333; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .song-list { height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; }
-        .song-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
-        .selected { background: #ffebeb !important; color: #d32f2f; font-weight: bold; }
-        .custom-upload { background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 10px; }
-        .color-control { margin-bottom: 10px; padding: 10px; border: 1px solid #eee; border-radius: 8px; }
-        .slider-group { display: flex; align-items: center; gap: 10px; margin: 3px 0; }
-        .slider-group label { width: 15px; font-weight: bold; font-size: 11px; }
-        input[type=range] { flex: 1; cursor: pointer; }
-        .demo-box { height: 50px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; border-radius: 4px; }
-        .start-btn { background: #d32f2f; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .start-btn:hover { background: #b71c1c; transform: translateY(-2px); }
-        input[type=number], input[type=file] { width: 100%; margin: 5px 0; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        body { margin: 0; padding: 0; background-color: #7F7F7F; overflow: hidden; font-family: sans-serif; touch-action: none; display: flex; flex-direction: column; height: 100vh; }
+        #game-ui { text-align: center; color: white; font-size: 18px; font-weight: bold; padding: 10px; }
+        #grid-container { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; align-content: center; justify-items: center; }
+        .card { background-color: #7F7F7F; border: 2px solid #999; border-radius: 12px; width: 85px; height: 85px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; transition: 0.2s; }
+        .gabor-content { position: absolute; width: 100%; height: 100%; background: repeating-linear-gradient(var(--ang), #fff, #fff 1px, #000 var(--sz), #000 var(--sz2)); mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); opacity: var(--op); }
+        .card.selected { border-color: #2196F3; box-shadow: 0 0 15px #2196F3; transform: scale(1.05); z-index: 2; }
+        .card.matched { opacity: 0.1; pointer-events: none; border-color: transparent; }
+        #controls { background: white; padding: 15px; border-radius: 20px 20px 0 0; }
+        .slider-group { display: flex; align-items: center; margin-bottom: 10px; }
+        label { width: 70px; font-size: 13px; font-weight: bold; }
+        input[type=range] { flex: 1; }
+        button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #2196F3; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
-
-    <div id="ui-layer">
-        <div class="column">
-            <h2>1. CHỌN BÀI HÁT</h2>
-            <div id="song-list" class="song-list"></div>
-            
-            <h2>2. TỰ THÊM NHẠC CỦA BẠN</h2>
-            <div class="custom-upload">
-                <input type="file" id="audio-upload" accept="audio/*">
-                <label style="font-size: 12px; font-weight: bold;">Nhập BPM:</label>
-                <input type="number" id="custom-bpm" value="120" min="40" max="300">
-            </div>
-
-            <p style="font-size: 12px; color: #666; margin: 5px 0;">Phím: <b>F G H J</b> | Chạm màn hình | Thoát: <b>ESC</b></p>
-            <button class="start-btn" onclick="handleStart()">BẮT ĐẦU CHƠI</button>
-        </div>
-
-        <div class="column">
-            <h2>3. CÂN CHỈNH ANAGLYPH</h2>
-            <div class="color-control">
-                <span style="font-weight: bold; color: #d32f2f; font-size: 13px;">KÍNH TRÁI (MÀU ĐỎ)</span>
-                <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
-                <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="131"></div>
-                <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="55"></div>
-                <div id="demo1" class="demo-box">DEMO ĐỎ</div>
-            </div>
-
-            <div class="color-control">
-                <span style="font-weight: bold; color: #008b8b; font-size: 13px;">KÍNH PHẢI (MÀU XANH)</span>
-                <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
-                <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
-                <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
-                <div id="demo2" class="demo-box">DEMO XANH</div>
-            </div>
-        </div>
+    <div id="game-ui">Cặp còn lại: <span id="pairs-left">6</span></div>
+    <div id="grid-container"></div>
+    <div id="controls">
+        <div class="slider-group"><label>Độ rõ:</label><input type="range" id="opSlider" min="10" max="100" value="80"></div>
+        <div class="slider-group"><label>Cỡ sọc:</label><input type="range" id="sizeSlider" min="2" max="10" value="4"></div>
+        <button id="resetBtn">🔄 ĐỔI VỊ TRÍ MỚI</button>
     </div>
 
-    <canvas id="gameCanvas" width="1080" height="1920"></canvas>
-
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const uiLayer = document.getElementById('ui-layer');
-
-        // --- CẤU HÌNH MOBILE-FIRST 9:16 (Mọi thứ tính bằng %) ---
-        const WIDTH = canvas.width; // 1080
-        const HEIGHT = canvas.height; // 1920
-        const LANE_WIDTH = WIDTH / 4; // Chia đều 4 lane: 270px
-
-        // Vị trí và vùng bấm nốt nhạc (tính theo %)
-        const HIT_ZONE_Y_PCT = 0.75; // Nằm ở 75% chiều cao màn hình từ trên xuống
-        const HIT_ZONE_Y = HEIGHT * HIT_ZONE_Y_PCT;
+        const grid = document.getElementById('grid-container');
+        const opS = document.getElementById('opSlider');
+        const sizeS = document.getElementById('sizeSlider');
         
-        const HIT_WINDOW_PCT = 0.45; // Vùng bấm rộng 45% chiều cao màn hình
-        const HIT_WINDOW = HEIGHT * HIT_WINDOW_PCT;
-        
-        const NOTE_HEIGHT_PCT = 0.15; // Chiều cao nốt bằng 15% chiều cao màn hình
-        const NOTE_HEIGHT = HEIGHT * NOTE_HEIGHT_PCT;
-
-        const SONGS = [
-            {name: "Shape Of You (96 BPM)", bpm: 96, file: "sounds/Shape-Of-You.mp3"},
-            {name: "Monkey Dance (98 BPM)", bpm: 98, file: "sounds/Monkey-Dance.mp3"},
-            {name: "BabyShark (115 BPM)", bpm: 115, file: "sounds/BabyShark.mp3"},
-            {name: "Counting Star (124 BPM)", bpm: 124, file: "sounds/Counting-Star.mp3"},
-            {name: "Sugar (120 BPM)", bpm: 120, file: "sounds/Sugar.mp3"},
-            {name: "Beliver (125 BPM)", bpm: 125, file: "sounds/Beliver.mp3"}
-        ];
-
-        let selectedSongIdx = 0, gameState = 'MENU', score = 0, notes = [];
-        let startTime = 0, currentAudio = null, feedbackTimer = 0, feedbackText = "";
-        
+        // --- KHỞI TẠO ÂM THANH (Giống bản Anaglyph Piano của anh) ---
         const dingSound = new Audio('sounds/Ding.wav');
         const failSound = new Audio('sounds/Fail.wav');
         dingSound.preload = 'auto';
         failSound.preload = 'auto';
 
-        let colorRed = {r:255, g:131, b:55}, colorCyan = {r:0, g:255, b:255};
+        let cardData = [], first = null, second = null, pairs = 6, canClick = true;
 
-        // --- LƯU TRỮ & CẬP NHẬT MÀU ---
-        function loadSavedColors() {
-            const r = localStorage.getItem('anaglyph_red'), c = localStorage.getItem('anaglyph_cyan');
-            if(r) { colorRed = JSON.parse(r); document.getElementById('r1').value = colorRed.r; document.getElementById('g1').value = colorRed.g; document.getElementById('b1').value = colorRed.b; }
-            if(c) { colorCyan = JSON.parse(c); document.getElementById('r2').value = colorCyan.r; document.getElementById('g2').value = colorCyan.g; document.getElementById('b2').value = colorCyan.b; }
-            updateUIColors();
+        function init() {
+            grid.innerHTML = ''; cardData = []; first = null; second = null; pairs = 6; canClick = true;
+            document.getElementById('pairs-left').innerText = pairs;
+            let angles = ["0deg", "45deg", "90deg", "135deg", "30deg", "60deg"];
+            let pool = [...angles, ...angles].sort(() => Math.random() - 0.5);
+
+            pool.forEach((ang, i) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<div class="gabor-content" style="--ang: ${ang};"></div>`;
+                grid.appendChild(card);
+                let data = { dom: card, ang: ang, matched: false };
+                card.onclick = () => {
+                    if (!canClick || data.matched || data === first) return;
+                    card.classList.add('selected');
+                    if (!first) { first = data; } 
+                    else {
+                        second = data;
+                        if (first.ang === second.ang) {
+                            // CHỌN ĐÚNG
+                            dingSound.currentTime = 0; // Reset để phát liên tục được
+                            dingSound.play();
+                            first.dom.classList.replace('selected', 'matched');
+                            second.dom.classList.replace('selected', 'matched');
+                            first.matched = second.matched = true;
+                            pairs--;
+                            document.getElementById('pairs-left').innerText = pairs;
+                            first = null; second = null;
+                            if(pairs === 0) setTimeout(() => alert("Hoàn thành bài tập!"), 300);
+                        } else {
+                            // CHỌN SAI
+                            canClick = false;
+                            failSound.currentTime = 0;
+                            failSound.play();
+                            setTimeout(() => {
+                                first.dom.classList.remove('selected');
+                                second.dom.classList.remove('selected');
+                                first = null; second = null;
+                                canClick = true;
+                            }, 500);
+                        }
+                    }
+                };
+                cardData.push(data);
+            });
+            updateStyles();
         }
 
-        function updateUIColors() {
-            colorRed = { r: document.getElementById('r1').value, g: document.getElementById('g1').value, b: document.getElementById('b1').value };
-            colorCyan = { r: document.getElementById('r2').value, g: document.getElementById('g2').value, b: document.getElementById('b2').value };
-            localStorage.setItem('anaglyph_red', JSON.stringify(colorRed));
-            localStorage.setItem('anaglyph_cyan', JSON.stringify(colorCyan));
-            document.getElementById('demo1').style.backgroundColor = `rgb(${colorRed.r},${colorRed.g},${colorRed.b})`;
-            document.getElementById('demo2').style.backgroundColor = `rgb(${colorCyan.r},${colorCyan.g},${colorCyan.b})`;
-        }
-
-        document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
-
-        function renderSongList() {
-            const list = document.getElementById('song-list');
-            list.innerHTML = '';
-            SONGS.forEach((song, i) => {
-                const div = document.createElement('div');
-                div.className = `song-item ${i === selectedSongIdx ? 'selected' : ''}`;
-                div.innerHTML = (i === selectedSongIdx ? "▶ " : "　") + song.name;
-                div.onclick = () => { selectedSongIdx = i; document.getElementById('audio-upload').value = ""; renderSongList(); };
-                list.appendChild(div);
+        function updateStyles() {
+            const op = opS.value / 100;
+            const size = parseInt(sizeS.value);
+            document.querySelectorAll('.gabor-content').forEach(el => {
+                el.style.setProperty('--op', op);
+                el.style.setProperty('--sz', size + "px");
+                el.style.setProperty('--sz2', (size * 2) + "px");
             });
         }
 
-        class Note {
-            constructor(lane, hitTime, speed) { this.lane = lane; this.hitTime = hitTime; this.speed = speed; this.hit = false; this.y = -NOTE_HEIGHT; }
-            update(currentTime) { this.y = HIT_ZONE_Y - ((this.hitTime - currentTime) * this.speed); }
-            draw() {
-                const c = (this.lane % 2 === 0) ? colorRed : colorCyan;
-                ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
-                // Căn chỉnh nốt nằm giữa lane một chút
-                const padding = LANE_WIDTH * 0.08;
-                ctx.fillRect(this.lane * LANE_WIDTH + padding, this.y, LANE_WIDTH - padding*2, NOTE_HEIGHT);
-            }
-        }
-
-        async function handleStart() {
-            const fileInput = document.getElementById('audio-upload');
-            let bpm, audioSrc;
-
-            if (fileInput.files.length > 0) {
-                bpm = parseInt(document.getElementById('custom-bpm').value);
-                audioSrc = URL.createObjectURL(fileInput.files[0]);
-            } else {
-                const song = SONGS[selectedSongIdx];
-                bpm = song.bpm;
-                audioSrc = song.file;
-            }
-
-            gameState = 'PLAYING';
-            uiLayer.style.display = 'none';
-            score = 0; notes = [];
-            
-            const beatInterval = 60 / bpm;
-            // Tốc độ di chuyển dựa trên chiều cao màn hình Mobile (nốt đi từ trên đỉnh xuống HitZone trong 2 nhịp)
-            const noteSpeed = HIT_ZONE_Y / (beatInterval * 2);
-
-            for (let i = 0; i < 800; i++) {
-                notes.push(new Note(Math.floor(Math.random() * 4), 3.0 + i * beatInterval, noteSpeed));
-            }
-
-            currentAudio = new Audio(audioSrc);
-            currentAudio.play();
-            startTime = performance.now();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function gameLoop() {
-            if (gameState !== 'PLAYING') return;
-            let currentTime = (performance.now() - startTime) / 1000;
-            ctx.fillStyle = "white"; ctx.fillRect(0, 0, WIDTH, HEIGHT);
-            
-            // Vẽ vùng bấm nốt nhạc (Hitzone background)
-            ctx.fillStyle = "#fcfcfc"; ctx.fillRect(0, HIT_ZONE_Y - HIT_WINDOW/2, WIDTH, HIT_WINDOW);
-            
-            // Vẽ đường kẻ Hitzone
-            ctx.strokeStyle = "#eee"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, HIT_ZONE_Y); ctx.lineTo(WIDTH, HIT_ZONE_Y); ctx.stroke();
-            
-            // Vẽ nốt nhạc
-            for (let i = notes.length - 1; i >= 0; i--) {
-                let n = notes[i]; n.update(currentTime);
-                if (!n.hit) {
-                    n.draw();
-                    // Nốt đi quá vùng bấm (Miss)
-                    if (n.y > (HIT_ZONE_Y + HIT_WINDOW / 2)) { failSound.cloneNode().play(); notes.splice(i, 1); }
-                } else { notes.splice(i, 1); }
-            }
-
-            // Vẽ chữ FGHJ và Căn đều 4 lane
-            const chars = ['F','G','H','J'];
-            const fontSize = LANE_WIDTH * 0.45; // Font size dựa trên độ rộng lane
-            ctx.font = `bold ${fontSize}px Arial`;
-            
-            chars.forEach((char, i) => {
-                const c = (i % 2 === 0) ? colorRed : colorCyan;
-                ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
-                
-                // Căn giữa chữ trong lane
-                const textWidth = ctx.measureText(char).width;
-                const charX = i * LANE_WIDTH + (LANE_WIDTH / 2) - (textWidth / 2);
-                
-                // Chữ nằm ngay dưới đường kẻ Hitzone một chút
-                ctx.fillText(char, charX, HIT_ZONE_Y + fontSize);
-            });
-
-            // Vẽ Điểm số và Phản hồi
-            ctx.fillStyle = "black"; ctx.font = `bold ${HEIGHT * 0.03}px Arial`; ctx.fillText(`Điểm: ${score}`, WIDTH * 0.05, HEIGHT * 0.04);
-            if (feedbackTimer > 0) { 
-                ctx.fillStyle = "#2e7d32"; 
-                ctx.font = `bold ${HEIGHT * 0.045}px Arial`;
-                const fbW = ctx.measureText(feedbackText).width;
-                ctx.fillText(feedbackText, (WIDTH/2) - (fbW/2), HEIGHT * 0.25); 
-                feedbackTimer--; 
-            }
-            requestAnimationFrame(gameLoop);
-        }
-
-        // Logic xử lý nhấn nốt nhạc (dùng chung cho cả phím và chạm)
-        function checkHit(laneIdx) {
-            if (gameState !== 'PLAYING') return;
-            let hit = false;
-            for (let n of notes) {
-                // Kiểm tra lane và vùng bấm (Hitzone +/- Window)
-                if (n.lane === laneIdx && !n.hit && Math.abs(n.y - HIT_ZONE_Y) < HIT_WINDOW / 2) {
-                    n.hit = true; hit = true; 
-                    dingSound.cloneNode().play(); 
-                    score += 10;
-                    feedbackText = "CHÍNH XÁC!"; feedbackTimer = 30; 
-                    break;
-                }
-            }
-            if (!hit) failSound.cloneNode().play();
-        }
-
-        // Xử lý Phím trên PC (Giữ nguyên)
-        window.addEventListener('keydown', (e) => {
-            if (gameState === 'PLAYING') {
-                if (e.key === 'Escape') { currentAudio.pause(); gameState = 'MENU'; uiLayer.style.display = 'flex'; return; }
-                let laneIdx = ['f', 'g', 'h', 'j'].indexOf(e.key.toLowerCase());
-                if (laneIdx !== -1) checkHit(laneIdx);
-            }
-        });
-
-        // Xử lý Chạm trên Màn hình (Mobile/Tablet) - Đã cập nhật cho 9:16
-        canvas.addEventListener('touchstart', (e) => {
-            if (gameState !== 'PLAYING') return;
-            e.preventDefault(); // Ngăn trình duyệt cuộn/zoom khi chơi
-
-            // Lấy kích thước hiển thị thực tế của canvas trên màn hình thiết bị
-            const rect = canvas.getBoundingClientRect();
-            // Tỷ lệ chuyển đổi từ pixel màn hình sang pixel nội bộ của Canvas (1080)
-            const scaleX = WIDTH / rect.width;
-
-            // Xử lý mọi điểm chạm mới trong danh sách changedTouches
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                let touch = e.changedTouches[i];
-                // Tọa độ X tương đối bên trong Canvas
-                let touchX = (touch.clientX - rect.left) * scaleX;
-                // Xác định lane dựa trên tọa độ X
-                let laneIdx = Math.floor(touchX / LANE_WIDTH);
-                
-                if (laneIdx >= 0 && laneIdx < 4) {
-                    checkHit(laneIdx);
-                }
-            }
-        }, {passive: false});
-
-        loadSavedColors(); renderSongList();
+        opS.oninput = updateStyles;
+        sizeS.oninput = updateStyles;
+        document.getElementById('resetBtn').onclick = init;
+        init();
     </script>
 </body>
 </html>
