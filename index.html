@@ -1,54 +1,183 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Vision Training</title>
-  <style>
-    body {
-      margin: 0;
-      background: black;
-      color: white;
-      text-align: center;
-      font-family: Arial;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Training App - Shine Vision</title>
+    <style>
+        /* --- Tổng thể nền đen --- */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #000000;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
 
-    h1 {
-      margin-top: 60px;
-      font-size: 40px;
-    }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
 
-    .btn {
-      display: block;
-      width: 260px;
-      margin: 25px auto;
-      padding: 20px;
-      font-size: 22px;
-      background: #222;
-      border: 2px solid white;
-      cursor: pointer;
-      transition: 0.3s;
-    }
+        /* --- Tiêu đề giống ảnh --- */
+        h1 {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
 
-    .btn:hover {
-      background: white;
-      color: black;
-    }
-  </style>
+        .author {
+            font-size: 18px;
+            color: #ccc;
+            margin-bottom: 40px;
+        }
+
+        /* --- Lưới Menu 4 App con --- */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        /* --- Thẻ bài tập (Card) --- */
+        .app-card {
+            border: 2px solid #FFFFFF;
+            border-radius: 25px;
+            padding: 25px 15px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: transparent;
+        }
+
+        .app-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.03);
+        }
+
+        /* --- Icon bên trong Card --- */
+        .app-card img {
+            width: 160px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* --- Tên bài tập --- */
+        .app-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Màu chữ Anaglyph */
+        .red { color: #ff3b30; }
+        .blue { color: #007aff; }
+
+        /* --- Đường kẻ ngang --- */
+        hr {
+            border: none;
+            border-top: 1px solid #555;
+            width: 60%;
+            margin: 40px auto;
+        }
+
+        /* --- Lưới 6 hình ảnh Before/After --- */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 cột */
+            gap: 15px; /* Khoảng cách giữa các ảnh */
+            margin-top: 50px; /* Khoảng cách phía trên */
+            margin-bottom: 30px;
+        }
+
+        /* --- Cài đặt hình ảnh kết quả --- */
+        .result-image {
+            width: 100%; /* Chiều rộng full ô lưới */
+            height: auto; /* Chiều cao tự động để giữ tỷ lệ */
+            border-radius: 5px; /* Bo góc nhẹ */
+            border: 1px solid #333; /* Viền tối mờ */
+            object-fit: cover; /* Cắt ảnh nếu không vừa, đảm bảo khung đẹp */
+            display: block;
+        }
+
+        /* --- Thông tin Footer --- */
+        .footer {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #eee;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* --- Responsive cho điện thoại --- */
+        @media (max-width: 600px) {
+            .menu-grid { grid-template-columns: 1fr; }
+            .results-grid { grid-template-columns: 1fr 1fr; } /* 2 cột trên mobile cho kết quả */
+            h1 { font-size: 36px; }
+            .app-card img { width: 140px; height: 90px; }
+        }
+    </style>
 </head>
-
 <body>
 
-<h1>👁 Vision Training</h1>
+    <div class="container">
+        <h1>Vision Training App</h1>
+        <div class="author">Bởi Khôi Phục Thị Lực Shine</div>
 
-<div class="btn" onclick="go('piano')">🎹 Piano</div>
-<div class="btn" onclick="go('rg-dot')">🔴 RG Dot</div>
-<div class="btn" onclick="go('snellen')">👁 Snellen Test</div>
+        <div class="menu-grid">
+            
+            <a href="piano/index.html" class="app-card">
+                <img src="assets/piano.jpg" alt="Piano">
+                <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano</div>
+            </a>
 
-<script>
-function go(app) {
-  window.location.href = app + "/index.html";
-}
-</script>
+            <a href="rg-dot/index.html" class="app-card">
+                <img src="assets/dot.jpg" alt="RG Dot">
+                <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> RG Dot</div>
+            </a>
+
+            <a href="snellen/index.html" class="app-card">
+                <img src="assets/snellen.jpg" alt="Snellen">
+                <div class="app-title">Snellen Test</div>
+            </a>
+
+            <a href="reading/index.html" class="app-card">
+                <img src="assets/reading.jpg" alt="Reading">
+                <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Reading</div>
+            </a>
+
+        </div>
+
+        <hr>
+
+        <div class="footer">
+            <div class="brand-name">Khôi phục thị lực Shine – 0973370148</div>
+            <p>Đơn vị Tiên phong trong lĩnh vực Đào Tạo Thị Giác 2 mắt</p>
+            <p>Với hơn 11 năm kinh nghiệm Nghiên cứu và Phát triển, chúng tôi tự hào vì đã giúp đỡ được hàng nghìn Học Viên sở hữu một đôi mắt Khoẻ Đẹp</p>
+        </div>
+
+        <div class="results-grid">
+            <img src="assets/1.jpg" alt="Kết quả 1" class="result-image">
+            <img src="assets/2.jpg" alt="Kết quả 2" class="result-image">
+            <img src="assets/3.jpg" alt="Kết quả 3" class="result-image">
+            <img src="assets/4.jpg" alt="Kết quả 4" class="result-image">
+            <img src="assets/5.jpg" alt="Kết quả 5" class="result-image">
+            <img src="assets/6.jpg" alt="Kết quả 6" class="result-image">
+        </div>
+        </div>
 
 </body>
 </html>
