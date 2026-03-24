@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anaglyph Reading Pro - Gray Display</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            padding: 20px; 
+            background-color: #e0e0e0; /* Nền ngoài tối hơn chút */
+            color: #333;
+        }
+
+        .container { 
+            max-width: 1000px; 
+            margin: auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        
+        .control-panel { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 15px; 
+            background: #f9f9f9; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .rgb-controls { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            padding: 12px; 
+            border-radius: 6px; 
+            background: #fff;
+            border: 1px solid #eee;
+        }
+        
+        .slider-group { display: flex; align-items: center; gap: 8px; font-size: 13px; font-family: monospace; }
+        .slider-group input { flex: 1; }
+        .slider-group span { width: 30px; text-align: right; }
+
+        .color-preview { 
+            width: 100%; 
+            height: 40px; 
+            border-radius: 4px; 
+            margin-top: 5px; 
+            border: 1px solid #ccc; 
+        }
+
+        /* --- CẬP NHẬT QUAN TRỌNG: NỀN KHUNG ĐỌC MÀU XÁM --- */
+        #reading-content { 
+            font-size: 28px; 
+            font-weight: 700; 
+            line-height: 1.8; 
+            white-space: pre-wrap; 
+            padding: 40px; 
+            border: 2px solid #ccc; 
+            border-radius: 10px; 
+            
+            /* Màu xám mục tiêu của anh */
+            background-color: rgb(245, 245, 245); 
+            
+            min-height: 400px;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        /* Biến màu cho chữ Anaglyph */
+        .color-1 { color: var(--red-final); }
+        .color-2 { color: var(--blue-final); }
+        .color-3 { color: #000000; }
+
+        select, textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
+        button { background: #2c3e50; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        label { font-weight: bold; margin-bottom: 5px; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 style="margin-top:0">Anaglyph Reading Pro</h2>
+    
+    <div style="margin-bottom: 20px;">
+        <label>📖 Chọn bài tập:</label>
+        <select id="story-select" onchange="loadFixedStory()"></select>
+    </div>
+
+    <div class="control-panel">
+        <div class="rgb-controls" style="border-top: 4px solid #ff4444;">
+            <strong>🔴 Kính Trái (Đỏ)</strong>
+            <div class="slider-group">R: <input type="range" id="r1" min="0" max="255" value="255" oninput="updateRGB()"> <span id="v-r1">255</span></div>
+            <div class="slider-group">G: <input type="range" id="g1" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-g1">0</span></div>
+            <div class="slider-group">B: <input type="range" id="b1" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-b1">0</span></div>
+            <div id="preview1" class="color-preview"></div>
+        </div>
+
+        <div class="rgb-controls" style="border-top: 4px solid #4444ff;">
+            <strong>🔵 Kính Phải (Xanh)</strong>
+            <div class="slider-group">R: <input type="range" id="r2" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-r2">0</span></div>
+            <div class="slider-group">G: <input type="range" id="g2" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-g2">0</span></div>
+            <div class="slider-group">B: <input type="range" id="b2" min="0" max="255" value="255" oninput="updateRGB()"> <span id="v-b2">255</span></div>
+            <div id="preview2" class="color-preview"></div>
+        </div>
+    </div>
+
+    <div id="reading-content">Hãy chọn bài đọc để bắt đầu tập luyện...</div>
+
+    <div style="border-top: 1px solid #eee; padding-top: 15px;">
+        <label>⚡ Dán văn bản nhanh:</label>
+        <textarea id="quick-input" rows="2" placeholder="Dán nội dung vào đây..."></textarea>
+        <button onclick="loadFromInput()">Chuyển đổi Anaglyph</button>
+    </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+    const contentDiv = document.getElementById('reading-content');
+    const storySelect = document.getElementById('story-select');
+
+    function init() {
+        if (typeof stories !== 'undefined') {
+            stories.forEach((s, index) => {
+                storySelect.add(new Option(s.title, index));
+            });
+        }
+        const saved = JSON.parse(localStorage.getItem('ana-reading-rgb'));
+        if(saved) {
+            ['r1','g1','b1','r2','g2','b2'].forEach(id => document.getElementById(id).value = saved[id]);
+        }
+        updateRGB();
+    }
+
+    function updateRGB() {
+        const s = {};
+        ['r1','g1','b1','r2','g2','b2'].forEach(id => {
+            s[id] = document.getElementById(id).value;
+            document.getElementById('v-' + id).innerText = s[id];
+        });
+        const c1 = `rgb(${s.r1},${s.g1},${s.b1})`;
+        const c2 = `rgb(${s.r2},${s.g2},${s.b2})`;
+        document.documentElement.style.setProperty('--red-final', c1);
+        document.documentElement.style.setProperty('--blue-final', c2);
+        document.getElementById('preview1').style.backgroundColor = c1;
+        document.getElementById('preview2').style.backgroundColor = c2;
+        localStorage.setItem('ana-reading-rgb', JSON.stringify(s));
+    }
+
+    function processText(text) {
+        return text.split(/\s+/).map((word, i) => `<span class="color-${(i % 3) + 1}">${word}</span>`).join(' ');
+    }
+
+    function loadFixedStory() {
+        const i = storySelect.value;
+        if(i !== "") contentDiv.innerHTML = processText(stories[i].content);
+    }
+
+    function loadFromInput() {
+        const t = document.getElementById('quick-input').value;
+        if(t.trim()) { storySelect.value = ""; contentDiv.innerHTML = processText(t); }
+    }
+
+    init();
+</script>
+</body>
+</html>
