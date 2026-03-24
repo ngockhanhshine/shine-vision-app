@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vision Training App - Shine Vision</title>
     <style>
-        /* --- Tổng thể nền đen --- */
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background-color: #000000;
@@ -22,7 +21,6 @@
             text-align: center;
         }
 
-        /* --- Tiêu đề giống ảnh --- */
         h1 {
             font-size: 48px;
             font-weight: bold;
@@ -36,15 +34,15 @@
             margin-bottom: 40px;
         }
 
-        /* --- Lưới Menu 4 App con --- */
+        /* Lưới Menu */
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 25px;
             margin-bottom: 50px;
+            justify-items: center;
         }
 
-        /* --- Thẻ bài tập (Card) --- */
         .app-card {
             border: 2px solid #FFFFFF;
             border-radius: 25px;
@@ -56,6 +54,9 @@
             flex-direction: column;
             align-items: center;
             background: transparent;
+            width: 100%;
+            max-width: 360px;
+            box-sizing: border-box;
         }
 
         .app-card:hover {
@@ -63,7 +64,6 @@
             transform: scale(1.03);
         }
 
-        /* --- Icon bên trong Card --- */
         .app-card img {
             width: 160px;
             height: 100px;
@@ -72,17 +72,14 @@
             margin-bottom: 20px;
         }
 
-        /* --- Tên bài tập --- */
         .app-title {
             font-size: 24px;
             font-weight: bold;
         }
 
-        /* Màu chữ Anaglyph */
         .red { color: #ff3b30; }
         .blue { color: #007aff; }
 
-        /* --- Đường kẻ ngang --- */
         hr {
             border: none;
             border-top: 1px solid #555;
@@ -90,26 +87,24 @@
             margin: 40px auto;
         }
 
-        /* --- Lưới 6 hình ảnh Before/After --- */
+        /* Lưới ảnh kết quả */
         .results-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3 cột */
-            gap: 15px; /* Khoảng cách giữa các ảnh */
-            margin-top: 50px; /* Khoảng cách phía trên */
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 50px;
             margin-bottom: 30px;
         }
 
-        /* --- Cài đặt hình ảnh kết quả --- */
         .result-image {
-            width: 100%; /* Chiều rộng full ô lưới */
-            height: auto; /* Chiều cao tự động để giữ tỷ lệ */
-            border-radius: 5px; /* Bo góc nhẹ */
-            border: 1px solid #333; /* Viền tối mờ */
-            object-fit: cover; /* Cắt ảnh nếu không vừa, đảm bảo khung đẹp */
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+            border: 1px solid #333;
+            object-fit: cover;
             display: block;
         }
 
-        /* --- Thông tin Footer --- */
         .footer {
             font-size: 15px;
             line-height: 1.6;
@@ -122,12 +117,20 @@
             margin-bottom: 10px;
         }
 
-        /* --- Responsive cho điện thoại --- */
+        @media (min-width: 601px) {
+            /* Căn giữa game thứ 5 nếu ở hàng lẻ */
+            .menu-grid .app-card:last-child:nth-child(odd) {
+                grid-column: 1 / -1;
+                max-width: 360px;
+            }
+        }
+
         @media (max-width: 600px) {
-            .menu-grid { grid-template-columns: 1fr; }
-            .results-grid { grid-template-columns: 1fr 1fr; } /* 2 cột trên mobile cho kết quả */
             h1 { font-size: 36px; }
+            .menu-grid { grid-template-columns: 1fr; }
             .app-card img { width: 140px; height: 90px; }
+            .app-title { font-size: 20px; }
+            .results-grid { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -159,6 +162,11 @@
                 <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Reading</div>
             </a>
 
+            <a href="gabormatch/index.html" class="app-card">
+                <img src="assets/gabor.jpeg" alt="Gabor">
+                <div class="app-title">Gabor</div>
+            </a>
+
         </div>
 
         <hr>
@@ -177,7 +185,7 @@
             <img src="assets/5.jpg" alt="Kết quả 5" class="result-image">
             <img src="assets/6.jpg" alt="Kết quả 6" class="result-image">
         </div>
-        </div>
+    </div>
 
 </body>
 </html>
