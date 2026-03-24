@@ -2,10 +2,10 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snellen C Image-based - Shine Vision</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Snellen C Mobile Optimized - Shine Vision</title>
     <style>
-        body { margin: 0; background: white; font-family: Arial, sans-serif; overflow: hidden; }
+        body { margin: 0; background: white; font-family: Arial, sans-serif; overflow: hidden; touch-action: none; }
         canvas { display: block; background: white; }
         #info-layer { position: absolute; top: 20px; left: 20px; pointer-events: none; }
         .status { font-size: 22px; font-weight: bold; margin-bottom: 5px; color: black; }
@@ -36,16 +36,18 @@
         const VISION_LEVELS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2];
         let currentIndex = 0;
         
-        // --- LOGIC GHI NHỚ TỶ LỆ SCALE ---
         const SAVED_SCALE = localStorage.getItem('snellen_base_scale');
         let baseScale = SAVED_SCALE ? parseFloat(SAVED_SCALE) : 1.0;
         
         let rotation = 0; 
         let scaleLocked = false;
         let inputBuffer = "";
-        let rightDownTime = 0;
 
-        // Load ảnh gốc
+        // Biến xử lý Touch
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const minSwipeDistance = 30;
+
         const imgC = new Image();
         imgC.src = 'images/landolt-c.png';
         const imgRule = new Image();
@@ -60,7 +62,6 @@
             rotation = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
         }
 
-        // Lưu scale vào bộ nhớ máy tính
         function saveScale() {
             localStorage.setItem('snellen_base_scale', baseScale);
         }
@@ -76,7 +77,7 @@
             const visionScale = 0.1 / vision;
             const finalScale = baseScale * visionScale;
 
-            // 1. Vẽ chữ C (Xoay và Scale)
+            // 1. Vẽ chữ C
             const cW = imgC.width * finalScale;
             const cH = imgC.height * finalScale;
             
@@ -86,13 +87,13 @@
             ctx.drawImage(imgC, -cW / 2, -cH / 2, cW, cH);
             ctx.restore();
 
-            // 2. Vẽ thước đo (Đường kẻ đỏ)
+            // 2. Vẽ thước đo
             const rW = imgRule.width * baseScale;
             const rH = imgRule.height * baseScale;
             ctx.drawImage(imgRule, (canvas.width - rW) / 2, canvas.height - 180, rW, rH);
 
-            // 3. Vẽ danh sách thị lực
-            const startY = canvas.height / 2 - (VISION_LEVELS.length * 25) / 2;
+            // 3. Vẽ danh sách thị lực (Bên phải)
+            const startY = canvas.height / 2 - (VISION_LEVELS.length * 30) / 2;
             ctx.textAlign = "right";
             ctx.font = "bold 22px Arial";
             VISION_LEVELS.forEach((v, i) => {
@@ -105,20 +106,69 @@
             document.getElementById('input-display').innerText = inputBuffer ? "Input: " + inputBuffer : "";
         }
 
-        // --- SỰ KIỆN ---
+        // --- HÀM ĐIỀU KHIỂN CHÍNH ---
+        function nextLevel() {
+            currentIndex = Math.min(VISION_LEVELS.length - 1, currentIndex + 1);
+            changeRotation();
+            draw();
+        }
+
+        function prevLevel() {
+            currentIndex = Math.max(0, currentIndex - 1);
+            changeRotation();
+            draw();
+        }
+
+        // --- SỰ KIỆN CẢM ỨNG (MOBILE) ---
+        window.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: false });
+
+        window.addEventListener('touchend', e => {
+            const touchEndX = e.changedTouches[0].screenX;
+            const touchEndY = e.changedTouches[0].screenY;
+            handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+        }, { passive: false });
+
+        function handleSwipe(startX, startY, endX, endY) {
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Vuốt ngang (Trái/Phải)
+                if (Math.abs(deltaX) > minSwipeDistance) {
+                    changeRotation();
+                    draw();
+                }
+            } else {
+                // Vuốt dọc
+                if (Math.abs(deltaY) > minSwipeDistance) {
+                    if (deltaY > 0) {
+                        // Vuốt xuống (Kéo màn hình xuống) -> Tăng hàng thị lực (giảm độ khó)
+                        prevLevel();
+                    } else {
+                        // Vuốt lên (Kéo màn hình lên) -> Giảm hàng thị lực (tăng độ khó)
+                        nextLevel();
+                    }
+                }
+            }
+        }
+
+        // --- GIỮ NGUYÊN CÁC SỰ KIỆN CŨ (PC) ---
         window.addEventListener('wheel', (e) => {
             if (scaleLocked) return;
             const step = e.ctrlKey ? 0.001 : 0.01;
             baseScale -= e.deltaY * step * 0.1;
             baseScale = Math.max(0.2, Math.min(5.0, baseScale));
-            saveScale(); // Tự động lưu khi cuộn
+            saveScale();
             draw();
         });
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') changeRotation();
-            if (e.key === 'ArrowDown') { currentIndex = Math.min(VISION_LEVELS.length - 1, currentIndex + 1); changeRotation(); }
-            if (e.key === 'ArrowUp') { currentIndex = Math.max(0, currentIndex - 1); changeRotation(); }
+            if (e.key === 'ArrowDown') nextLevel();
+            if (e.key === 'ArrowUp') prevLevel();
             if (e.key === ' ') scaleLocked = !scaleLocked;
 
             if (/^\d$/.test(e.key)) inputBuffer += e.key;
@@ -126,29 +176,15 @@
                 baseScale = parseFloat(inputBuffer) / 1000;
                 baseScale = Math.max(0.2, Math.min(5.0, baseScale));
                 inputBuffer = "";
-                saveScale(); // Tự động lưu khi nhập số
+                saveScale();
             }
             if (e.key === 'Backspace') inputBuffer = "";
             draw();
         });
 
-        window.onmousedown = (e) => {
-            if (e.button === 0) changeRotation();
-            if (e.button === 2) rightDownTime = Date.now();
-            draw();
-        };
-
-        window.onmouseup = (e) => {
-            if (e.button === 2) {
-                const hold = Date.now() - rightDownTime;
-                if (hold >= 500) { currentIndex = Math.max(0, currentIndex - 1); changeRotation(); }
-                else { currentIndex = Math.min(VISION_LEVELS.length - 1, currentIndex + 1); changeRotation(); }
-            }
-            draw();
-        };
-
         window.oncontextmenu = (e) => e.preventDefault();
         window.onresize = draw;
+        
         changeRotation();
         draw();
     </script>
