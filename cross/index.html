@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Circle Cross Training - Mobile Optimized</title>
+    <title>Circle Cross Training - Pro Mobile</title>
     <style>
         :root {
             --bg-color: rgb(245, 245, 245);
@@ -18,10 +18,23 @@
             background-color: var(--bg-color);
             overflow: hidden;
             user-select: none;
-            touch-action: none; 
+            touch-action: none;
         }
 
-        /* Stage hiển thị hình tập */
+        /* Bảng điều khiển - Mặc định nằm ở vị trí 0 */
+        #controls {
+            width: 380px;
+            background: var(--panel-bg);
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            z-index: 10;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        /* Stage tập - Mặc định nằm bên trái (-100%) */
         #game-stage {
             flex: 1;
             display: flex;
@@ -30,24 +43,11 @@
             position: relative;
             cursor: pointer;
             background-color: var(--bg-color);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             width: 100%;
             height: 100%;
         }
 
-        /* Bảng điều khiển */
-        #controls {
-            width: 380px;
-            background: var(--panel-bg);
-            padding: 20px;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
-            overflow-y: auto;
-            z-index: 10;
-            transition: transform 0.3s ease, width 0.3s ease;
-            flex-shrink: 0;
-        }
-
-        /* Hiệu ứng REC */
         #rec-indicator {
             position: absolute;
             top: 20px;
@@ -70,9 +70,8 @@
         }
 
         @keyframes blink {
-            0% { opacity: 1; }
+            0%, 100% { opacity: 1; }
             50% { opacity: 0; }
-            100% { opacity: 1; }
         }
 
         .shape-container {
@@ -107,75 +106,76 @@
             transform: translate(-50%, -50%);
         }
 
-        /* Giao diện Mobile */
         @media (max-width: 768px) {
-            body {
-                position: relative;
-            }
             #controls {
                 position: absolute;
-                right: 0;
+                left: 0;
                 top: 0;
                 height: 100%;
                 width: 100%;
-                box-sizing: border-box;
-                transform: translateX(100%); /* Mặc định ẩn cài đặt sang phải */
+                transform: translateX(0);
             }
             #game-stage {
                 position: absolute;
                 left: 0;
                 top: 0;
-                transform: translateX(0); /* Mặc định hiện hình tập */
+                transform: translateX(-100%); /* Đưa stage tập sang bên TRÁI */
             }
-
-            /* Trạng thái khi Vuốt sang TRÁI để hiện Cài đặt */
-            body.menu-open #controls {
-                transform: translateX(0);
-            }
-            body.menu-open #game-stage {
-                transform: translateX(-100%);
-            }
+            /* Khi Training Mode: Đẩy Cài đặt sang PHẢI (100%), đưa Stage về 0 */
+            body.training-mode #controls { transform: translateX(100%); }
+            body.training-mode #game-stage { transform: translateX(0); }
         }
 
-        /* Style cho các thành phần điều khiển */
         .control-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border: 1px solid #ddd;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             background: #fff;
         }
 
         h3 { margin-top: 0; font-size: 16px; text-transform: uppercase; text-align: center; margin-bottom: 15px; }
 
-        .mode-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 15px; }
         .mode-btn {
             flex: 1; padding: 10px; border: 2px solid #ccc; background: white;
-            cursor: pointer; border-radius: 5px; text-align: center; font-weight: bold;
+            cursor: pointer; border-radius: 5px; text-align: center; font-weight: bold; font-size: 14px;
         }
         .mode-btn.active { border-color: #007bff; background: #e7f1ff; color: #007bff; }
 
         label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #444; }
-        .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .rgb-label { font-size: 12px; font-weight: bold; width: 15px; color: #666; }
+        
         .step-btn {
-            width: 32px; height: 32px; border: 1px solid #ccc; background: #f8f8f8;
+            width: 36px; height: 36px; border: 1px solid #ccc; background: #f8f8f8;
             cursor: pointer; border-radius: 4px; font-weight: bold; display: flex;
             justify-content: center; align-items: center; flex-shrink: 0;
+            font-size: 18px;
         }
-        input[type="range"] { flex: 1; cursor: pointer; height: 6px; }
-        .demo-box { color: white; text-align: center; padding: 10px; font-weight: bold; border-radius: 6px; margin-top: 10px; font-size: 13px; text-transform: uppercase; }
-        #log-container { margin-top: 10px; max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; padding-top: 10px; }
-        .log-item { font-size: 13px; padding: 5px 0; border-bottom: 1px dashed #eee; color: #555; }
+
+        input[type="range"] { 
+            flex: 1; 
+            cursor: pointer; 
+            height: 25px; 
+            touch-action: pan-y; 
+        }
+        
+        .demo-box { color: white; text-align: center; padding: 8px; font-weight: bold; border-radius: 6px; margin-top: 5px; font-size: 12px; text-transform: uppercase; }
+        #log-container { margin-top: 10px; max-height: 150px; overflow-y: auto; border-top: 1px solid #eee; padding-top: 10px; }
+        .log-item { font-size: 13px; padding: 6px 0; border-bottom: 1px dashed #eee; color: #555; }
         .clear-log { font-size: 11px; color: #007bff; cursor: pointer; text-decoration: underline; float: right; }
         
         .swipe-hint {
             position: fixed;
-            bottom: 10px;
+            bottom: 15px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 10px;
-            color: #aaa;
+            font-size: 11px;
+            color: #999;
+            background: rgba(255,255,255,0.7);
+            padding: 2px 10px;
+            border-radius: 10px;
             pointer-events: none;
         }
     </style>
@@ -203,7 +203,7 @@
                 </div>
             </div>
         </div>
-        <div class="swipe-hint">Vuốt sang trái để cài đặt</div>
+        <div class="swipe-hint">Vuốt phải để về cài đặt</div>
     </div>
 
     <div id="controls">
@@ -216,9 +216,9 @@
         <div class="control-group">
             <label>KÍCH THƯỚC (SIZE): <span id="val-size">120</span>px</label>
             <div class="slider-row">
-                <div class="step-btn" onclick="stepSlider('slider-size', -5)">-</div>
+                <div class="step-btn" onclick="stepSlider('slider-size', -1)">-</div>
                 <input type="range" id="slider-size" min="50" max="400" value="120">
-                <div class="step-btn" onclick="stepSlider('slider-size', 5)">+</div>
+                <div class="step-btn" onclick="stepSlider('slider-size', 1)">+</div>
             </div>
         </div>
 
@@ -226,15 +226,15 @@
             <div class="control-group">
                 <label>KHOẢNG CÁCH NGANG: <span id="val-h-space">150</span>px</label>
                 <div class="slider-row">
-                    <div class="step-btn" onclick="stepSlider('slider-h-space', -5)">-</div>
+                    <div class="step-btn" onclick="stepSlider('slider-h-space', -1)">-</div>
                     <input type="range" id="slider-h-space" min="0" max="800" value="150">
-                    <div class="step-btn" onclick="stepSlider('slider-h-space', 5)">+</div>
+                    <div class="step-btn" onclick="stepSlider('slider-h-space', 1)">+</div>
                 </div>
                 <label>KHOẢNG CÁCH DỌC: <span id="val-v-space">0</span>px</label>
                 <div class="slider-row">
-                    <div class="step-btn" onclick="stepSlider('slider-v-space', -5)">-</div>
+                    <div class="step-btn" onclick="stepSlider('slider-v-space', -1)">-</div>
                     <input type="range" id="slider-v-space" min="-400" max="400" value="0">
-                    <div class="step-btn" onclick="stepSlider('slider-v-space', 5)">+</div>
+                    <div class="step-btn" onclick="stepSlider('slider-v-space', 1)">+</div>
                 </div>
             </div>
         </div>
@@ -259,7 +259,7 @@
             <label>NHẬT KÝ LUYỆN TẬP <span class="clear-log" onclick="clearLog()">Xóa hết</span></label>
             <div id="log-container"></div>
         </div>
-        <div style="text-align: center; color: #aaa; font-size: 10px;">Vuốt sang phải để về màn hình tập</div>
+        <div style="text-align: center; color: #aaa; font-size: 11px; padding-bottom: 20px;">Vuốt trái qua phải để tập</div>
     </div>
 
     <script>
@@ -267,27 +267,39 @@
         let isRecording = false;
         let startTime, timerInterval;
         let trainingLogs = JSON.parse(localStorage.getItem('trainingLogs')) || [];
+        let isTouchingSlider = false;
+
         const sliders = document.querySelectorAll('input[type="range"]');
 
-        // --- Xử lý Vuốt Đảo Ngược ---
+        sliders.forEach(slider => {
+            slider.addEventListener('touchstart', () => { isTouchingSlider = true; }, {passive: true});
+            slider.addEventListener('touchend', () => { isTouchingSlider = false; }, {passive: true});
+            slider.addEventListener('input', updateStyles);
+        });
+
+        // --- Xử lý Vuốt: Trái qua phải -> Tập, Phải qua trái -> Cài đặt ---
         let touchStartX = 0;
-        document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+        document.addEventListener('touchstart', e => {
+            if (isTouchingSlider) return;
+            touchStartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+
         document.addEventListener('touchend', e => {
+            if (isTouchingSlider) return;
             let touchEndX = e.changedTouches[0].screenX;
             let diff = touchStartX - touchEndX;
 
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) {
-                    // Vuốt sang TRÁI -> Hiện cài đặt
-                    document.body.classList.add('menu-open');
+            if (Math.abs(diff) > 60) {
+                if (diff < 0) {
+                    // Vuốt từ Trái qua Phải (diff âm) -> Sang màn hình tập
+                    document.body.classList.add('training-mode');
                 } else {
-                    // Vuốt sang PHẢI -> Hiện màn hình tập
-                    document.body.classList.remove('menu-open');
+                    // Vuốt từ Phải qua Trái (diff dương) -> Về cài đặt
+                    document.body.classList.remove('training-mode');
                 }
             }
-        });
+        }, {passive: true});
 
-        // --- Hệ thống REC ---
         function handleStageClick() {
             if (!isRecording) {
                 isRecording = true;
@@ -328,7 +340,6 @@
             }
         }
 
-        // --- Hệ thống giao diện ---
         function stepSlider(id, step) {
             const slider = document.getElementById(id);
             slider.value = parseInt(slider.value) + step;
@@ -426,7 +437,6 @@
             updateStyles();
         }
 
-        sliders.forEach(s => s.addEventListener('input', updateStyles));
         loadData();
         renderLogs();
         setMode(mode);
