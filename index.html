@@ -1,21 +1,13 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://shinevisionapp.com/">
-    <meta property="og:title" content="App Đào tạo thị giác 2 mắt - Khôi phục thị lực Shine">
-    <meta property="og:description" content="Ứng dụng luyện tập thị giác chuyên sâu với các bài tập Anaglyph Piano, RG Dot, Snellen, Tetris và Gabor.">
-    <meta property="og:image" content="https://shinevisionapp.com/thumbnail.png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vision Training App - Shine Vision</title>
     
     <link rel="icon" type="image/png" href="assets/favicon.png">
+
     <style>
-        /* --- Tổng thể nền đen sang trọng --- */
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background-color: #000000;
@@ -27,12 +19,11 @@
         }
 
         .container {
-            max-width: 900px; /* Tăng nhẹ độ rộng container cho 6 game */
+            max-width: 900px;
             width: 100%;
             text-align: center;
         }
 
-        /* --- Tiêu đề giống ảnh --- */
         h1 {
             font-size: 48px;
             font-weight: bold;
@@ -46,25 +37,21 @@
             margin-bottom: 40px;
         }
 
-        /* Style cho link ẩn (không gạch chân, màu mặc định) */
         .hidden-link {
             text-decoration: none;
             color: inherit;
         }
-        .hidden-link:hover {
-            color: #fff; /* Hiện màu trắng khi hover */
-        }
+        .hidden-link:hover { color: #fff; }
 
-        /* --- Lưới Menu App con (6 game, 2 cột) --- */
+        /* Lưới Menu App - Tối ưu cho số lượng lẻ */
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* 2 cột bằng nhau */
+            grid-template-columns: repeat(2, 1fr);
             gap: 25px;
             margin-bottom: 50px;
             justify-items: center;
         }
 
-        /* --- Thẻ bài tập (Card) --- */
         .app-card {
             border: 2px solid #FFFFFF;
             border-radius: 25px;
@@ -87,27 +74,23 @@
             border-color: #aaa;
         }
 
-        /* --- Icon bên trong Card --- */
         .app-card img {
             width: 160px;
             height: 100px;
-            object-fit: cover; /* Cắt ảnh đẹp */
+            object-fit: cover;
             border-radius: 10px;
             margin-bottom: 20px;
-            border: 1px solid #333; /* Viền nhẹ cho ảnh */
+            border: 1px solid #333;
         }
 
-        /* --- Tên bài tập --- */
         .app-title {
             font-size: 24px;
             font-weight: bold;
         }
 
-        /* Màu chữ Anaglyph */
         .red { color: #ff3b30; }
         .blue { color: #007aff; }
 
-        /* --- Đường kẻ ngang --- */
         hr {
             border: none;
             border-top: 1px solid #555;
@@ -115,10 +98,10 @@
             margin: 40px auto;
         }
 
-        /* --- Lưới 6 hình ảnh Before/After --- */
+        /* Lưới 6 hình ảnh Before/After */
         .results-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3 cột */
+            grid-template-columns: repeat(3, 1fr);
             gap: 15px;
             margin-top: 50px;
             margin-bottom: 30px;
@@ -133,7 +116,6 @@
             display: block;
         }
 
-        /* --- Thông tin Footer --- */
         .footer {
             font-size: 15px;
             line-height: 1.6;
@@ -146,24 +128,25 @@
             margin-bottom: 10px;
         }
 
-        /* Link ở footer (có gạch chân khi hover) */
         .footer-link {
             text-decoration: none;
             color: #fff;
             font-weight: bold;
         }
-        .footer-link:hover {
-            text-decoration: underline;
+        .footer-link:hover { text-decoration: underline; }
+
+        /* Logic căn giữa item lẻ cuối cùng trên PC */
+        @media (min-width: 601px) {
+            .menu-grid .app-card:last-child:nth-child(odd) {
+                grid-column: 1 / -1;
+                max-width: 380px;
+            }
         }
 
-        /* --- Responsive cho thiết bị --- */
         @media (max-width: 600px) {
             h1 { font-size: 32px; }
-            .author { font-size: 16px; }
-            .menu-grid { grid-template-columns: 1fr; } /* 1 cột trên mobile */
-            .app-card img { width: 140px; height: 90px; }
-            .app-title { font-size: 20px; }
-            .results-grid { grid-template-columns: 1fr 1fr; } /* 2 cột trên mobile */
+            .menu-grid { grid-template-columns: 1fr; }
+            .results-grid { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -171,10 +154,10 @@
 
     <div class="container">
         <h1>Vision Training App</h1>
-        
         <div class="author">
             Bởi <a href="https://shinevisioncenter.com" target="_blank" class="hidden-link">Khôi Phục Thị Lực Shine</a>
         </div>
+
         <div class="menu-grid">
             
             <a href="piano/index.html" class="app-card">
@@ -206,12 +189,17 @@
                 <img src="assets/tetris.png" alt="Tetris">
                 <div class="app-title">Tetris</div>
             </a>
-            </div>
+
+            <a href="crowd/index.html" class="app-card">
+                <img src="assets/crowd.png" alt="Crowd Training">
+                <div class="app-title">Crowd Training</div>
+            </a>
+
+        </div>
 
         <hr>
 
         <div class="footer">
-            
             <div class="brand-name">
                 <a href="https://shinevisioncenter.com" target="_blank" class="footer-link">Khôi phục thị lực Shine</a> – 0973370148
             </div>
@@ -220,12 +208,12 @@
         </div>
 
         <div class="results-grid">
-            <img src="assets/1.jpg" alt="Kết quả 1" class="result-image">
-            <img src="assets/2.jpg" alt="Kết quả 2" class="result-image">
-            <img src="assets/3.jpg" alt="Kết quả 3" class="result-image">
-            <img src="assets/4.jpg" alt="Kết quả 4" class="result-image">
-            <img src="assets/5.jpg" alt="Kết quả 5" class="result-image">
-            <img src="assets/6.jpg" alt="Kết quả 6" class="result-image">
+            <img src="assets/1.jpg" alt="1" class="result-image">
+            <img src="assets/2.jpg" alt="2" class="result-image">
+            <img src="assets/3.jpg" alt="3" class="result-image">
+            <img src="assets/4.jpg" alt="4" class="result-image">
+            <img src="assets/5.jpg" alt="5" class="result-image">
+            <img src="assets/6.jpg" alt="6" class="result-image">
         </div>
     </div>
 
