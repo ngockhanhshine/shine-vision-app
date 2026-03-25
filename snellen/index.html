@@ -33,7 +33,7 @@
         </div>
         <div class="menu-item">
             <input type="radio" name="chartType" value="sloan" id="typeSloan" onchange="toggleChart('sloan')">
-            <label for="typeSloan">Bảng Sloan</label>
+            <label for="typeSloan">Bảng Sloan (Quốc tế)</label>
         </div>
     </div>
 
@@ -64,7 +64,6 @@
                 },
                 images: ['C.png','D.png','H.png','K.png','N.png','O.png','P.png','R.png','V.png','Z.png'],
                 rule: 'rule2.png',
-                // GIẢM TIẾP 2.04 LẦN TỪ MỨC 2.65 CŨ
                 internalScale: 1 / (2.65 * 2.04) 
             }
         };
@@ -151,6 +150,7 @@
             draw();
         }
 
+        // Mouse Events
         let holdTimer;
         let isHold = false;
 
@@ -158,10 +158,7 @@
             if(e.button === 0) { changeRandom(); draw(); } 
             else if(e.button === 2) { 
                 isHold = false;
-                holdTimer = setTimeout(() => { 
-                    isHold = true;
-                    updateLevel(-1); 
-                }, 500);
+                holdTimer = setTimeout(() => { isHold = true; updateLevel(-1); }, 500);
             }
         };
 
@@ -171,6 +168,25 @@
                 if(!isHold) { updateLevel(1); }
             }
         };
+
+        // --- CẢI TIẾN LĂN CHUỘT ---
+        window.addEventListener('wheel', (e) => {
+            if (scaleLocked) return;
+            
+            // Chặn zoom trình duyệt khi nhấn Ctrl
+            if (e.ctrlKey) {
+                e.preventDefault();
+                // Bước nhảy siêu mịn 0.1%
+                baseScale -= (e.deltaY > 0 ? 0.001 : -0.001);
+            } else {
+                // Bước nhảy 1% khi lăn thường
+                baseScale -= (e.deltaY > 0 ? 0.01 : -0.01);
+            }
+
+            baseScale = Math.max(0.1, Math.min(5.0, baseScale));
+            localStorage.setItem('snellen_base_scale', baseScale);
+            draw();
+        }, { passive: false }); // Cần passive: false để e.preventDefault() hoạt động
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { changeRandom(); draw(); }
@@ -202,14 +218,6 @@
             } else if (Math.abs(deltaY) > 30) {
                 updateLevel(deltaY > 0 ? -1 : 1);
             }
-        });
-
-        window.addEventListener('wheel', (e) => {
-            if (scaleLocked) return;
-            baseScale -= e.deltaY * 0.0005;
-            baseScale = Math.max(0.1, Math.min(5.0, baseScale));
-            localStorage.setItem('snellen_base_scale', baseScale);
-            draw();
         });
 
         window.oncontextmenu = (e) => e.preventDefault();
