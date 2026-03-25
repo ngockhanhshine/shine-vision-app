@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Dichoptic Tetris Pro v4 - Vision Training</title>
+    <style>
+        html, body {
+            margin: 0; padding: 0; height: 100%; overflow: hidden; 
+            background: rgb(245, 245, 245);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        /* --- PHẦN 1: SETUP --- */
+        #setup-scene {
+            display: flex; flex-direction: column; align-items: center;
+            background: #fff; padding: 30px; border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 600px; width: 90%;
+        }
+        .config-groups { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; width: 100%; margin-bottom: 25px; }
+        .control-group { display: flex; flex-direction: column; gap: 8px; }
+        .slider-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+        input[type=range] { flex-grow: 1; cursor: pointer; }
+        .color-preview { width: 100%; height: 15px; border-radius: 4px; margin-top: 8px; border: 1px solid #ccc; }
+        #start-btn { padding: 12px 40px; font-size: 18px; font-weight: bold; background: #2ecc71; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+
+        /* --- PHẦN 2: GAME --- */
+        #game-scene { display: none; align-items: flex-start; gap: 20px; }
+        
+        #fusion-frame {
+            padding: 15px; background: #000; border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: flex; align-items: center;
+        }
+
+        #game-container { position: relative; background: rgb(245, 245, 245); }
+        canvas { display: block; }
+
+        .side-panel { display: flex; flex-direction: column; gap: 20px; min-width: 120px; }
+        .next-box {
+            background: #fff; padding: 15px; border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center;
+        }
+        .next-box canvas { background: rgb(245, 245, 245); margin: 10px auto 0; border: 1px solid #eee; }
+        .stats { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; font-weight: bold; font-size: 20px; }
+        #back-btn { padding: 8px 15px; background: #555; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; align-self: center; }
+    </style>
+</head>
+<body>
+
+    <div id="setup-scene">
+        <h2 style="margin-top:0;">Cấu hình Dichoptic Tetris</h2>
+        <div class="config-groups">
+            <div class="control-group">
+                <strong style="color: #008b8b;">Mắt Yếu (Khối đang rơi)</strong>
+                <div class="slider-row">R: <input type="range" id="r1" min="0" max="255" value="0"> <span id="v-r1">0</span></div>
+                <div class="slider-row">G: <input type="range" id="g1" min="0" max="255" value="255"> <span id="v-g1">255</span></div>
+                <div class="slider-row">B: <input type="range" id="b1" min="0" max="255" value="255"> <span id="v-b1">255</span></div>
+                <div id="preview1" class="color-preview"></div>
+            </div>
+            <div class="control-group">
+                <strong style="color: #b22222;">Mắt Khỏe (Khối cố định)</strong>
+                <div class="slider-row">R: <input type="range" id="r2" min="0" max="255" value="255"> <span id="v-r2">255</span></div>
+                <div class="slider-row">G: <input type="range" id="g2" min="0" max="255" value="0"> <span id="v-g2">0</span></div>
+                <div class="slider-row">B: <input type="range" id="b2" min="0" max="255" value="85"> <span id="v-b2">85</span></div>
+                <div id="preview2" class="color-preview"></div>
+            </div>
+        </div>
+        <button id="start-btn">Bắt đầu tập luyện</button>
+    </div>
+
+    <div id="game-scene">
+        <div id="fusion-frame">
+            <div id="game-container">
+                <canvas id="tetris" width="240" height="400"></canvas>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div class="next-box">
+                <div style="font-size: 14px; font-weight: bold; color: #666;">TIẾP THEO</div>
+                <canvas id="next" width="80" height="80"></canvas>
+            </div>
+            <div class="stats">SCORE: <span id="score">0</span></div>
+            <button id="back-btn">Quay lại cài đặt</button>
+        </div>
+    </div>
+
+<script>
+const COLOR_STORAGE_KEY = 'dichoptic_tetris_v4';
+const colors = { weak: { r: 0, g: 255, b: 255 }, strong: { r: 255, g: 0, b: 85 } };
+
+const canvas = document.getElementById('tetris');
+const context = canvas.getContext('2d');
+const nextCanvas = document.getElementById('next');
+const nextContext = nextCanvas.getContext('2d');
+
+context.scale(20, 20);
+nextContext.scale(20, 20);
+
+let gameActive = false;
+let loopStarted = false;
+
+// --- CẤU HÌNH MÀU & LOCAL STORAGE ---
+function loadSettings() {
+    const saved = localStorage.getItem(COLOR_STORAGE_KEY);
+    if (saved) {
+        const data = JSON.parse(saved);
+        document.getElementById('r1').value = data.weak.r; document.getElementById('g1').value = data.weak.g; document.getElementById('b1').value = data.weak.b;
+        document.getElementById('r2').value = data.strong.r; document.getElementById('g2').value = data.strong.g; document.getElementById('b2').value = data.strong.b;
+    }
+}
+
+function updateColorPreviews() {
+    colors.weak = { r: +r1.value, g: +g1.value, b: +b1.value };
+    colors.strong = { r: +r2.value, g: +g2.value, b: +b2.value };
+    ['r1','g1','b1','r2','g2','b2'].forEach(id => document.getElementById('v-'+id).innerText = document.getElementById(id).value);
+    preview1.style.background = `rgb(${colors.weak.r},${colors.weak.g},${colors.weak.b})`;
+    preview2.style.background = `rgb(${colors.strong.r},${colors.strong.g},${colors.strong.b})`;
+}
+
+document.querySelectorAll('input').forEach(i => i.oninput = updateColorPreviews);
+
+document.getElementById('start-btn').onclick = () => {
+    localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(colors));
+    document.getElementById('setup-scene').style.display = 'none';
+    document.getElementById('game-scene').style.display = 'flex';
+    gameActive = true;
+    playerReset();
+    if (!loopStarted) { update(); loopStarted = true; }
+};
+
+document.getElementById('back-btn').onclick = () => {
+    document.getElementById('game-scene').style.display = 'none';
+    document.getElementById('setup-scene').style.display = 'flex';
+    gameActive = false;
+};
+
+// --- LOGIC TETRIS ---
+function createMatrix(w, h) {
+    const matrix = [];
+    while (h--) matrix.push(new Array(w).fill(0));
+    return matrix;
+}
+
+function createPiece(type) {
+    if (type === 'I') return [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]];
+    if (type === 'L') return [[0, 2, 0], [0, 2, 0], [0, 2, 2]];
+    if (type === 'J') return [[0, 3, 0], [0, 3, 0], [3, 3, 0]];
+    if (type === 'O') return [[4, 4], [4, 4]];
+    if (type === 'Z') return [[5, 5, 0], [0, 5, 5], [0, 0, 0]];
+    if (type === 'S') return [[0, 6, 6], [6, 6, 0], [0, 0, 0]];
+    if (type === 'T') return [[0, 7, 0], [7, 7, 7], [0, 0, 0]];
+}
+
+function drawGrid(ctx, w, h) {
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.lineWidth = 0.05;
+    ctx.setLineDash([0.1, 0.2]);
+    for (let x = 0; x <= w; x++) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+    for (let y = 0; y <= h; y++) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+    ctx.setLineDash([]);
+}
+
+function drawMatrix(ctx, matrix, offset, isPlayer) {
+    matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) {
+                const c = isPlayer ? colors.weak : colors.strong;
+                ctx.fillStyle = `rgb(${c.r}, ${c.g}, ${c.b})`;
+                ctx.fillRect(x + offset.x, y + offset.y, 1, 1);
+            }
+        });
+    });
+}
+
+function draw() {
+    // Vẽ màn hình chính
+    context.fillStyle = 'rgb(245, 245, 245)';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    drawGrid(context, 12, 20);
+    drawMatrix(context, arena, {x: 0, y: 0}, false);
+    drawMatrix(context, player.matrix, player.pos, true);
+
+    // Vẽ khối tiếp theo
+    nextContext.fillStyle = 'rgb(245, 245, 245)';
+    nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+    drawGrid(nextContext, 4, 4);
+    // Khối tiếp theo dùng màu Cyan (isPlayer = true) để mắt yếu tập luyện
+    drawMatrix(nextContext, player.next, {x: 0, y: 0}, true);
+}
+
+function collide(arena, player) {
+    const [m, o] = [player.matrix, player.pos];
+    for (let y = 0; y < m.length; ++y) {
+        for (let x = 0; x < m[y].length; ++x) {
+            if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) return true;
+        }
+    }
+    return false;
+}
+
+function merge(arena, player) {
+    player.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value;
+        });
+    });
+}
+
+function arenaSweep() {
+    let rowCount = 1;
+    outer: for (let y = arena.length - 1; y > 0; --y) {
+        for (let x = 0; x < arena[y].length; ++x) {
+            if (arena[y][x] === 0) continue outer;
+        }
+        const row = arena.splice(y, 1)[0].fill(0);
+        arena.unshift(row);
+        player.score += rowCount * 10;
+    }
+}
+
+function playerReset() {
+    const pieces = 'TJLOSZI';
+    if (player.next === null) {
+        player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
+    } else {
+        player.matrix = player.next;
+    }
+    player.next = createPiece(pieces[pieces.length * Math.random() | 0]);
+    player.pos.y = 0;
+    player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+    if (collide(arena, player)) {
+        arena.forEach(row => row.fill(0));
+        player.score = 0;
+    }
+    document.getElementById('score').innerText = player.score;
+}
+
+function playerDrop() {
+    player.pos.y++;
+    if (collide(arena, player)) {
+        player.pos.y--;
+        merge(arena, player);
+        playerReset();
+        arenaSweep();
+    }
+    dropCounter = 0;
+}
+
+let dropCounter = 0;
+let lastTime = 0;
+
+function update(time = 0) {
+    if (gameActive) {
+        const deltaTime = time - lastTime;
+        lastTime = time;
+        dropCounter += deltaTime;
+        if (dropCounter > 1000) playerDrop();
+        draw();
+    } else {
+        lastTime = time;
+    }
+    requestAnimationFrame(update);
+}
+
+const arena = createMatrix(12, 20);
+const player = { pos: {x: 0, y: 0}, matrix: null, next: null, score: 0 };
+
+document.addEventListener('keydown', event => {
+    if (!gameActive) return;
+    if ([37, 38, 39, 40].includes(event.keyCode)) event.preventDefault();
+    if (event.keyCode === 37) { player.pos.x--; if(collide(arena, player)) player.pos.x++; }
+    if (event.keyCode === 39) { player.pos.x++; if(collide(arena, player)) player.pos.x--; }
+    if (event.keyCode === 40) playerDrop();
+    if (event.keyCode === 38) {
+        const oldX = player.pos.x;
+        let m = player.matrix;
+        for (let y = 0; y < m.length; ++y) {
+            for (let x = 0; x < y; ++x) [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
+        }
+        m.forEach(row => row.reverse());
+        if(collide(arena, player)) { m.forEach(row => row.reverse()); player.pos.x = oldX; }
+    }
+});
+
+loadSettings();
+updateColorPreviews();
+</script>
+</body>
+</html>
