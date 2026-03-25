@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vision Training App - Shine Vision</title>
+    
+    <link rel="icon" type="image/png" href="assets/favicon.png">
     <style>
+        /* --- Tổng thể nền đen sang trọng --- */
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background-color: #000000;
@@ -16,11 +19,12 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px; /* Tăng nhẹ độ rộng container cho 6 game */
             width: 100%;
             text-align: center;
         }
 
+        /* --- Tiêu đề giống ảnh --- */
         h1 {
             font-size: 48px;
             font-weight: bold;
@@ -34,15 +38,25 @@
             margin-bottom: 40px;
         }
 
-        /* Lưới Menu */
+        /* Style cho link ẩn (không gạch chân, màu mặc định) */
+        .hidden-link {
+            text-decoration: none;
+            color: inherit;
+        }
+        .hidden-link:hover {
+            color: #fff; /* Hiện màu trắng khi hover */
+        }
+
+        /* --- Lưới Menu App con (6 game, 2 cột) --- */
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, 1fr); /* 2 cột bằng nhau */
             gap: 25px;
             margin-bottom: 50px;
             justify-items: center;
         }
 
+        /* --- Thẻ bài tập (Card) --- */
         .app-card {
             border: 2px solid #FFFFFF;
             border-radius: 25px;
@@ -55,31 +69,37 @@
             align-items: center;
             background: transparent;
             width: 100%;
-            max-width: 360px;
+            max-width: 380px;
             box-sizing: border-box;
         }
 
         .app-card:hover {
             background: rgba(255, 255, 255, 0.1);
             transform: scale(1.03);
+            border-color: #aaa;
         }
 
+        /* --- Icon bên trong Card --- */
         .app-card img {
             width: 160px;
             height: 100px;
-            object-fit: cover;
+            object-fit: cover; /* Cắt ảnh đẹp */
             border-radius: 10px;
             margin-bottom: 20px;
+            border: 1px solid #333; /* Viền nhẹ cho ảnh */
         }
 
+        /* --- Tên bài tập --- */
         .app-title {
             font-size: 24px;
             font-weight: bold;
         }
 
+        /* Màu chữ Anaglyph */
         .red { color: #ff3b30; }
         .blue { color: #007aff; }
 
+        /* --- Đường kẻ ngang --- */
         hr {
             border: none;
             border-top: 1px solid #555;
@@ -87,10 +107,10 @@
             margin: 40px auto;
         }
 
-        /* Lưới ảnh kết quả */
+        /* --- Lưới 6 hình ảnh Before/After --- */
         .results-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, 1fr); /* 3 cột */
             gap: 15px;
             margin-top: 50px;
             margin-bottom: 30px;
@@ -105,6 +125,7 @@
             display: block;
         }
 
+        /* --- Thông tin Footer --- */
         .footer {
             font-size: 15px;
             line-height: 1.6;
@@ -117,20 +138,24 @@
             margin-bottom: 10px;
         }
 
-        @media (min-width: 601px) {
-            /* Căn giữa game thứ 5 nếu ở hàng lẻ */
-            .menu-grid .app-card:last-child:nth-child(odd) {
-                grid-column: 1 / -1;
-                max-width: 360px;
-            }
+        /* Link ở footer (có gạch chân khi hover) */
+        .footer-link {
+            text-decoration: none;
+            color: #fff;
+            font-weight: bold;
+        }
+        .footer-link:hover {
+            text-decoration: underline;
         }
 
+        /* --- Responsive cho thiết bị --- */
         @media (max-width: 600px) {
-            h1 { font-size: 36px; }
-            .menu-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 32px; }
+            .author { font-size: 16px; }
+            .menu-grid { grid-template-columns: 1fr; } /* 1 cột trên mobile */
             .app-card img { width: 140px; height: 90px; }
             .app-title { font-size: 20px; }
-            .results-grid { grid-template-columns: 1fr 1fr; }
+            .results-grid { grid-template-columns: 1fr 1fr; } /* 2 cột trên mobile */
         }
     </style>
 </head>
@@ -138,8 +163,10 @@
 
     <div class="container">
         <h1>Vision Training App</h1>
-        <div class="author">Bởi Khôi Phục Thị Lực Shine</div>
-
+        
+        <div class="author">
+            Bởi <a href="https://shinevisioncenter.com" target="_blank" class="hidden-link">Khôi Phục Thị Lực Shine</a>
+        </div>
         <div class="menu-grid">
             
             <a href="piano/index.html" class="app-card">
@@ -163,16 +190,23 @@
             </a>
 
             <a href="gabormatch/index.html" class="app-card">
-                <img src="assets/gabor.jpeg" alt="Gabor">
-                <div class="app-title">Gabor</div>
+                <img src="assets/gabor.jpeg" alt="Gabor Match">
+                <div class="app-title">Gabor Match</div>
             </a>
 
-        </div>
+            <a href="tetris/index.html" class="app-card">
+                <img src="assets/tetris.png" alt="Tetris">
+                <div class="app-title">Tetris</div>
+            </a>
+            </div>
 
         <hr>
 
         <div class="footer">
-            <div class="brand-name">Khôi phục thị lực Shine – 0973370148</div>
+            
+            <div class="brand-name">
+                <a href="https://shinevisioncenter.com" target="_blank" class="footer-link">Khôi phục thị lực Shine</a> – 0973370148
+            </div>
             <p>Đơn vị Tiên phong trong lĩnh vực Đào Tạo Thị Giác 2 mắt</p>
             <p>Với hơn 11 năm kinh nghiệm Nghiên cứu và Phát triển, chúng tôi tự hào vì đã giúp đỡ được hàng nghìn Học Viên sở hữu một đôi mắt Khoẻ Đẹp</p>
         </div>
