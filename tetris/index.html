@@ -102,24 +102,32 @@
     </div>
 
 <script>
-// --- PHẦN ÂM THANH MP3 ---
-const sounds = {
-    1: new Audio('sounds/1.mp3'),
-    2: new Audio('sounds/2.mp3'),
-    3: new Audio('sounds/3.mp3'),
-    4: new Audio('sounds/4.mp3'),
-    click: new Audio('sounds/click.mp3'),
-    go: new Audio('sounds/go.mp3')
+// --- PHẦN ÂM THANH (ĐÃ SỬA ĐƯỜNG DẪN THEO CẤU TRÚC: tetris/index.html & tetris/sounds/) ---
+const sounds = {};
+const soundPaths = {
+    1: 'sounds/1.mp3',
+    2: 'sounds/2.mp3',
+    3: 'sounds/3.mp3',
+    4: 'sounds/4.mp3',
+    click: 'sounds/click.mp3',
+    go: 'sounds/go.mp3'
 };
 
+Object.keys(soundPaths).forEach(key => {
+    sounds[key] = new Audio(soundPaths[key]);
+});
+
 function playSfx(key) {
-    if (sounds[key]) {
-        sounds[key].currentTime = 0;
-        sounds[key].play().catch(e => console.log("Audio Error:", e));
+    const s = sounds[key];
+    if (s) {
+        s.pause();
+        s.currentTime = 0;
+        let p = s.play();
+        if (p !== undefined) p.catch(() => {});
     }
 }
 
-// --- LOGIC GAME GỐC ---
+// --- LOGIC GAME ---
 const COLOR_KEY = 'dichoptic_v4_shine';
 let colors = { weak: {r:0,g:255,b:255}, strong: {r:255,g:0,b:85} };
 const canvas = document.getElementById('tetris');
@@ -155,17 +163,20 @@ function load() {
 function updateColors() {
     colors.weak = {r:+r1.value, g:+g1.value, b:+b1.value};
     colors.strong = {r:+r2.value, g:+g2.value, b:+b2.value};
-    ['r1','g1','b1','r2','g2','b2'].forEach(id => document.getElementById('v-'+id).innerText = document.getElementById(id).value);
+    ['r1','g1','b1','r2','g2','b2'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) document.getElementById('v-'+id).innerText = el.value;
+    });
     preview1.style.background = `rgb(${colors.weak.r},${colors.weak.g},${colors.weak.b})`;
     preview2.style.background = `rgb(${colors.strong.r},${colors.strong.g},${colors.strong.b})`;
 }
 
 document.querySelectorAll('input').forEach(i => i.oninput = updateColors);
 
-document.getElementById('start-btn').onclick = () => {
-    // Unlock âm thanh cho Mobile
-    Object.values(sounds).forEach(s => { s.play(); s.pause(); s.currentTime = 0; });
-    
+document.getElementById('start-btn').onclick = function() {
+    Object.keys(sounds).forEach(key => {
+        sounds[key].play().then(() => { sounds[key].pause(); sounds[key].currentTime = 0; }).catch(() => {});
+    });
     localStorage.setItem(COLOR_KEY, JSON.stringify(colors));
     document.getElementById('setup-scene').style.display = 'none';
     document.getElementById('game-scene').style.display = 'flex';
@@ -222,7 +233,6 @@ function draw() {
     drawGrid(context, 12, 20);
     drawMatrix(context, arena, {x:0, y:0}, false);
     drawMatrix(context, player.matrix, player.pos, true);
-
     nextCtx.fillStyle = 'rgb(245,245,245)';
     nextCtx.fillRect(0,0,4,4);
     drawMatrix(nextCtx, player.next, {x:0, y:0}, true);
@@ -235,7 +245,7 @@ function playerReset() {
     player.pos.y = 0; 
     player.pos.x = Math.floor(arena[0].length / 2) - Math.floor(player.matrix[0].length / 2);
     if(collide()) {
-        playSfx('go'); // Âm thanh Game Over
+        playSfx('go');
         arena.forEach(r => r.fill(0));
         player.score = 0;
     }
@@ -256,7 +266,7 @@ function merge() {
     player.matrix.forEach((r, y) => r.forEach((v, x) => {
         if(v!==0) arena[y+player.pos.y][x+player.pos.x] = v;
     }));
-    playSfx('click'); // Âm thanh khi khối dừng (chuyển màu mắt khỏe)
+    playSfx('click');
 }
 
 function sweep() {
@@ -270,13 +280,11 @@ function sweep() {
         }
     }
     if (rowsCleared > 0) {
-        // Âm thanh ăn điểm theo số hàng
         if (rowsCleared >= 1 && rowsCleared <= 4) playSfx(rowsCleared);
-        
         if (rowsCleared === 1) player.score += 10;
         else if (rowsCleared === 2) player.score += 25;
-        else if (rowsCleared === 3) player.score += 45;
-        else if (rowsCleared === 4) player.score += 80;
+        else if (rowsCleared === 3) player.score += 50;
+        else if (rowsCleared === 4) player.score += 100;
         document.getElementById('score').innerText = player.score;
     }
 }
@@ -324,11 +332,41 @@ function update(time = 0) {
     requestAnimationFrame(update);
 }
 
-// Controls
-document.getElementById('left-btn').onclick = () => move(-1);
-document.getElementById('right-btn').onclick = () => move(1);
-document.getElementById('down-btn').onclick = () => drop();
-document.getElementById('rotate-btn').onclick = () => rotate();
+// --- HỆ THỐNG ĐIỀU KHIỂN NHẤN GIỮ (LONG PRESS) ---
+let controlInterval = null;
+let controlDelay = null;
+
+function startContinuousAction(action, delay = 200, interval = 80) {
+    stopContinuousAction();
+    action(); 
+    controlDelay = setTimeout(() => {
+        controlInterval = setInterval(action, interval);
+    }, delay);
+}
+
+function stopContinuousAction() {
+    clearTimeout(controlDelay);
+    clearInterval(controlInterval);
+}
+
+const btnConfigs = [
+    { id: 'left-btn', action: () => move(-1), continuous: true },
+    { id: 'right-btn', action: () => move(1), continuous: true },
+    { id: 'down-btn', action: () => drop(), continuous: true },
+    { id: 'rotate-btn', action: () => rotate(), continuous: false }
+];
+
+btnConfigs.forEach(config => {
+    const btn = document.getElementById(config.id);
+    if (config.continuous) {
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); startContinuousAction(config.action); });
+        btn.addEventListener('touchend', stopContinuousAction);
+        btn.addEventListener('mousedown', (e) => { startContinuousAction(config.action); });
+        window.addEventListener('mouseup', stopContinuousAction);
+    } else {
+        btn.onclick = (e) => { e.preventDefault(); config.action(); };
+    }
+});
 
 document.onkeydown = e => {
     if(!gameActive) return;
