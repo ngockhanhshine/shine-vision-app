@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle Cross Training - Tập Hợp Thị</title>
+    <style>
+        :root {
+            --bg-color: rgb(245, 245, 245);
+            --panel-bg: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-color);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+        }
+
+        /* Hiệu ứng REC */
+        #rec-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            color: #ff0000;
+            font-size: 18px;
+            z-index: 100;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            background-color: #ff0000;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .shape-container {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            top: 50%;
+            left: 50%;
+            pointer-events: none; /* Để click xuyên qua hình vào stage */
+        }
+
+        .circle-outer, .circle-inner {
+            border-style: solid;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            position: absolute;
+        }
+
+        .cross {
+            position: absolute;
+            font-weight: bold;
+            line-height: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #controls {
+            width: 380px;
+            background: var(--panel-bg);
+            padding: 20px;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        h3 { margin-top: 0; font-size: 16px; text-transform: uppercase; text-align: center; margin-bottom: 15px; }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ccc;
+            background: white;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .mode-btn.active {
+            border-color: #007bff;
+            background: #e7f1ff;
+            color: #007bff;
+        }
+
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #444; }
+        
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .rgb-label { font-size: 12px; font-weight: bold; width: 15px; color: #666; }
+
+        .step-btn {
+            width: 32px; height: 32px;
+            border: 1px solid #ccc;
+            background: #f8f8f8;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            display: flex; justify-content: center; align-items: center;
+            flex-shrink: 0;
+        }
+
+        input[type="range"] { flex: 1; cursor: pointer; height: 6px; }
+        
+        .demo-box {
+            color: white; text-align: center; padding: 10px;
+            font-weight: bold; border-radius: 6px; margin-top: 10px;
+            font-size: 13px; text-transform: uppercase;
+        }
+
+        /* CSS Nhật ký */
+        #log-container {
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        .log-item {
+            font-size: 13px;
+            padding: 5px 0;
+            border-bottom: 1px dashed #eee;
+            color: #555;
+        }
+        .clear-log {
+            font-size: 11px;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+            float: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-stage" onclick="handleStageClick()">
+        <div id="rec-indicator">
+            <div class="dot"></div>
+            <span>REC <span id="timer-display">0.0</span>s</span>
+        </div>
+
+        <div id="container-left" class="shape-container">
+            <div class="circle-outer" id="outer-l">
+                <div class="circle-inner" id="inner-l">
+                    <div class="cross" id="cross-l">+</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="container-right" class="shape-container">
+            <div class="circle-outer" id="outer-r">
+                <div class="circle-inner" id="inner-r">
+                    <div class="cross" id="cross-r">+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <h3>Thiết lập & Nhật ký</h3>
+        
+        <div class="mode-selector">
+            <div class="mode-btn" id="btn-1" onclick="setMode(1)">1 Hình</div>
+            <div class="mode-btn" id="btn-2" onclick="setMode(2)">2 Hình</div>
+        </div>
+
+        <div class="control-group">
+            <label>KÍCH THƯỚC (SIZE): <span id="val-size">120</span>px</label>
+            <div class="slider-row">
+                <div class="step-btn" onclick="stepSlider('slider-size', -5)">-</div>
+                <input type="range" id="slider-size" min="50" max="400" value="120">
+                <div class="step-btn" onclick="stepSlider('slider-size', 5)">+</div>
+            </div>
+        </div>
+
+        <div id="spacing-controls">
+            <div class="control-group">
+                <label>KHOẢNG CÁCH NGANG: <span id="val-h-space">150</span>px</label>
+                <div class="slider-row">
+                    <div class="step-btn" onclick="stepSlider('slider-h-space', -5)">-</div>
+                    <input type="range" id="slider-h-space" min="0" max="800" value="150">
+                    <div class="step-btn" onclick="stepSlider('slider-h-space', 5)">+</div>
+                </div>
+                
+                <label>KHOẢNG CÁCH DỌC: <span id="val-v-space">0</span>px</label>
+                <div class="slider-row">
+                    <div class="step-btn" onclick="stepSlider('slider-v-space', -5)">-</div>
+                    <input type="range" id="slider-v-space" min="-400" max="400" value="0">
+                    <div class="step-btn" onclick="stepSlider('slider-v-space', 5)">+</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label id="label-l">MÀU HÌNH TRÁI</label>
+            <div class="slider-row"><span class="rgb-label">R</span><input type="range" id="r-l" min="0" max="255" value="0"></div>
+            <div class="slider-row"><span class="rgb-label">G</span><input type="range" id="g-l" min="0" max="255" value="162"></div>
+            <div class="slider-row"><span class="rgb-label">B</span><input type="range" id="b-l" min="0" max="255" value="232"></div>
+            <div class="demo-box" id="demo-l">Màu hiện tại</div>
+        </div>
+
+        <div class="control-group" id="color-right-group">
+            <label>MÀU HÌNH PHẢI</label>
+            <div class="slider-row"><span class="rgb-label">R</span><input type="range" id="r-r" min="0" max="255" value="255"></div>
+            <div class="slider-row"><span class="rgb-label">G</span><input type="range" id="g-r" min="0" max="255" value="0"></div>
+            <div class="slider-row"><span class="rgb-label">B</span><input type="range" id="b-r" min="0" max="255" value="0"></div>
+            <div class="demo-box" id="demo-r">Màu hiện tại</div>
+        </div>
+
+        <div class="control-group">
+            <label>NHẬT KÝ LUYỆN TẬP <span class="clear-log" onclick="clearLog()">Xóa hết</span></label>
+            <div id="log-container"></div>
+        </div>
+    </div>
+
+    <script>
+        let mode = 1;
+        let isRecording = false;
+        let startTime;
+        let timerInterval;
+        let trainingLogs = JSON.parse(localStorage.getItem('trainingLogs')) || [];
+
+        const sliders = document.querySelectorAll('input[type="range"]');
+
+        // Xử lý đếm giờ
+        function handleStageClick() {
+            if (!isRecording) {
+                // Bắt đầu REC
+                isRecording = true;
+                startTime = Date.now();
+                document.getElementById('rec-indicator').style.display = 'flex';
+                timerInterval = setInterval(updateTimerDisplay, 100);
+            } else {
+                // Dừng REC
+                isRecording = false;
+                clearInterval(timerInterval);
+                const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+                document.getElementById('rec-indicator').style.display = 'none';
+                addLog(duration);
+            }
+        }
+
+        function updateTimerDisplay() {
+            const current = ((Date.now() - startTime) / 1000).toFixed(1);
+            document.getElementById('timer-display').innerText = current;
+        }
+
+        function addLog(seconds) {
+            const now = new Date();
+            const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+            
+            // Tính số lần trong ngày
+            const trialsToday = trainingLogs.filter(log => log.date === dateStr).length + 1;
+            
+            const newEntry = {
+                date: dateStr,
+                trial: trialsToday,
+                time: seconds
+            };
+
+            trainingLogs.unshift(newEntry); // Thêm vào đầu danh sách
+            localStorage.setItem('trainingLogs', JSON.stringify(trainingLogs));
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('log-container');
+            container.innerHTML = trainingLogs.map(log => 
+                `<div class="log-item">${log.date} - Lần ${log.trial} - ${log.time} giây</div>`
+            ).join('');
+        }
+
+        function clearLog() {
+            if(confirm("Xóa toàn bộ nhật ký?")) {
+                trainingLogs = [];
+                localStorage.removeItem('trainingLogs');
+                renderLogs();
+            }
+        }
+
+        // --- Các hàm điều khiển cũ ---
+        function stepSlider(id, step) {
+            const slider = document.getElementById(id);
+            slider.value = parseInt(slider.value) + step;
+            updateStyles();
+        }
+
+        function saveData() {
+            const data = {
+                mode: mode,
+                size: document.getElementById('slider-size').value,
+                hSpace: document.getElementById('slider-h-space').value,
+                vSpace: document.getElementById('slider-v-space').value,
+                colorL: {
+                    r: document.getElementById('r-l').value, g: document.getElementById('g-l').value, b: document.getElementById('b-l').value
+                },
+                colorR: {
+                    r: document.getElementById('r-r').value, g: document.getElementById('g-r').value, b: document.getElementById('b-r').value
+                }
+            };
+            localStorage.setItem('circleCrossGameData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('circleCrossGameData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                mode = data.mode;
+                document.getElementById('slider-size').value = data.size;
+                document.getElementById('slider-h-space').value = data.hSpace;
+                document.getElementById('slider-v-space').value = data.vSpace;
+                document.getElementById('r-l').value = data.colorL.r;
+                document.getElementById('g-l').value = data.colorL.g;
+                document.getElementById('b-l').value = data.colorL.b;
+                document.getElementById('r-r').value = data.colorR.r;
+                document.getElementById('g-r').value = data.colorR.g;
+                document.getElementById('b-r').value = data.colorR.b;
+            }
+        }
+
+        function updateStyles() {
+            const size = parseInt(document.getElementById('slider-size').value);
+            const hSpace = parseInt(document.getElementById('slider-h-space').value);
+            const vSpace = parseInt(document.getElementById('slider-v-space').value);
+
+            const colorL = `rgb(${document.getElementById('r-l').value}, ${document.getElementById('g-l').value}, ${document.getElementById('b-l').value})`;
+            const colorR = `rgb(${document.getElementById('r-r').value}, ${document.getElementById('g-r').value}, ${document.getElementById('b-r').value})`;
+
+            document.getElementById('val-size').innerText = size;
+            document.getElementById('val-h-space').innerText = hSpace;
+            document.getElementById('val-v-space').innerText = vSpace;
+            document.getElementById('demo-l').style.backgroundColor = colorL;
+            document.getElementById('demo-r').style.backgroundColor = colorR;
+
+            const thickness = Math.max(2, Math.round(size * 0.06));
+
+            const configs = [
+                { cont: 'container-left', outer: 'outer-l', inner: 'inner-l', cross: 'cross-l', color: colorL },
+                { cont: 'container-right', outer: 'outer-r', inner: 'inner-r', cross: 'cross-r', color: colorR }
+            ];
+
+            configs.forEach(item => {
+                const outEl = document.getElementById(item.outer);
+                const inEl = document.getElementById(item.inner);
+                const crossEl = document.getElementById(item.cross);
+
+                outEl.style.width = size + 'px';
+                outEl.style.height = size + 'px';
+                outEl.style.borderWidth = thickness + 'px';
+                outEl.style.borderColor = item.color;
+
+                const innerSize = Math.round(size * 0.55);
+                inEl.style.width = innerSize + 'px';
+                inEl.style.height = innerSize + 'px';
+                inEl.style.borderWidth = thickness + 'px';
+                inEl.style.borderColor = item.color;
+
+                crossEl.style.fontSize = Math.round(size * 0.4) + 'px';
+                crossEl.style.color = item.color;
+            });
+
+            const leftCont = document.getElementById('container-left');
+            const rightCont = document.getElementById('container-right');
+
+            if (mode === 1) {
+                rightCont.style.display = 'none';
+                leftCont.style.transform = 'translate(-50%, -50%)';
+                document.getElementById('spacing-controls').style.opacity = '0.3';
+                document.getElementById('spacing-controls').style.pointerEvents = 'none';
+                document.getElementById('color-right-group').style.display = 'none';
+                document.getElementById('label-l').innerText = "MÀU HÌNH";
+            } else {
+                rightCont.style.display = 'flex';
+                leftCont.style.transform = `translate(calc(-50% - ${hSpace/2}px), calc(-50% - ${vSpace/2}px))`;
+                rightCont.style.transform = `translate(calc(-50% + ${hSpace/2}px), calc(-50% + ${vSpace/2}px))`;
+                document.getElementById('spacing-controls').style.opacity = '1';
+                document.getElementById('spacing-controls').style.pointerEvents = 'all';
+                document.getElementById('color-right-group').style.display = 'block';
+                document.getElementById('label-l').innerText = "MÀU HÌNH TRÁI";
+            }
+            saveData();
+        }
+
+        function setMode(m) {
+            mode = m;
+            document.getElementById('btn-1').classList.toggle('active', m === 1);
+            document.getElementById('btn-2').classList.toggle('active', m === 2);
+            updateStyles();
+        }
+
+        sliders.forEach(s => s.addEventListener('input', updateStyles));
+        
+        loadData();
+        renderLogs();
+        setMode(mode);
+    </script>
+</body>
+</html>
