@@ -2,8 +2,8 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Circle Cross Training - Tập Hợp Thị</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Circle Cross Training - Mobile Optimized</title>
     <style>
         :root {
             --bg-color: rgb(245, 245, 245);
@@ -18,8 +18,10 @@
             background-color: var(--bg-color);
             overflow: hidden;
             user-select: none;
+            touch-action: none; 
         }
 
+        /* Stage hiển thị hình tập */
         #game-stage {
             flex: 1;
             display: flex;
@@ -27,6 +29,22 @@
             align-items: center;
             position: relative;
             cursor: pointer;
+            background-color: var(--bg-color);
+            transition: transform 0.3s ease;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Bảng điều khiển */
+        #controls {
+            width: 380px;
+            background: var(--panel-bg);
+            padding: 20px;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            z-index: 10;
+            transition: transform 0.3s ease, width 0.3s ease;
+            flex-shrink: 0;
         }
 
         /* Hiệu ứng REC */
@@ -64,7 +82,7 @@
             align-items: center;
             top: 50%;
             left: 50%;
-            pointer-events: none; /* Để click xuyên qua hình vào stage */
+            pointer-events: none;
         }
 
         .circle-outer, .circle-inner {
@@ -89,15 +107,37 @@
             transform: translate(-50%, -50%);
         }
 
-        #controls {
-            width: 380px;
-            background: var(--panel-bg);
-            padding: 20px;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
-            overflow-y: auto;
-            z-index: 10;
+        /* Giao diện Mobile */
+        @media (max-width: 768px) {
+            body {
+                position: relative;
+            }
+            #controls {
+                position: absolute;
+                right: 0;
+                top: 0;
+                height: 100%;
+                width: 100%;
+                box-sizing: border-box;
+                transform: translateX(100%); /* Mặc định ẩn cài đặt sang phải */
+            }
+            #game-stage {
+                position: absolute;
+                left: 0;
+                top: 0;
+                transform: translateX(0); /* Mặc định hiện hình tập */
+            }
+
+            /* Trạng thái khi Vuốt sang TRÁI để hiện Cài đặt */
+            body.menu-open #controls {
+                transform: translateX(0);
+            }
+            body.menu-open #game-stage {
+                transform: translateX(-100%);
+            }
         }
 
+        /* Style cho các thành phần điều khiển */
         .control-group {
             margin-bottom: 20px;
             border: 1px solid #ddd;
@@ -108,79 +148,35 @@
 
         h3 { margin-top: 0; font-size: 16px; text-transform: uppercase; text-align: center; margin-bottom: 15px; }
 
-        .mode-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 20px; }
         .mode-btn {
-            flex: 1;
-            padding: 10px;
-            border: 2px solid #ccc;
-            background: white;
-            cursor: pointer;
-            border-radius: 5px;
-            text-align: center;
-            font-weight: bold;
+            flex: 1; padding: 10px; border: 2px solid #ccc; background: white;
+            cursor: pointer; border-radius: 5px; text-align: center; font-weight: bold;
         }
-
-        .mode-btn.active {
-            border-color: #007bff;
-            background: #e7f1ff;
-            color: #007bff;
-        }
+        .mode-btn.active { border-color: #007bff; background: #e7f1ff; color: #007bff; }
 
         label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #444; }
-        
-        .slider-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
+        .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
         .rgb-label { font-size: 12px; font-weight: bold; width: 15px; color: #666; }
-
         .step-btn {
-            width: 32px; height: 32px;
-            border: 1px solid #ccc;
-            background: #f8f8f8;
-            cursor: pointer;
-            border-radius: 4px;
-            font-weight: bold;
-            display: flex; justify-content: center; align-items: center;
-            flex-shrink: 0;
+            width: 32px; height: 32px; border: 1px solid #ccc; background: #f8f8f8;
+            cursor: pointer; border-radius: 4px; font-weight: bold; display: flex;
+            justify-content: center; align-items: center; flex-shrink: 0;
         }
-
         input[type="range"] { flex: 1; cursor: pointer; height: 6px; }
+        .demo-box { color: white; text-align: center; padding: 10px; font-weight: bold; border-radius: 6px; margin-top: 10px; font-size: 13px; text-transform: uppercase; }
+        #log-container { margin-top: 10px; max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; padding-top: 10px; }
+        .log-item { font-size: 13px; padding: 5px 0; border-bottom: 1px dashed #eee; color: #555; }
+        .clear-log { font-size: 11px; color: #007bff; cursor: pointer; text-decoration: underline; float: right; }
         
-        .demo-box {
-            color: white; text-align: center; padding: 10px;
-            font-weight: bold; border-radius: 6px; margin-top: 10px;
-            font-size: 13px; text-transform: uppercase;
-        }
-
-        /* CSS Nhật ký */
-        #log-container {
-            margin-top: 10px;
-            max-height: 200px;
-            overflow-y: auto;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
-        }
-        .log-item {
-            font-size: 13px;
-            padding: 5px 0;
-            border-bottom: 1px dashed #eee;
-            color: #555;
-        }
-        .clear-log {
-            font-size: 11px;
-            color: #007bff;
-            cursor: pointer;
-            text-decoration: underline;
-            float: right;
+        .swipe-hint {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #aaa;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -207,11 +203,11 @@
                 </div>
             </div>
         </div>
+        <div class="swipe-hint">Vuốt sang trái để cài đặt</div>
     </div>
 
     <div id="controls">
-        <h3>Thiết lập & Nhật ký</h3>
-        
+        <h3>Cài đặt & Nhật ký</h3>
         <div class="mode-selector">
             <div class="mode-btn" id="btn-1" onclick="setMode(1)">1 Hình</div>
             <div class="mode-btn" id="btn-2" onclick="setMode(2)">2 Hình</div>
@@ -234,7 +230,6 @@
                     <input type="range" id="slider-h-space" min="0" max="800" value="150">
                     <div class="step-btn" onclick="stepSlider('slider-h-space', 5)">+</div>
                 </div>
-                
                 <label>KHOẢNG CÁCH DỌC: <span id="val-v-space">0</span>px</label>
                 <div class="slider-row">
                     <div class="step-btn" onclick="stepSlider('slider-v-space', -5)">-</div>
@@ -264,27 +259,44 @@
             <label>NHẬT KÝ LUYỆN TẬP <span class="clear-log" onclick="clearLog()">Xóa hết</span></label>
             <div id="log-container"></div>
         </div>
+        <div style="text-align: center; color: #aaa; font-size: 10px;">Vuốt sang phải để về màn hình tập</div>
     </div>
 
     <script>
         let mode = 1;
         let isRecording = false;
-        let startTime;
-        let timerInterval;
+        let startTime, timerInterval;
         let trainingLogs = JSON.parse(localStorage.getItem('trainingLogs')) || [];
-
         const sliders = document.querySelectorAll('input[type="range"]');
 
-        // Xử lý đếm giờ
+        // --- Xử lý Vuốt Đảo Ngược ---
+        let touchStartX = 0;
+        document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+        document.addEventListener('touchend', e => {
+            let touchEndX = e.changedTouches[0].screenX;
+            let diff = touchStartX - touchEndX;
+
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                    // Vuốt sang TRÁI -> Hiện cài đặt
+                    document.body.classList.add('menu-open');
+                } else {
+                    // Vuốt sang PHẢI -> Hiện màn hình tập
+                    document.body.classList.remove('menu-open');
+                }
+            }
+        });
+
+        // --- Hệ thống REC ---
         function handleStageClick() {
             if (!isRecording) {
-                // Bắt đầu REC
                 isRecording = true;
                 startTime = Date.now();
                 document.getElementById('rec-indicator').style.display = 'flex';
-                timerInterval = setInterval(updateTimerDisplay, 100);
+                timerInterval = setInterval(() => {
+                    document.getElementById('timer-display').innerText = ((Date.now() - startTime) / 1000).toFixed(1);
+                }, 100);
             } else {
-                // Dừng REC
                 isRecording = false;
                 clearInterval(timerInterval);
                 const duration = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -293,32 +305,17 @@
             }
         }
 
-        function updateTimerDisplay() {
-            const current = ((Date.now() - startTime) / 1000).toFixed(1);
-            document.getElementById('timer-display').innerText = current;
-        }
-
         function addLog(seconds) {
             const now = new Date();
             const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-            
-            // Tính số lần trong ngày
             const trialsToday = trainingLogs.filter(log => log.date === dateStr).length + 1;
-            
-            const newEntry = {
-                date: dateStr,
-                trial: trialsToday,
-                time: seconds
-            };
-
-            trainingLogs.unshift(newEntry); // Thêm vào đầu danh sách
+            trainingLogs.unshift({ date: dateStr, trial: trialsToday, time: seconds });
             localStorage.setItem('trainingLogs', JSON.stringify(trainingLogs));
             renderLogs();
         }
 
         function renderLogs() {
-            const container = document.getElementById('log-container');
-            container.innerHTML = trainingLogs.map(log => 
+            document.getElementById('log-container').innerHTML = trainingLogs.map(log => 
                 `<div class="log-item">${log.date} - Lần ${log.trial} - ${log.time} giây</div>`
             ).join('');
         }
@@ -331,7 +328,7 @@
             }
         }
 
-        // --- Các hàm điều khiển cũ ---
+        // --- Hệ thống giao diện ---
         function stepSlider(id, step) {
             const slider = document.getElementById(id);
             slider.value = parseInt(slider.value) + step;
@@ -344,12 +341,8 @@
                 size: document.getElementById('slider-size').value,
                 hSpace: document.getElementById('slider-h-space').value,
                 vSpace: document.getElementById('slider-v-space').value,
-                colorL: {
-                    r: document.getElementById('r-l').value, g: document.getElementById('g-l').value, b: document.getElementById('b-l').value
-                },
-                colorR: {
-                    r: document.getElementById('r-r').value, g: document.getElementById('g-r').value, b: document.getElementById('b-r').value
-                }
+                colorL: { r: document.getElementById('r-l').value, g: document.getElementById('g-l').value, b: document.getElementById('b-l').value },
+                colorR: { r: document.getElementById('r-r').value, g: document.getElementById('g-r').value, b: document.getElementById('b-r').value }
             };
             localStorage.setItem('circleCrossGameData', JSON.stringify(data));
         }
@@ -375,7 +368,6 @@
             const size = parseInt(document.getElementById('slider-size').value);
             const hSpace = parseInt(document.getElementById('slider-h-space').value);
             const vSpace = parseInt(document.getElementById('slider-v-space').value);
-
             const colorL = `rgb(${document.getElementById('r-l').value}, ${document.getElementById('g-l').value}, ${document.getElementById('b-l').value})`;
             const colorR = `rgb(${document.getElementById('r-r').value}, ${document.getElementById('g-r').value}, ${document.getElementById('b-r').value})`;
 
@@ -386,7 +378,6 @@
             document.getElementById('demo-r').style.backgroundColor = colorR;
 
             const thickness = Math.max(2, Math.round(size * 0.06));
-
             const configs = [
                 { cont: 'container-left', outer: 'outer-l', inner: 'inner-l', cross: 'cross-l', color: colorL },
                 { cont: 'container-right', outer: 'outer-r', inner: 'inner-r', cross: 'cross-r', color: colorR }
@@ -396,18 +387,12 @@
                 const outEl = document.getElementById(item.outer);
                 const inEl = document.getElementById(item.inner);
                 const crossEl = document.getElementById(item.cross);
-
-                outEl.style.width = size + 'px';
-                outEl.style.height = size + 'px';
+                outEl.style.width = outEl.style.height = size + 'px';
                 outEl.style.borderWidth = thickness + 'px';
                 outEl.style.borderColor = item.color;
-
-                const innerSize = Math.round(size * 0.55);
-                inEl.style.width = innerSize + 'px';
-                inEl.style.height = innerSize + 'px';
+                inEl.style.width = inEl.style.height = Math.round(size * 0.55) + 'px';
                 inEl.style.borderWidth = thickness + 'px';
                 inEl.style.borderColor = item.color;
-
                 crossEl.style.fontSize = Math.round(size * 0.4) + 'px';
                 crossEl.style.color = item.color;
             });
@@ -442,7 +427,6 @@
         }
 
         sliders.forEach(s => s.addEventListener('input', updateStyles));
-        
         loadData();
         renderLogs();
         setMode(mode);
