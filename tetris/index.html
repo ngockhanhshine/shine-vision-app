@@ -2,261 +2,321 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Dichoptic Tetris Pro v4 - Vision Training</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dichoptic Tetris Mobile - Shine Vision</title>
     <style>
+        * { touch-action: manipulation; box-sizing: border-box; }
         html, body {
             margin: 0; padding: 0; height: 100%; overflow: hidden; 
             background: rgb(245, 245, 245);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex; justify-content: center; align-items: center;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- PHẦN 1: SETUP --- */
         #setup-scene {
             display: flex; flex-direction: column; align-items: center;
-            background: #fff; padding: 30px; border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 600px; width: 90%;
+            background: #fff; padding: 20px; border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px;
+            margin-top: 20px; z-index: 10;
         }
-        .config-groups { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; width: 100%; margin-bottom: 25px; }
-        .control-group { display: flex; flex-direction: column; gap: 8px; }
-        .slider-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-        input[type=range] { flex-grow: 1; cursor: pointer; }
-        .color-preview { width: 100%; height: 15px; border-radius: 4px; margin-top: 8px; border: 1px solid #ccc; }
-        #start-btn { padding: 12px 40px; font-size: 18px; font-weight: bold; background: #2ecc71; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+        .config-groups { width: 100%; margin-bottom: 20px; }
+        .control-group { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .slider-row { display: flex; align-items: center; gap: 10px; font-size: 13px; margin-top: 5px; }
+        input[type=range] { flex-grow: 1; height: 25px; }
+        .color-preview { width: 100%; height: 15px; border-radius: 4px; margin-top: 5px; border: 1px solid #ccc; }
+        #start-btn { padding: 15px 40px; font-size: 18px; font-weight: bold; background: #2ecc71; color: #fff; border: none; border-radius: 8px; width: 100%; cursor: pointer; }
 
-        /* --- PHẦN 2: GAME --- */
-        #game-scene { display: none; align-items: flex-start; gap: 20px; }
+        #game-scene { 
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+            width: 100%; 
+            height: 100%;
+            justify-content: space-between;
+            padding: 10px 0;
+        }
         
-        #fusion-frame {
-            padding: 15px; background: #000; border-radius: 5px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            display: flex; align-items: center;
-        }
-
+        .game-header { display: flex; gap: 15px; align-items: center; margin-bottom: 5px; }
+        #fusion-frame { padding: 10px; background: #000; border-radius: 5px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         #game-container { position: relative; background: rgb(245, 245, 245); }
         canvas { display: block; }
+        .next-box { background: #fff; padding: 5px 10px; border-radius: 8px; text-align: center; border: 1px solid #ddd; }
+        .stats { font-weight: bold; font-size: 18px; }
 
-        .side-panel { display: flex; flex-direction: column; gap: 20px; min-width: 120px; }
-        .next-box {
-            background: #fff; padding: 15px; border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center;
+        #controls {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 12px; width: 95%; max-width: 400px; margin-bottom: env(safe-area-inset-bottom, 20px);
         }
-        .next-box canvas { background: rgb(245, 245, 245); margin: 10px auto 0; border: 1px solid #eee; }
-        .stats { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; font-weight: bold; font-size: 20px; }
-        #back-btn { padding: 8px 15px; background: #555; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; align-self: center; }
+        .btn-ctrl {
+            aspect-ratio: 1; background: #ddd; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            border: none; box-shadow: 0 4px #bbb; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-ctrl:active { background: #ccc; box-shadow: 0 2px #999; transform: translateY(2px); }
+        .btn-ctrl svg { width: 35px; height: 35px; fill: #333; pointer-events: none; }
+        #back-btn { background: #555; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="setup-scene">
-        <h2 style="margin-top:0;">Cấu hình Dichoptic Tetris</h2>
+        <h3 style="margin:0 0 10px 0;">Cấu hình Dichoptic</h3>
         <div class="config-groups">
             <div class="control-group">
-                <strong style="color: #008b8b;">Mắt Yếu (Khối đang rơi)</strong>
-                <div class="slider-row">R: <input type="range" id="r1" min="0" max="255" value="0"> <span id="v-r1">0</span></div>
-                <div class="slider-row">G: <input type="range" id="g1" min="0" max="255" value="255"> <span id="v-g1">255</span></div>
-                <div class="slider-row">B: <input type="range" id="b1" min="0" max="255" value="255"> <span id="v-b1">255</span></div>
+                <strong style="color: #008b8b; font-size: 14px;">Mắt Yếu (Khối rơi)</strong>
+                <div class="slider-row">R <input type="range" id="r1" min="0" max="255" value="0"> <span id="v-r1">0</span></div>
+                <div class="slider-row">G <input type="range" id="g1" min="0" max="255" value="255"> <span id="v-g1">255</span></div>
+                <div class="slider-row">B <input type="range" id="b1" min="0" max="255" value="255"> <span id="v-b1">255</span></div>
                 <div id="preview1" class="color-preview"></div>
             </div>
             <div class="control-group">
-                <strong style="color: #b22222;">Mắt Khỏe (Khối cố định)</strong>
-                <div class="slider-row">R: <input type="range" id="r2" min="0" max="255" value="255"> <span id="v-r2">255</span></div>
-                <div class="slider-row">G: <input type="range" id="g2" min="0" max="255" value="0"> <span id="v-g2">0</span></div>
-                <div class="slider-row">B: <input type="range" id="b2" min="0" max="255" value="85"> <span id="v-b2">85</span></div>
+                <strong style="color: #b22222; font-size: 14px;">Mắt Khỏe (Cố định)</strong>
+                <div class="slider-row">R <input type="range" id="r2" min="0" max="255" value="255"> <span id="v-r2">255</span></div>
+                <div class="slider-row">G <input type="range" id="g2" min="0" max="255" value="0"> <span id="v-g2">0</span></div>
+                <div class="slider-row">B <input type="range" id="b2" min="0" max="255" value="85"> <span id="v-b2">85</span></div>
                 <div id="preview2" class="color-preview"></div>
             </div>
         </div>
-        <button id="start-btn">Bắt đầu tập luyện</button>
+        <button id="start-btn">BẮT ĐẦU TẬP LUYỆN</button>
     </div>
 
     <div id="game-scene">
-        <div id="fusion-frame">
-            <div id="game-container">
-                <canvas id="tetris" width="240" height="400"></canvas>
-            </div>
-        </div>
-
-        <div class="side-panel">
+        <div class="game-header">
             <div class="next-box">
-                <div style="font-size: 14px; font-weight: bold; color: #666;">TIẾP THEO</div>
-                <canvas id="next" width="80" height="80"></canvas>
+                <div style="font-size: 9px; font-weight: bold; color: #666;">TIẾP THEO</div>
+                <canvas id="next" width="60" height="60" style="width:40px; height:40px;"></canvas>
             </div>
             <div class="stats">SCORE: <span id="score">0</span></div>
-            <button id="back-btn">Quay lại cài đặt</button>
+            <button id="back-btn">Cài đặt</button>
+        </div>
+        <div id="fusion-frame">
+            <div id="game-container"><canvas id="tetris"></canvas></div>
+        </div>
+        <div id="controls">
+            <button class="btn-ctrl" id="left-btn"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>
+            <button class="btn-ctrl" id="right-btn"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg></button>
+            <button class="btn-ctrl" id="down-btn"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
+            <button class="btn-ctrl" id="rotate-btn"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
         </div>
     </div>
 
 <script>
-const COLOR_STORAGE_KEY = 'dichoptic_tetris_v4';
-const colors = { weak: { r: 0, g: 255, b: 255 }, strong: { r: 255, g: 0, b: 85 } };
+// --- PHẦN ÂM THANH MP3 ---
+const sounds = {
+    1: new Audio('sounds/1.mp3'),
+    2: new Audio('sounds/2.mp3'),
+    3: new Audio('sounds/3.mp3'),
+    4: new Audio('sounds/4.mp3'),
+    click: new Audio('sounds/click.mp3'),
+    go: new Audio('sounds/go.mp3')
+};
 
-const canvas = document.getElementById('tetris');
-const context = canvas.getContext('2d');
-const nextCanvas = document.getElementById('next');
-const nextContext = nextCanvas.getContext('2d');
-
-context.scale(20, 20);
-nextContext.scale(20, 20);
-
-let gameActive = false;
-let loopStarted = false;
-
-// --- CẤU HÌNH MÀU & LOCAL STORAGE ---
-function loadSettings() {
-    const saved = localStorage.getItem(COLOR_STORAGE_KEY);
-    if (saved) {
-        const data = JSON.parse(saved);
-        document.getElementById('r1').value = data.weak.r; document.getElementById('g1').value = data.weak.g; document.getElementById('b1').value = data.weak.b;
-        document.getElementById('r2').value = data.strong.r; document.getElementById('g2').value = data.strong.g; document.getElementById('b2').value = data.strong.b;
+function playSfx(key) {
+    if (sounds[key]) {
+        sounds[key].currentTime = 0;
+        sounds[key].play().catch(e => console.log("Audio Error:", e));
     }
 }
 
-function updateColorPreviews() {
-    colors.weak = { r: +r1.value, g: +g1.value, b: +b1.value };
-    colors.strong = { r: +r2.value, g: +g2.value, b: +b2.value };
+// --- LOGIC GAME GỐC ---
+const COLOR_KEY = 'dichoptic_v4_shine';
+let colors = { weak: {r:0,g:255,b:255}, strong: {r:255,g:0,b:85} };
+const canvas = document.getElementById('tetris');
+const context = canvas.getContext('2d');
+const nextCanvas = document.getElementById('next');
+const nextCtx = nextCanvas.getContext('2d');
+
+let gameActive = false;
+let loopStarted = false;
+let dropCounter = 0;
+let lastTime = 0;
+
+function resizeCanvas() {
+    const vh = window.innerHeight;
+    const availableHeight = vh * 0.55;
+    canvas.height = availableHeight;
+    canvas.width = availableHeight * (12/20);
+    const blockSize = canvas.height / 20;
+    context.setTransform(blockSize, 0, 0, blockSize, 0, 0);
+    nextCtx.setTransform(nextCanvas.height/4, 0, 0, nextCanvas.height/4, 0, 0);
+}
+window.addEventListener('resize', resizeCanvas);
+
+function load() {
+    const saved = localStorage.getItem(COLOR_KEY);
+    if(saved) {
+        const d = JSON.parse(saved);
+        colors = d;
+        document.getElementById('r1').value = d.weak.r; document.getElementById('g1').value = d.weak.g; document.getElementById('b1').value = d.weak.b;
+        document.getElementById('r2').value = d.strong.r; document.getElementById('g2').value = d.strong.g; document.getElementById('b2').value = d.strong.b;
+    }
+}
+function updateColors() {
+    colors.weak = {r:+r1.value, g:+g1.value, b:+b1.value};
+    colors.strong = {r:+r2.value, g:+g2.value, b:+b2.value};
     ['r1','g1','b1','r2','g2','b2'].forEach(id => document.getElementById('v-'+id).innerText = document.getElementById(id).value);
     preview1.style.background = `rgb(${colors.weak.r},${colors.weak.g},${colors.weak.b})`;
     preview2.style.background = `rgb(${colors.strong.r},${colors.strong.g},${colors.strong.b})`;
 }
 
-document.querySelectorAll('input').forEach(i => i.oninput = updateColorPreviews);
+document.querySelectorAll('input').forEach(i => i.oninput = updateColors);
 
 document.getElementById('start-btn').onclick = () => {
-    localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(colors));
+    // Unlock âm thanh cho Mobile
+    Object.values(sounds).forEach(s => { s.play(); s.pause(); s.currentTime = 0; });
+    
+    localStorage.setItem(COLOR_KEY, JSON.stringify(colors));
     document.getElementById('setup-scene').style.display = 'none';
     document.getElementById('game-scene').style.display = 'flex';
+    resizeCanvas();
     gameActive = true;
     playerReset();
-    if (!loopStarted) { update(); loopStarted = true; }
+    if(!loopStarted) {
+        lastTime = performance.now();
+        update(); 
+        loopStarted = true; 
+    }
 };
 
 document.getElementById('back-btn').onclick = () => {
+    gameActive = false;
     document.getElementById('game-scene').style.display = 'none';
     document.getElementById('setup-scene').style.display = 'flex';
-    gameActive = false;
 };
 
-// --- LOGIC TETRIS ---
-function createMatrix(w, h) {
-    const matrix = [];
-    while (h--) matrix.push(new Array(w).fill(0));
-    return matrix;
-}
+const arena = Array.from({length:20}, () => new Array(12).fill(0));
+const player = { pos: {x:0, y:0}, matrix: null, next: null, score: 0 };
 
-function createPiece(type) {
-    if (type === 'I') return [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]];
-    if (type === 'L') return [[0, 2, 0], [0, 2, 0], [0, 2, 2]];
-    if (type === 'J') return [[0, 3, 0], [0, 3, 0], [3, 3, 0]];
-    if (type === 'O') return [[4, 4], [4, 4]];
-    if (type === 'Z') return [[5, 5, 0], [0, 5, 5], [0, 0, 0]];
-    if (type === 'S') return [[0, 6, 6], [6, 6, 0], [0, 0, 0]];
-    if (type === 'T') return [[0, 7, 0], [7, 7, 7], [0, 0, 0]];
+function createPiece(t) {
+    if (t === 'I') return [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]];
+    if (t === 'L') return [[0, 2, 0], [0, 2, 0], [0, 2, 2]];
+    if (t === 'J') return [[3, 0, 0], [3, 0, 0], [3, 3, 0]];
+    if (t === 'O') return [[4, 4], [4, 4]];
+    if (t === 'Z') return [[5, 5, 0], [0, 5, 5], [0, 0, 0]];
+    if (t === 'S') return [[0, 6, 6], [6, 6, 0], [0, 0, 0]];
+    if (t === 'T') return [[0, 7, 0], [7, 7, 7], [0, 0, 0]];
 }
 
 function drawGrid(ctx, w, h) {
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-    ctx.lineWidth = 0.05;
-    ctx.setLineDash([0.1, 0.2]);
-    for (let x = 0; x <= w; x++) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
-    for (let y = 0; y <= h; y++) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+    ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth = 0.05; ctx.setLineDash([0.1, 0.2]);
+    for(let x=0; x<=w; x++) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+    for(let y=0; y<=h; y++) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
     ctx.setLineDash([]);
 }
 
-function drawMatrix(ctx, matrix, offset, isPlayer) {
-    matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value !== 0) {
-                const c = isPlayer ? colors.weak : colors.strong;
-                ctx.fillStyle = `rgb(${c.r}, ${c.g}, ${c.b})`;
-                ctx.fillRect(x + offset.x, y + offset.y, 1, 1);
-            }
-        });
-    });
+function drawMatrix(ctx, m, o, isWeak) {
+    if(!m) return;
+    m.forEach((row, y) => row.forEach((v, x) => {
+        if(v !== 0) {
+            const c = isWeak ? colors.weak : colors.strong;
+            ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+            ctx.fillRect(x + o.x, y + o.y, 1, 1);
+        }
+    }));
 }
 
 function draw() {
-    // Vẽ màn hình chính
-    context.fillStyle = 'rgb(245, 245, 245)';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = 'rgb(245,245,245)';
+    context.fillRect(0,0,12,20);
     drawGrid(context, 12, 20);
-    drawMatrix(context, arena, {x: 0, y: 0}, false);
+    drawMatrix(context, arena, {x:0, y:0}, false);
     drawMatrix(context, player.matrix, player.pos, true);
 
-    // Vẽ khối tiếp theo
-    nextContext.fillStyle = 'rgb(245, 245, 245)';
-    nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-    drawGrid(nextContext, 4, 4);
-    // Khối tiếp theo dùng màu Cyan (isPlayer = true) để mắt yếu tập luyện
-    drawMatrix(nextContext, player.next, {x: 0, y: 0}, true);
-}
-
-function collide(arena, player) {
-    const [m, o] = [player.matrix, player.pos];
-    for (let y = 0; y < m.length; ++y) {
-        for (let x = 0; x < m[y].length; ++x) {
-            if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) return true;
-        }
-    }
-    return false;
-}
-
-function merge(arena, player) {
-    player.matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value;
-        });
-    });
-}
-
-function arenaSweep() {
-    let rowCount = 1;
-    outer: for (let y = arena.length - 1; y > 0; --y) {
-        for (let x = 0; x < arena[y].length; ++x) {
-            if (arena[y][x] === 0) continue outer;
-        }
-        const row = arena.splice(y, 1)[0].fill(0);
-        arena.unshift(row);
-        player.score += rowCount * 10;
-    }
+    nextCtx.fillStyle = 'rgb(245,245,245)';
+    nextCtx.fillRect(0,0,4,4);
+    drawMatrix(nextCtx, player.next, {x:0, y:0}, true);
 }
 
 function playerReset() {
-    const pieces = 'TJLOSZI';
-    if (player.next === null) {
-        player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
-    } else {
-        player.matrix = player.next;
-    }
-    player.next = createPiece(pieces[pieces.length * Math.random() | 0]);
-    player.pos.y = 0;
-    player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
-    if (collide(arena, player)) {
-        arena.forEach(row => row.fill(0));
+    const pcs = 'TJLOSZI';
+    player.matrix = player.next || createPiece(pcs[pcs.length * Math.random() | 0]);
+    player.next = createPiece(pcs[pcs.length * Math.random() | 0]);
+    player.pos.y = 0; 
+    player.pos.x = Math.floor(arena[0].length / 2) - Math.floor(player.matrix[0].length / 2);
+    if(collide()) {
+        playSfx('go'); // Âm thanh Game Over
+        arena.forEach(r => r.fill(0));
         player.score = 0;
     }
     document.getElementById('score').innerText = player.score;
 }
 
-function playerDrop() {
+function collide() {
+    const [m, o] = [player.matrix, player.pos];
+    for(let y=0; y<m.length; ++y) {
+        for(let x=0; x<m[y].length; ++x) {
+            if(m[y][x] !== 0 && (arena[y+o.y] === undefined || arena[y+o.y][x+o.x] === undefined || arena[y+o.y][x+o.x] !== 0)) return true;
+        }
+    }
+    return false;
+}
+
+function merge() {
+    player.matrix.forEach((r, y) => r.forEach((v, x) => {
+        if(v!==0) arena[y+player.pos.y][x+player.pos.x] = v;
+    }));
+    playSfx('click'); // Âm thanh khi khối dừng (chuyển màu mắt khỏe)
+}
+
+function sweep() {
+    let rowsCleared = 0;
+    for (let y = arena.length - 1; y >= 0; y--) {
+        if (arena[y].every(v => v !== 0)) {
+            arena.splice(y, 1);
+            arena.unshift(new Array(12).fill(0));
+            y++;
+            rowsCleared++;
+        }
+    }
+    if (rowsCleared > 0) {
+        // Âm thanh ăn điểm theo số hàng
+        if (rowsCleared >= 1 && rowsCleared <= 4) playSfx(rowsCleared);
+        
+        if (rowsCleared === 1) player.score += 10;
+        else if (rowsCleared === 2) player.score += 25;
+        else if (rowsCleared === 3) player.score += 50;
+        else if (rowsCleared === 4) player.score += 20;
+        document.getElementById('score').innerText = player.score;
+    }
+}
+
+function drop() {
     player.pos.y++;
-    if (collide(arena, player)) {
+    if(collide()) {
         player.pos.y--;
-        merge(arena, player);
+        merge();
         playerReset();
-        arenaSweep();
+        sweep();
     }
     dropCounter = 0;
 }
 
-let dropCounter = 0;
-let lastTime = 0;
+function move(d) {
+    player.pos.x += d;
+    if(collide()) player.pos.x -= d;
+}
+
+function rotate() {
+    const m = player.matrix;
+    for(let y=0; y<m.length; ++y) {
+        for(let x=0; x<y; ++x) [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
+    }
+    m.forEach(r => r.reverse());
+    if(collide()) {
+        m.forEach(r => r.reverse());
+        for(let y=0; y<m.length; ++y) {
+            for(let x=0; x<y; ++x) [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
+        }
+    }
+}
 
 function update(time = 0) {
-    if (gameActive) {
+    if(gameActive) {
         const deltaTime = time - lastTime;
         lastTime = time;
         dropCounter += deltaTime;
-        if (dropCounter > 1000) playerDrop();
+        if(dropCounter > 1000) drop();
         draw();
     } else {
         lastTime = time;
@@ -264,28 +324,22 @@ function update(time = 0) {
     requestAnimationFrame(update);
 }
 
-const arena = createMatrix(12, 20);
-const player = { pos: {x: 0, y: 0}, matrix: null, next: null, score: 0 };
+// Controls
+document.getElementById('left-btn').onclick = () => move(-1);
+document.getElementById('right-btn').onclick = () => move(1);
+document.getElementById('down-btn').onclick = () => drop();
+document.getElementById('rotate-btn').onclick = () => rotate();
 
-document.addEventListener('keydown', event => {
-    if (!gameActive) return;
-    if ([37, 38, 39, 40].includes(event.keyCode)) event.preventDefault();
-    if (event.keyCode === 37) { player.pos.x--; if(collide(arena, player)) player.pos.x++; }
-    if (event.keyCode === 39) { player.pos.x++; if(collide(arena, player)) player.pos.x--; }
-    if (event.keyCode === 40) playerDrop();
-    if (event.keyCode === 38) {
-        const oldX = player.pos.x;
-        let m = player.matrix;
-        for (let y = 0; y < m.length; ++y) {
-            for (let x = 0; x < y; ++x) [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
-        }
-        m.forEach(row => row.reverse());
-        if(collide(arena, player)) { m.forEach(row => row.reverse()); player.pos.x = oldX; }
-    }
-});
+document.onkeydown = e => {
+    if(!gameActive) return;
+    if(e.keyCode===37) move(-1); 
+    else if(e.keyCode===39) move(1);
+    else if(e.keyCode===40) drop(); 
+    else if(e.keyCode===38) rotate();
+    if([37,38,39,40].includes(e.keyCode)) e.preventDefault();
+};
 
-loadSettings();
-updateColorPreviews();
+load(); updateColors();
 </script>
 </body>
 </html>
