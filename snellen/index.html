@@ -9,9 +9,8 @@
         canvas { display: block; background: white; }
         #info-layer { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
         .status { font-size: 18px; font-weight: bold; margin-bottom: 5px; color: black; }
-        #scale-display { pointer-events: auto; cursor: pointer; color: #007bff; }
+        #swipe-hint { display: none; color: rgb(100,100,100); font-size: 12px; font-style: italic; margin-top: 5px; }
         
-        /* Menu PC */
         #menu-layer { 
             position: absolute; top: 100px; left: 20px; pointer-events: auto; 
             background: rgba(255,255,255,0.9); padding: 12px; border-radius: 8px; 
@@ -19,7 +18,6 @@
             z-index: 20;
         }
         
-        /* Stage Mobile */
         #stage-left { 
             position: absolute; top: 0; left: -280px; width: 280px; height: 100%; 
             background: white; border-right: 1px solid #ccc;
@@ -32,9 +30,15 @@
         
         #rule-container {
             flex: 1; width: 100%; display: flex; justify-content: center; align-items: center;
-            overflow: hidden; margin-top: 10px;
+            overflow: hidden; margin-top: 10px; position: relative;
         }
         #mobile-rule-img { transform: rotate(90deg); transform-origin: center; max-width: none; display: block; }
+        
+        /* Đẩy ghi chú xuống sát đáy Stage trái */
+        .rule-note { 
+            color: #d9534f; font-size: 11px; font-weight: bold; text-align: center; 
+            padding-bottom: 15px; width: 100%; line-height: 1.4;
+        }
 
         .menu-item { margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; font-size: 16px; font-weight: bold; width: 100%; }
         .menu-item input { margin-right: 8px; width: 18px; height: 18px; }
@@ -43,11 +47,11 @@
 
         @media (max-width: 768px) { 
             #menu-layer { display: none; } 
-            #pc-scale-display { display: none; } /* Ẩn % ở màn hình chính trên mobile */
+            #pc-scale-display { display: none; }
+            #swipe-hint { display: block; }
         }
         @media (min-width: 769px) { 
             #stage-left { display: none; } 
-            #mobile-scale-box { display: none; }
         }
     </style>
 </head>
@@ -55,6 +59,7 @@
 
     <div id="info-layer">
         <div id="pc-scale-display" class="status" style="pointer-events: auto; cursor: pointer; color: #007bff;" onclick="handleScaleClick()">100.0%</div>
+        <div id="swipe-hint">Vuốt sang trái để mở cài đặt</div>
         <div id="lock-status" class="status" style="color:red"></div>
         <div id="input-display" class="status" style="color:blue"></div>
     </div>
@@ -75,9 +80,14 @@
         </div>
 
         <hr style="width:100%">
-        <p style="font-size:11px; color:#666; margin-bottom:5px;">Áp thước vào vùng này:</p>
+        <p style="font-size:11px; color:#666; margin-top:10px;">Áp thước vào vùng này:</p>
+        
         <div id="rule-container">
             <img id="mobile-rule-img" src="" alt="Rule">
+        </div>
+
+        <div class="rule-note">
+            Chỉnh thước đúng 5cm khi kiểm tra ở 2,5m<br>và 10cm khi kiểm tra ở 5m
         </div>
     </div>
 
@@ -183,12 +193,14 @@
             });
             ctx.globalAlpha = 1.0;
 
-            // Cập nhật text % cho cả 2 bản
             const scaleText = (baseScale * 100).toFixed(1) + "%";
             document.getElementById('pc-scale-display').innerText = scaleText;
             document.getElementById('mb-scale-text').innerText = scaleText;
             document.getElementById('lock-status').innerText = scaleLocked ? "LOCKED" : "";
             document.getElementById('input-display').innerText = inputBuffer ? "Input: " + inputBuffer : "";
+            
+            const hint = document.getElementById('swipe-hint');
+            if(hint) hint.style.visibility = isStageActive ? 'hidden' : 'visible';
         }
 
         function updateLevel(dir) {
