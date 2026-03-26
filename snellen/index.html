@@ -11,6 +11,7 @@
         .status { font-size: 18px; font-weight: bold; margin-bottom: 5px; color: black; }
         #swipe-hint { display: none; color: rgb(100,100,100); font-size: 12px; font-style: italic; margin-top: 5px; }
         
+        /* Menu PC */
         #menu-layer { 
             position: absolute; top: 100px; left: 20px; pointer-events: auto; 
             background: rgba(255,255,255,0.9); padding: 12px; border-radius: 8px; 
@@ -18,6 +19,7 @@
             z-index: 20;
         }
         
+        /* Stage Mobile */
         #stage-left { 
             position: absolute; top: 0; left: -280px; width: 280px; height: 100%; 
             background: white; border-right: 1px solid #ccc;
@@ -34,8 +36,7 @@
         }
         #mobile-rule-img { transform: rotate(90deg); transform-origin: center; max-width: none; display: block; }
         
-        /* Đẩy ghi chú xuống sát đáy Stage trái */
-        .rule-note { 
+        .rule-note-mobile { 
             color: #d9534f; font-size: 11px; font-weight: bold; text-align: center; 
             padding-bottom: 15px; width: 100%; line-height: 1.4;
         }
@@ -86,8 +87,8 @@
             <img id="mobile-rule-img" src="" alt="Rule">
         </div>
 
-        <div class="rule-note">
-            Chỉnh thước đúng 5cm khi kiểm tra ở 2,5m<br>và 10cm khi kiểm tra ở 5m
+        <div class="rule-note-mobile">
+            Chỉnh thước đúng 10cm khi kiểm tra ở 5m<br>và 5cm khi kiểm tra ở 2,5m
         </div>
     </div>
 
@@ -177,10 +178,22 @@
                 ctx.drawImage(img, -w / 2, -h / 2, w, h); ctx.restore();
             }
 
+            // Thanh thước PC và Ghi chú PC
             if(!isMobile && imgCache[chartData.rule]) {
                 const rs = baseScale * chartData.internalScale;
                 const rW = imgCache[chartData.rule].width * rs, rH = imgCache[chartData.rule].height * rs;
-                ctx.drawImage(imgCache[chartData.rule], (canvas.width - rW) / 2, canvas.height - 180, rW, rH);
+                const rX = (canvas.width - rW) / 2;
+                const rY = canvas.height - 180;
+                
+                ctx.drawImage(imgCache[chartData.rule], rX, rY, rW, rH);
+                
+                // Thêm dòng chữ ghi chú dưới thanh Rules bản PC
+                ctx.save();
+                ctx.textAlign = "center";
+                ctx.fillStyle = "rgb(100, 100, 100)";
+                ctx.font = "13px Arial";
+                ctx.fillText("Chỉnh thước đúng 10cm khi kiểm tra ở 5m và 5cm khi kiểm tra ở 2,5m", canvas.width / 2, rY + rH + 20);
+                ctx.restore();
             }
 
             const startY = canvas.height / 2 - (chartData.levels.length * 30) / 2;
