@@ -11,48 +11,43 @@
         .status { font-size: 18px; font-weight: bold; margin-bottom: 5px; color: black; }
         #swipe-hint { display: none; color: rgb(100,100,100); font-size: 12px; font-style: italic; margin-top: 5px; }
         
-        /* Menu PC */
         #menu-layer { 
             position: absolute; top: 100px; left: 20px; pointer-events: auto; 
             background: rgba(255,255,255,0.9); padding: 12px; border-radius: 8px; 
             border: 1px solid #ccc; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
             z-index: 20;
         }
+
+        #log-container {
+            position: absolute; bottom: 100px; left: 20px; width: 220px;
+            background: rgba(245, 245, 245, 0.9); border: 1px solid #ddd;
+            border-radius: 8px; padding: 10px; z-index: 10; font-size: 12px;
+            max-height: 180px; overflow-y: auto; box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
+        }
+        #log-container h4 { margin: 0 0 5px 0; font-size: 13px; border-bottom: 1px solid #ccc; }
         
-        /* Stage Mobile */
         #stage-left { 
             position: absolute; top: 0; left: -280px; width: 280px; height: 100%; 
             background: white; border-right: 1px solid #ccc;
             transition: left 0.3s ease; z-index: 100; padding: 20px; box-sizing: border-box;
-            box-shadow: 5px 0 15px rgba(0,0,0,0.1);
             display: flex; flex-direction: column; align-items: center;
         }
         #stage-left.active { left: 0; }
-        #mobile-scale-box { width: 100%; text-align: center; margin: 10px 0; padding: 10px; background: #f0f7ff; border-radius: 5px; cursor: pointer; }
+        #mobile-scale-box { width: 100%; text-align: center; margin: 10px 0; padding: 10px; background: #f0f7ff; border-radius: 5px; cursor: pointer;}
         
-        #rule-container {
-            flex: 1; width: 100%; display: flex; justify-content: center; align-items: center;
-            overflow: hidden; margin-top: 10px; position: relative;
-        }
+        #rule-container { flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; }
         #mobile-rule-img { transform: rotate(90deg); transform-origin: center; max-width: none; display: block; }
         
-        .rule-note-mobile { 
-            color: #d9534f; font-size: 11px; font-weight: bold; text-align: center; 
-            padding-bottom: 15px; width: 100%; line-height: 1.4;
-        }
-
-        .menu-item { margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; font-size: 16px; font-weight: bold; width: 100%; }
+        .rule-note-mobile { color: #d9534f; font-size: 11px; font-weight: bold; text-align: center; padding-bottom: 15px; line-height: 1.4; }
+        .menu-item { margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; font-size: 16px; font-weight: bold; }
         .menu-item input { margin-right: 8px; width: 18px; height: 18px; }
         
         #credit { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #505050; font-size: 13px; line-height: 1.4; pointer-events: none; z-index: 5; }
 
         @media (max-width: 768px) { 
-            #menu-layer { display: none; } 
+            #menu-layer, #log-container { display: none; } 
             #pc-scale-display { display: none; }
             #swipe-hint { display: block; }
-        }
-        @media (min-width: 769px) { 
-            #stage-left { display: none; } 
         }
     </style>
 </head>
@@ -61,35 +56,31 @@
     <div id="info-layer">
         <div id="pc-scale-display" class="status" style="pointer-events: auto; cursor: pointer; color: #007bff;" onclick="handleScaleClick()">100.0%</div>
         <div id="swipe-hint">Vuốt sang trái để mở cài đặt</div>
-        <div id="lock-status" class="status" style="color:red"></div>
         <div id="input-display" class="status" style="color:blue"></div>
     </div>
 
     <div id="menu-layer">
-        <div class="menu-item"><input type="radio" name="chartPC" id="typeCPC" checked onchange="toggleChart('landolt')"><label for="typeCPC">Bảng Chữ C</label></div>
-        <div class="menu-item"><input type="radio" name="chartPC" id="typeSloanPC" onchange="toggleChart('sloan')"><label for="typeSloanPC">Bảng Sloan (Quốc tế)</label></div>
+        <div class="menu-item"><input type="radio" name="chartPC" id="typeCPC" checked onchange="toggleChart('landolt')"><label for="typeCPC">Bảng Chữ C (WASD)</label></div>
+        <div class="menu-item"><input type="radio" name="chartPC" id="typeSloanPC" onchange="toggleChart('sloan')"><label for="typeSloanPC">Bảng Sloan (Phím chữ)</label></div>
+    </div>
+
+    <div id="log-container">
+        <h4>Nhật ký thị lực</h4>
+        <div id="log-list"></div>
     </div>
 
     <div id="stage-left">
         <h3 style="margin-top:0;">CÀI ĐẶT</h3>
         <div class="menu-item"><input type="radio" name="chartMB" id="typeCMB" checked onchange="toggleChart('landolt')"><label for="typeCMB">Bảng Chữ C</label></div>
         <div class="menu-item"><input type="radio" name="chartMB" id="typeSloanMB" onchange="toggleChart('sloan')"><label for="typeSloanMB">Bảng Sloan (Quốc tế)</label></div>
-        
         <div id="mobile-scale-box" onclick="handleScaleClick()">
             <span style="font-size: 14px; color: #666;">Tỷ lệ hiện tại:</span><br>
             <span id="mb-scale-text" style="font-size: 22px; font-weight: bold; color: #007bff;">100.0%</span>
         </div>
-
         <hr style="width:100%">
         <p style="font-size:11px; color:#666; margin-top:10px;">Áp thước vào vùng này:</p>
-        
-        <div id="rule-container">
-            <img id="mobile-rule-img" src="" alt="Rule">
-        </div>
-
-        <div class="rule-note-mobile">
-            Chỉnh thước đúng 10cm khi kiểm tra ở 5m<br>và 5cm khi kiểm tra ở 2,5m
-        </div>
+        <div id="rule-container"><img id="mobile-rule-img" src="" alt="Rule"></div>
+        <div class="rule-note-mobile">Chỉnh thước đúng 10cm khi kiểm tra ở 5m<br>và 5cm khi kiểm tra ở 2,5m</div>
     </div>
 
     <div id="credit">
@@ -106,12 +97,28 @@
         const mobileRuleImg = document.getElementById('mobile-rule-img');
 
         const CHARTS = {
-            landolt: { levels: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2], labels: (v) => v.toFixed(1), images: ['landolt-c.png'], rule: 'rules-c.png', internalScale: 1.0 },
-            sloan: { levels: [50, 25, 17.5, 12.5, 10, 8, 7.5, 6.25, 5.5, 5], labels: (v) => { const sn = {50:"20/200", 25:"20/100", 17.5:"20/70", 12.5:"20/50", 10:"20/40", 8:"20/32", 7.5:"20/30", 6.25:"20/25", 5.5:"20/22", 5:"20/20"}; return sn[v] || "20/xx"; }, images: ['C.png','D.png','H.png','K.png','N.png','O.png','P.png','R.png','V.png','Z.png'], rule: 'rule2.png', internalScale: 1 / (2.65 * 2.04) }
+            landolt: { 
+                levels: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2], 
+                labels: (v) => v.toFixed(1), images: ['landolt-c.png'], rule: 'rules-c.png', internalScale: 1.0,
+                keyMap: { 0: 'd', 90: 's', 180: 'a', 270: 'w' } 
+            },
+            sloan: { 
+                levels: [50, 25, 17.5, 12.5, 10, 8, 7.5, 6.25, 5.5, 5], 
+                labels: (v) => { const sn = {50:"20/200", 25:"20/100", 17.5:"20/70", 12.5:"20/50", 10:"20/40", 8:"20/32", 7.5:"20/30", 6.25:"20/25", 5.5:"20/22", 5:"20/20"}; return sn[v] || "20/xx"; }, 
+                images: ['C.png','D.png','H.png','K.png','N.png','O.png','P.png','R.png','V.png','Z.png'], rule: 'rule2.png', internalScale: 1 / (2.65 * 2.04) 
+            }
         };
 
         let currentChart = 'landolt', currentIndex = 0, baseScale = localStorage.getItem('snellen_base_scale') ? parseFloat(localStorage.getItem('snellen_base_scale')) : 1.0;
-        let rotation = 0, currentImgIdx = 0, scaleLocked = false, inputBuffer = "", isStageActive = false;
+        let rotation = 0, currentImgIdx = 0, inputBuffer = "", isStageActive = false;
+        let sessionCount = 0, sessionCorrect = 0, logs = JSON.parse(localStorage.getItem('vision_logs') || "[]");
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination);
+            if(type === 'correct') { osc.frequency.setValueAtTime(880, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+            else { osc.frequency.setValueAtTime(220, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
+        }
 
         const imgCache = {};
         function loadImages() {
@@ -119,42 +126,53 @@
             let loaded = 0;
             allImages.forEach(src => {
                 const img = new Image(); img.src = 'images/' + src;
-                img.onload = () => { loaded++; if(loaded === allImages.length) { updateRuleUI(); draw(); } };
+                img.onload = () => { loaded++; if(loaded === allImages.length) { updateRuleUI(); updateLogUI(); draw(); } };
                 imgCache[src] = img;
             });
+        }
+
+        function updateLogUI() {
+            document.getElementById('log-list').innerHTML = logs.slice(-8).reverse().map(l => `<div style="margin-bottom:2px; font-family:monospace;">${l}</div>`).join('');
+        }
+
+        function trackResponse(key) {
+            if(window.innerWidth <= 768) return;
+            const chart = CHARTS[currentChart];
+            let isCorrect = (currentChart === 'landolt') ? (key.toLowerCase() === chart.keyMap[rotation]) : (key.toLowerCase() === chart.images[currentImgIdx].split('.')[0].toLowerCase());
+
+            sessionCount++;
+            if(isCorrect) { sessionCorrect++; playSound('correct'); } else { playSound('wrong'); }
+
+            if(sessionCount >= 5) {
+                if(sessionCorrect / sessionCount >= 0.8) {
+                    const d = new Date();
+                    const log = `${d.getDate()}/${d.getMonth()+1} - Lần ${logs.length+1} - ${chart.labels(chart.levels[currentIndex])}`;
+                    logs.push(log); localStorage.setItem('vision_logs', JSON.stringify(logs)); updateLogUI();
+                }
+                sessionCount = 0; sessionCorrect = 0;
+            }
+            changeRandom(); draw();
         }
 
         function updateRuleUI() {
             const chartData = CHARTS[currentChart];
             mobileRuleImg.src = 'images/' + chartData.rule;
-            const rScale = baseScale * chartData.internalScale;
-            if (imgCache[chartData.rule]) {
-                mobileRuleImg.style.width = (imgCache[chartData.rule].width * rScale) + "px";
-            }
+            if (imgCache[chartData.rule]) mobileRuleImg.style.width = (imgCache[chartData.rule].width * baseScale * chartData.internalScale) + "px";
         }
 
         function toggleChart(type) {
-            currentChart = type; currentIndex = 0;
-            const pcRadio = document.getElementById(type === 'landolt' ? 'typeCPC' : 'typeSloanPC');
-            const mbRadio = document.getElementById(type === 'landolt' ? 'typeCMB' : 'typeSloanMB');
-            if(pcRadio) pcRadio.checked = true;
-            if(mbRadio) mbRadio.checked = true;
+            currentChart = type; currentIndex = 0; sessionCount = 0; sessionCorrect = 0;
+            document.getElementById(type === 'landolt' ? 'typeCPC' : 'typeSloanPC').checked = true;
+            document.getElementById(type === 'landolt' ? 'typeCMB' : 'typeSloanMB').checked = true;
             updateRuleUI(); changeRandom(); draw();
         }
 
         function handleScaleClick() {
             let val = prompt("Nhập tỷ lệ (%) mới:", (baseScale * 100).toFixed(1));
-            if (val !== null && !isNaN(val)) {
-                baseScale = Math.max(0.1, Math.min(5.0, parseFloat(val) / 100));
-                saveScale();
-            }
+            if (val !== null && !isNaN(val)) { baseScale = Math.max(0.1, Math.min(5.0, parseFloat(val) / 100)); saveScale(); }
         }
 
-        function saveScale() {
-            localStorage.setItem('snellen_base_scale', baseScale);
-            updateRuleUI(); draw();
-        }
-
+        function saveScale() { localStorage.setItem('snellen_base_scale', baseScale); updateRuleUI(); draw(); }
         function changeRandom() {
             rotation = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
             currentImgIdx = Math.floor(Math.random() * CHARTS[currentChart].images.length);
@@ -178,121 +196,89 @@
                 ctx.drawImage(img, -w / 2, -h / 2, w, h); ctx.restore();
             }
 
-            // Thanh thước PC và Ghi chú PC
             if(!isMobile && imgCache[chartData.rule]) {
                 const rs = baseScale * chartData.internalScale;
                 const rW = imgCache[chartData.rule].width * rs, rH = imgCache[chartData.rule].height * rs;
-                const rX = (canvas.width - rW) / 2;
                 const rY = canvas.height - 180;
-                
-                ctx.drawImage(imgCache[chartData.rule], rX, rY, rW, rH);
-                
-                // Thêm dòng chữ ghi chú dưới thanh Rules bản PC
-                ctx.save();
-                ctx.textAlign = "center";
-                ctx.fillStyle = "rgb(100, 100, 100)";
-                ctx.font = "13px Arial";
+                ctx.drawImage(imgCache[chartData.rule], (canvas.width - rW) / 2, rY, rW, rH);
+                ctx.textAlign = "center"; ctx.fillStyle = "rgb(100, 100, 100)"; ctx.font = "13px Arial";
                 ctx.fillText("Chỉnh thước đúng 10cm khi kiểm tra ở 5m và 5cm khi kiểm tra ở 2,5m", canvas.width / 2, rY + rH + 20);
-                ctx.restore();
             }
 
             const startY = canvas.height / 2 - (chartData.levels.length * 30) / 2;
-            ctx.textAlign = "right";
-            ctx.font = isMobile ? "bold 14px Arial" : "bold 20px Arial";
+            ctx.textAlign = "right"; ctx.font = isMobile ? "bold 14px Arial" : "bold 20px Arial";
             chartData.levels.forEach((v, i) => {
                 ctx.fillStyle = (i === currentIndex) ? "red" : "#ccc";
                 if(isMobile && isStageActive) ctx.globalAlpha = 0.1;
                 ctx.fillText(chartData.labels(v), canvas.width - 20, startY + i * 30);
             });
-            ctx.globalAlpha = 1.0;
-
-            const scaleText = (baseScale * 100).toFixed(1) + "%";
-            document.getElementById('pc-scale-display').innerText = scaleText;
-            document.getElementById('mb-scale-text').innerText = scaleText;
-            document.getElementById('lock-status').innerText = scaleLocked ? "LOCKED" : "";
-            document.getElementById('input-display').innerText = inputBuffer ? "Input: " + inputBuffer : "";
             
-            const hint = document.getElementById('swipe-hint');
-            if(hint) hint.style.visibility = isStageActive ? 'hidden' : 'visible';
+            document.getElementById('pc-scale-display').innerText = (baseScale * 100).toFixed(1) + "%";
+            document.getElementById('mb-scale-text').innerText = (baseScale * 100).toFixed(1) + "%";
+            document.getElementById('input-display').innerText = inputBuffer ? "Input: " + inputBuffer : "";
         }
 
-        function updateLevel(dir) {
-            currentIndex = Math.max(0, Math.min(CHARTS[currentChart].levels.length - 1, currentIndex + dir));
-            changeRandom(); draw();
-        }
-
-        // --- PC EVENTS ---
+        // --- PC EVENTS (MOUSE & KEYBOARD) ---
         let holdTimer, isHold = false;
         window.onmousedown = (e) => {
             if(window.innerWidth <= 768) return;
-            if(e.button === 0) { changeRandom(); draw(); } 
-            else if(e.button === 2) { isHold = false; holdTimer = setTimeout(() => { isHold = true; updateLevel(-1); }, 500); }
+            if(e.button === 0) { changeRandom(); sessionCount = 0; sessionCorrect = 0; draw(); } 
+            else if(e.button === 2) { 
+                isHold = false; 
+                holdTimer = setTimeout(() => { 
+                    isHold = true; 
+                    currentIndex = Math.max(0, currentIndex - 1); // Lên hàng
+                    sessionCount = 0; sessionCorrect = 0; changeRandom(); draw();
+                }, 500); 
+            }
         };
         window.onmouseup = (e) => {
             if(window.innerWidth <= 768) return;
-            if(e.button === 2) { clearTimeout(holdTimer); if(!isHold) updateLevel(1); }
-        };
-        window.addEventListener('wheel', (e) => {
-            if (scaleLocked) return;
-            if (e.ctrlKey) { e.preventDefault(); baseScale -= (e.deltaY > 0 ? 0.001 : -0.001); }
-            else { baseScale -= (e.deltaY > 0 ? 0.01 : -0.01); }
-            baseScale = Math.max(0.1, Math.min(5.0, baseScale));
-            saveScale();
-        }, { passive: false });
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { changeRandom(); draw(); }
-            if (e.key === 'ArrowDown') updateLevel(1);
-            if (e.key === 'ArrowUp') updateLevel(-1);
-            if (e.key === ' ') scaleLocked = !scaleLocked;
-            if (/^\d$/.test(e.key)) inputBuffer += e.key;
-            if (e.key === 'Enter' && inputBuffer) {
-                baseScale = parseFloat(inputBuffer) / 1000;
-                baseScale = Math.max(0.1, Math.min(5.0, baseScale));
-                inputBuffer = ""; saveScale();
+            if(e.button === 2) { 
+                clearTimeout(holdTimer); 
+                if(!isHold) { 
+                    currentIndex = Math.min(CHARTS[currentChart].levels.length - 1, currentIndex + 1); // Xuống hàng
+                    sessionCount = 0; sessionCorrect = 0; changeRandom(); draw();
+                } 
             }
-            if (e.key === 'Backspace') inputBuffer = "";
-            draw();
+        };
+
+        window.addEventListener('keydown', (e) => {
+            if (/^\d$/.test(e.key)) { inputBuffer += e.key; draw(); return; }
+            if (e.key === 'Enter' && inputBuffer) {
+                baseScale = Math.max(0.1, Math.min(5.0, parseFloat(inputBuffer) / 1000));
+                inputBuffer = ""; saveScale(); return;
+            }
+            if (e.key === 'Backspace') { inputBuffer = ""; draw(); return; }
+
+            if (['ArrowLeft', 'ArrowRight'].includes(e.key)) { changeRandom(); draw(); }
+            if (e.key === 'ArrowDown') { currentIndex = Math.min(CHARTS[currentChart].levels.length-1, currentIndex+1); sessionCount=0; sessionCorrect=0; changeRandom(); draw(); }
+            if (e.key === 'ArrowUp') { currentIndex = Math.max(0, currentIndex-1); sessionCount=0; sessionCorrect=0; changeRandom(); draw(); }
+            
+            if(currentChart === 'landolt' && ['w','a','s','d'].includes(e.key.toLowerCase())) trackResponse(e.key);
+            else if(currentChart === 'sloan' && /^[a-z]$/i.test(e.key)) trackResponse(e.key);
         });
 
+        window.addEventListener('wheel', (e) => {
+            if(window.innerWidth <= 768) return;
+            baseScale = Math.max(0.1, Math.min(5.0, baseScale - (e.deltaY > 0 ? (e.ctrlKey ? 0.001 : 0.01) : (e.ctrlKey ? -0.001 : -0.01))));
+            saveScale();
+        }, { passive: false });
+
         // --- MOBILE EVENTS ---
-        let tStartX, tStartY, tStartTime, initialDist = null;
-        window.addEventListener('touchstart', e => {
-            if (e.touches.length === 2) {
-                initialDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-            } else {
-                tStartX = e.touches[0].screenX; tStartY = e.touches[0].screenY; tStartTime = Date.now();
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchmove', e => {
-            if (e.touches.length === 2 && initialDist !== null && !scaleLocked) {
-                e.preventDefault();
-                let dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                let delta = (dist - initialDist) * 0.002;
-                baseScale = Math.max(0.1, Math.min(5.0, baseScale + delta));
-                initialDist = dist; saveScale();
-            }
-        }, { passive: false });
-
+        let tStartX, tStartY, tStartTime;
+        window.addEventListener('touchstart', e => { if(e.touches.length === 1){ tStartX = e.touches[0].screenX; tStartY = e.touches[0].screenY; tStartTime = Date.now(); } });
         window.addEventListener('touchend', e => {
-            initialDist = null;
             if (e.changedTouches.length === 1 && window.innerWidth <= 768) {
                 const dX = e.changedTouches[0].screenX - tStartX, dY = e.changedTouches[0].screenY - tStartY;
-                const dTime = Date.now() - tStartTime;
-                if (Math.abs(dX) < 15 && Math.abs(dY) < 15 && dTime < 250) {
-                    if (!isStageActive) { changeRandom(); draw(); }
-                } else if (Math.abs(dX) > Math.abs(dY) && Math.abs(dX) > 40) {
-                    isStageActive = (dX > 50);
-                    stageLeft.classList.toggle('active', isStageActive); draw();
-                } else if (Math.abs(dY) > 40) {
-                    updateLevel(dY > 0 ? -1 : 1);
-                }
+                if (Math.abs(dX) < 15 && Math.abs(dY) < 15 && (Date.now() - tStartTime) < 250) { if (!isStageActive) { changeRandom(); draw(); } }
+                else if (Math.abs(dX) > 40) { isStageActive = (dX > 50); stageLeft.classList.toggle('active', isStageActive); draw(); }
+                else if (Math.abs(dY) > 40) { currentIndex = Math.max(0, Math.min(CHARTS[currentChart].levels.length-1, currentIndex + (dY > 0 ? -1 : 1))); sessionCount=0; sessionCorrect=0; changeRandom(); draw(); }
             }
         });
 
         window.oncontextmenu = (e) => e.preventDefault();
-        window.onresize = draw;
-        loadImages();
+        window.onresize = draw; loadImages();
     </script>
 </body>
 </html>
