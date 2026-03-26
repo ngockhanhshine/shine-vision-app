@@ -3,37 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Snellen & Sloan Mobile - Shine Vision</title>
+    <title>Snellen & Sloan - Shine Vision</title>
     <style>
         body { margin: 0; background: white; font-family: Arial, sans-serif; overflow: hidden; touch-action: none; }
         canvas { display: block; background: white; }
-        #info-layer { position: absolute; top: 20px; left: 20px; pointer-events: none; }
+        #info-layer { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
         .status { font-size: 18px; font-weight: bold; margin-bottom: 5px; color: black; }
+        #scale-display { pointer-events: auto; cursor: pointer; color: #007bff; }
         
-        #menu-layer { position: absolute; top: 100px; left: 20px; pointer-events: auto; background: rgba(255,255,255,0.9); padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .menu-item { margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; font-size: 16px; font-weight: bold; }
-        .menu-item input { margin-right: 8px; cursor: pointer; width: 18px; height: 18px; }
+        /* Giao diện PC gốc của anh */
+        #menu-layer { 
+            position: absolute; top: 100px; left: 20px; pointer-events: auto; 
+            background: rgba(255,255,255,0.9); padding: 12px; border-radius: 8px; 
+            border: 1px solid #ccc; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            z-index: 20;
+        }
+        
+        /* Giao diện Stage Mobile mới */
+        #stage-left { 
+            position: absolute; top: 0; left: -280px; width: 280px; height: 100%; 
+            background: white; border-right: 1px solid #ccc;
+            transition: left 0.3s ease; z-index: 100; padding: 20px; box-sizing: border-box;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        #stage-left.active { left: 0; }
+        #rule-container {
+            flex: 1; width: 100%; display: flex; justify-content: center; align-items: center;
+            overflow: hidden; margin-top: 20px;
+        }
+        #mobile-rule-img { transform: rotate(90deg); transform-origin: center; max-width: none; display: block; }
 
-        .input-buf { color: blue; }
-        #credit { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #505050; font-size: 13px; line-height: 1.4; pointer-events: none; }
+        .menu-item { margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; font-size: 16px; font-weight: bold; width: 100%; }
+        .menu-item input { margin-right: 8px; width: 18px; height: 18px; }
+        
+        #credit { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #505050; font-size: 13px; line-height: 1.4; pointer-events: none; z-index: 5; }
+
+        @media (max-width: 768px) { #menu-layer { display: none; } }
+        @media (min-width: 769px) { #stage-left { display: none; } }
     </style>
 </head>
 <body>
 
     <div id="info-layer">
-        <div id="scale-display" class="status">100.0%</div>
+        <div id="scale-display" class="status" onclick="handleScaleClick()">100.0%</div>
         <div id="lock-status" class="status" style="color:red"></div>
-        <div id="input-display" class="status input-buf"></div>
+        <div id="input-display" class="status" style="color:blue"></div>
     </div>
 
     <div id="menu-layer">
-        <div class="menu-item">
-            <input type="radio" name="chartType" value="landolt" id="typeC" checked onchange="toggleChart('landolt')">
-            <label for="typeC">Bảng Chữ C</label>
-        </div>
-        <div class="menu-item">
-            <input type="radio" name="chartType" value="sloan" id="typeSloan" onchange="toggleChart('sloan')">
-            <label for="typeSloan">Bảng Sloan (Quốc tế)</label>
+        <div class="menu-item"><input type="radio" name="chartPC" id="typeCPC" checked onchange="toggleChart('landolt')"><label for="typeCPC">Bảng Chữ C</label></div>
+        <div class="menu-item"><input type="radio" name="chartPC" id="typeSloanPC" onchange="toggleChart('sloan')"><label for="typeSloanPC">Bảng Sloan (Quốc tế)</label></div>
+    </div>
+
+    <div id="stage-left">
+        <h3 style="margin-top:0;">CÀI ĐẶT</h3>
+        <div class="menu-item"><input type="radio" name="chartMB" id="typeCMB" checked onchange="toggleChart('landolt')"><label for="typeCMB">Bảng Chữ C</label></div>
+        <div class="menu-item"><input type="radio" name="chartMB" id="typeSloanMB" onchange="toggleChart('sloan')"><label for="typeSloanMB">Bảng Sloan (Quốc tế)</label></div>
+        <hr style="width:100%">
+        <p style="font-size:12px; color:#666;">Áp thước vào vùng này:</p>
+        <div id="rule-container">
+            <img id="mobile-rule-img" src="" alt="Rule">
         </div>
     </div>
 
@@ -47,97 +77,100 @@
     <script>
         const canvas = document.getElementById('snellenCanvas');
         const ctx = canvas.getContext('2d');
+        const stageLeft = document.getElementById('stage-left');
+        const mobileRuleImg = document.getElementById('mobile-rule-img');
 
         const CHARTS = {
-            landolt: {
-                levels: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2],
-                labels: (v) => v.toFixed(1),
-                images: ['landolt-c.png'],
-                rule: 'rules-c.png',
-                internalScale: 1.0
-            },
-            sloan: {
-                levels: [50, 25, 17.5, 12.5, 10, 8, 7.5, 6.25, 5.5, 5],
-                labels: (v) => {
-                    const snellen = {50:"20/200", 25:"20/100", 17.5:"20/70", 12.5:"20/50", 10:"20/40", 8:"20/32", 7.5:"20/30", 6.25:"20/25", 5.5:"20/22", 5:"20/20"};
-                    return snellen[v] || "20/xx";
-                },
-                images: ['C.png','D.png','H.png','K.png','N.png','O.png','P.png','R.png','V.png','Z.png'],
-                rule: 'rule2.png',
-                internalScale: 1 / (2.65 * 2.04) 
-            }
+            landolt: { levels: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2], labels: (v) => v.toFixed(1), images: ['landolt-c.png'], rule: 'rules-c.png', internalScale: 1.0 },
+            sloan: { levels: [50, 25, 17.5, 12.5, 10, 8, 7.5, 6.25, 5.5, 5], labels: (v) => { const sn = {50:"20/200", 25:"20/100", 17.5:"20/70", 12.5:"20/50", 10:"20/40", 8:"20/32", 7.5:"20/30", 6.25:"20/25", 5.5:"20/22", 5:"20/20"}; return sn[v] || "20/xx"; }, images: ['C.png','D.png','H.png','K.png','N.png','O.png','P.png','R.png','V.png','Z.png'], rule: 'rule2.png', internalScale: 1 / (2.65 * 2.04) }
         };
 
-        let currentChart = 'landolt';
-        let currentIndex = 0;
-        let baseScale = localStorage.getItem('snellen_base_scale') ? parseFloat(localStorage.getItem('snellen_base_scale')) : 1.0;
-        let rotation = 0;
-        let currentImgIdx = 0;
-        let scaleLocked = false;
-        let inputBuffer = "";
+        let currentChart = 'landolt', currentIndex = 0, baseScale = localStorage.getItem('snellen_base_scale') ? parseFloat(localStorage.getItem('snellen_base_scale')) : 1.0;
+        let rotation = 0, currentImgIdx = 0, scaleLocked = false, inputBuffer = "", isStageActive = false;
 
         const imgCache = {};
         function loadImages() {
             const allImages = [...CHARTS.landolt.images, CHARTS.landolt.rule, ...CHARTS.sloan.images, CHARTS.sloan.rule];
             let loaded = 0;
             allImages.forEach(src => {
-                const img = new Image();
-                img.src = 'images/' + src;
-                img.onload = () => { loaded++; if(loaded === allImages.length) draw(); };
+                const img = new Image(); img.src = 'images/' + src;
+                img.onload = () => { loaded++; if(loaded === allImages.length) { updateRuleUI(); draw(); } };
                 imgCache[src] = img;
             });
         }
 
+        function updateRuleUI() {
+            const chartData = CHARTS[currentChart];
+            mobileRuleImg.src = 'images/' + chartData.rule;
+            const rScale = baseScale * chartData.internalScale;
+            if (imgCache[chartData.rule]) {
+                mobileRuleImg.style.width = (imgCache[chartData.rule].width * rScale) + "px";
+            }
+        }
+
         function toggleChart(type) {
-            currentChart = type;
-            currentIndex = 0;
-            changeRandom();
-            draw();
+            currentChart = type; currentIndex = 0;
+            const pcRadio = document.getElementById(type === 'landolt' ? 'typeCPC' : 'typeSloanPC');
+            const mbRadio = document.getElementById(type === 'landolt' ? 'typeCMB' : 'typeSloanMB');
+            if(pcRadio) pcRadio.checked = true;
+            if(mbRadio) mbRadio.checked = true;
+            updateRuleUI(); changeRandom(); draw();
+        }
+
+        function handleScaleClick() {
+            if (window.innerWidth <= 768) {
+                let val = prompt("Nhập tỷ lệ (%) mớii:", (baseScale * 100).toFixed(1));
+                if (val !== null && !isNaN(val)) {
+                    baseScale = Math.max(0.1, Math.min(5.0, parseFloat(val) / 100));
+                    saveScale();
+                }
+            }
+        }
+
+        function saveScale() {
+            localStorage.setItem('snellen_base_scale', baseScale);
+            updateRuleUI(); draw();
         }
 
         function changeRandom() {
             rotation = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
-            const pool = CHARTS[currentChart].images;
-            currentImgIdx = Math.floor(Math.random() * pool.length);
+            currentImgIdx = Math.floor(Math.random() * CHARTS[currentChart].images.length);
         }
 
         function draw() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const chartData = CHARTS[currentChart];
-            const level = chartData.levels[currentIndex];
+            const chartData = CHARTS[currentChart], level = chartData.levels[currentIndex];
             let visionScale = (currentChart === 'landolt') ? (0.1 / level) : (level / 50);
-
             const finalScale = baseScale * visionScale * chartData.internalScale;
+            const isMobile = window.innerWidth <= 768;
 
             const img = imgCache[chartData.images[currentImgIdx]];
             if(img) {
-                const w = img.width * finalScale;
-                const h = img.height * finalScale;
+                const w = img.width * finalScale, h = img.height * finalScale;
                 ctx.save();
-                ctx.translate(canvas.width / 2, canvas.height / 2 - 40);
+                if(isMobile && isStageActive) ctx.globalAlpha = 0.2;
+                ctx.translate(canvas.width / 2, canvas.height / 2 - (isMobile ? 0 : 40));
                 if(currentChart === 'landolt') ctx.rotate(rotation * Math.PI / 180);
-                ctx.drawImage(img, -w / 2, -h / 2, w, h);
-                ctx.restore();
+                ctx.drawImage(img, -w / 2, -h / 2, w, h); ctx.restore();
             }
 
-            const ruleImg = imgCache[chartData.rule];
-            if(ruleImg) {
-                const rScale = baseScale * chartData.internalScale;
-                const rW = ruleImg.width * rScale;
-                const rH = ruleImg.height * rScale;
-                ctx.drawImage(ruleImg, (canvas.width - rW) / 2, canvas.height - 180, rW, rH);
+            // Thước ngang PC gốc
+            if(!isMobile && imgCache[chartData.rule]) {
+                const rs = baseScale * chartData.internalScale;
+                const rW = imgCache[chartData.rule].width * rs, rH = imgCache[chartData.rule].height * rs;
+                ctx.drawImage(imgCache[chartData.rule], (canvas.width - rW) / 2, canvas.height - 180, rW, rH);
             }
 
             const startY = canvas.height / 2 - (chartData.levels.length * 30) / 2;
             ctx.textAlign = "right";
-            ctx.font = "bold 20px Arial";
+            ctx.font = isMobile ? "bold 14px Arial" : "bold 20px Arial"; // Giảm 30% trên Mobile
             chartData.levels.forEach((v, i) => {
                 ctx.fillStyle = (i === currentIndex) ? "red" : "#ccc";
+                if(isMobile && isStageActive) ctx.globalAlpha = 0.1;
                 ctx.fillText(chartData.labels(v), canvas.width - 20, startY + i * 30);
             });
+            ctx.globalAlpha = 1.0;
 
             document.getElementById('scale-display').innerText = (baseScale * 100).toFixed(1) + "%";
             document.getElementById('lock-status').innerText = scaleLocked ? "LOCKED" : "";
@@ -146,48 +179,27 @@
 
         function updateLevel(dir) {
             currentIndex = Math.max(0, Math.min(CHARTS[currentChart].levels.length - 1, currentIndex + dir));
-            changeRandom();
-            draw();
+            changeRandom(); draw();
         }
 
-        // Mouse Events
-        let holdTimer;
-        let isHold = false;
-
+        // --- PC EVENTS (Giữ nguyên của anh) ---
+        let holdTimer, isHold = false;
         window.onmousedown = (e) => {
+            if(window.innerWidth <= 768) return;
             if(e.button === 0) { changeRandom(); draw(); } 
-            else if(e.button === 2) { 
-                isHold = false;
-                holdTimer = setTimeout(() => { isHold = true; updateLevel(-1); }, 500);
-            }
+            else if(e.button === 2) { isHold = false; holdTimer = setTimeout(() => { isHold = true; updateLevel(-1); }, 500); }
         };
-
         window.onmouseup = (e) => {
-            if(e.button === 2) {
-                clearTimeout(holdTimer);
-                if(!isHold) { updateLevel(1); }
-            }
+            if(window.innerWidth <= 768) return;
+            if(e.button === 2) { clearTimeout(holdTimer); if(!isHold) updateLevel(1); }
         };
-
-        // --- CẢI TIẾN LĂN CHUỘT ---
         window.addEventListener('wheel', (e) => {
             if (scaleLocked) return;
-            
-            // Chặn zoom trình duyệt khi nhấn Ctrl
-            if (e.ctrlKey) {
-                e.preventDefault();
-                // Bước nhảy siêu mịn 0.1%
-                baseScale -= (e.deltaY > 0 ? 0.001 : -0.001);
-            } else {
-                // Bước nhảy 1% khi lăn thường
-                baseScale -= (e.deltaY > 0 ? 0.01 : -0.01);
-            }
-
+            if (e.ctrlKey) { e.preventDefault(); baseScale -= (e.deltaY > 0 ? 0.001 : -0.001); }
+            else { baseScale -= (e.deltaY > 0 ? 0.01 : -0.01); }
             baseScale = Math.max(0.1, Math.min(5.0, baseScale));
-            localStorage.setItem('snellen_base_scale', baseScale);
-            draw();
-        }, { passive: false }); // Cần passive: false để e.preventDefault() hoạt động
-
+            saveScale();
+        }, { passive: false });
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { changeRandom(); draw(); }
             if (e.key === 'ArrowDown') updateLevel(1);
@@ -197,26 +209,45 @@
             if (e.key === 'Enter' && inputBuffer) {
                 baseScale = parseFloat(inputBuffer) / 1000;
                 baseScale = Math.max(0.1, Math.min(5.0, baseScale));
-                inputBuffer = "";
-                localStorage.setItem('snellen_base_scale', baseScale);
-                draw();
+                inputBuffer = ""; saveScale();
             }
             if (e.key === 'Backspace') inputBuffer = "";
             draw();
         });
 
-        let tStartX, tStartY;
+        // --- MOBILE EVENTS (Tối ưu mới) ---
+        let tStartX, tStartY, tStartTime, initialDist = null;
         window.addEventListener('touchstart', e => {
-            tStartX = e.changedTouches[0].screenX;
-            tStartY = e.changedTouches[0].screenY;
-        });
+            if (e.touches.length === 2) {
+                initialDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            } else {
+                tStartX = e.touches[0].screenX; tStartY = e.touches[0].screenY; tStartTime = Date.now();
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchmove', e => {
+            if (e.touches.length === 2 && initialDist !== null && !scaleLocked) {
+                e.preventDefault();
+                let dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                let delta = (dist - initialDist) * 0.002;
+                baseScale = Math.max(0.1, Math.min(5.0, baseScale + delta));
+                initialDist = dist; saveScale();
+            }
+        }, { passive: false });
+
         window.addEventListener('touchend', e => {
-            const deltaX = e.changedTouches[0].screenX - tStartX;
-            const deltaY = e.changedTouches[0].screenY - tStartY;
-            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
-                changeRandom(); draw();
-            } else if (Math.abs(deltaY) > 30) {
-                updateLevel(deltaY > 0 ? -1 : 1);
+            initialDist = null;
+            if (e.changedTouches.length === 1 && window.innerWidth <= 768) {
+                const dX = e.changedTouches[0].screenX - tStartX, dY = e.changedTouches[0].screenY - tStartY;
+                const dTime = Date.now() - tStartTime;
+                if (Math.abs(dX) < 15 && Math.abs(dY) < 15 && dTime < 250) { // Chạm 1 lần
+                    if (!isStageActive) { changeRandom(); draw(); }
+                } else if (Math.abs(dX) > Math.abs(dY) && Math.abs(dX) > 40) { // Vuốt ngang
+                    isStageActive = (dX > 50);
+                    stageLeft.classList.toggle('active', isStageActive); draw();
+                } else if (Math.abs(dY) > 40) { // Vuốt dọc
+                    updateLevel(dY > 0 ? -1 : 1);
+                }
             }
         });
 
