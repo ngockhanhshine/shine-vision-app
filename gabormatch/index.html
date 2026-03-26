@@ -3,51 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shine Vision - Gabor Sound Training</title>
+    <title>Shine Vision - Adaptive Gabor</title>
     <style>
         body { margin: 0; padding: 0; background-color: #7F7F7F; overflow: hidden; font-family: sans-serif; touch-action: none; display: flex; flex-direction: column; height: 100vh; }
-        #game-ui { text-align: center; color: white; font-size: 18px; font-weight: bold; padding: 10px; }
-        #grid-container { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; align-content: center; justify-items: center; }
-        .card { background-color: #7F7F7F; border: 2px solid #999; border-radius: 12px; width: 85px; height: 85px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; transition: 0.2s; }
+        #game-ui { text-align: center; color: white; font-size: 16px; font-weight: bold; padding: 10px; background: rgba(0,0,0,0.2); }
+        #grid-container { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; align-content: center; justify-items: center; }
+        
+        .card { background-color: #7F7F7F; border: 2px solid #999; border-radius: 12px; width: 80px; height: 80px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; }
         .gabor-content { position: absolute; width: 100%; height: 100%; background: repeating-linear-gradient(var(--ang), #fff, #fff 1px, #000 var(--sz), #000 var(--sz2)); mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); opacity: var(--op); }
-        .card.selected { border-color: #2196F3; box-shadow: 0 0 15px #2196F3; transform: scale(1.05); z-index: 2; }
-        .card.matched { opacity: 0.1; pointer-events: none; border-color: transparent; }
-        #controls { background: white; padding: 15px; border-radius: 20px 20px 0 0; }
-        .slider-group { display: flex; align-items: center; margin-bottom: 10px; }
-        label { width: 70px; font-size: 13px; font-weight: bold; }
-        input[type=range] { flex: 1; }
-        button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #2196F3; color: white; font-weight: bold; }
+        .card.selected { border-color: #2196F3; box-shadow: 0 0 15px #2196F3; z-index: 2; }
+        .card.matched { opacity: 0.1; pointer-events: none; }
+
+        #controls-wrapper { background: white; padding: 15px; border-radius: 20px 20px 0 0; display: flex; flex-wrap: wrap; gap: 15px; max-height: 45vh; overflow-y: auto; }
+        .control-section { flex: 1; min-width: 250px; }
+        .journal-section { flex: 1; min-width: 250px; border-left: 1px solid #eee; padding-left: 15px; }
+
+        .slider-group { display: flex; align-items: center; margin-bottom: 12px; gap: 8px; }
+        .slider-group label { width: 60px; font-size: 12px; font-weight: bold; }
+        .slider-group input { flex: 1; }
+        .btn-step { width: 30px; height: 30px; border-radius: 5px; border: 1px solid #ccc; background: #f8f8f8; cursor: pointer; font-weight: bold; }
+
+        #journal-list { font-size: 12px; list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 5px; }
+        #journal-list li { padding: 5px; border-bottom: 1px solid #eee; color: #444; }
+        #journal-list li:nth-child(odd) { background: #fafafa; }
+
+        button#resetBtn { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #2196F3; color: white; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        
+        .msg-alert { color: #d32f2f; font-size: 11px; font-weight: bold; margin-top: 5px; display: none; }
+
+        @media (max-width: 600px) {
+            .journal-section { border-left: none; padding-left: 0; border-top: 1px solid #eee; padding-top: 10px; }
+            .card { width: 75px; height: 75px; }
+        }
     </style>
 </head>
 <body>
-    <div id="game-ui">Cặp còn lại: <span id="pairs-left">6</span></div>
+    <div id="game-ui">Cặp còn lại: <span id="pairs-left">6</span> | <span id="timer">00:00</span></div>
     <div id="grid-container"></div>
-    <div id="controls">
-        <div class="slider-group"><label>Độ rõ:</label><input type="range" id="opSlider" min="10" max="100" value="80"></div>
-        <div class="slider-group"><label>Cỡ sọc:</label><input type="range" id="sizeSlider" min="2" max="10" value="4"></div>
-        <button id="resetBtn">🔄 ĐỔI VỊ TRÍ MỚI</button>
+    
+    <div id="controls-wrapper">
+        <div class="control-section">
+            <div class="slider-group">
+                <label>Độ rõ:</label>
+                <button class="btn-step" onclick="adjust('op', -5)">-</button>
+                <input type="range" id="opSlider" min="5" max="100" value="80">
+                <button class="btn-step" onclick="adjust('op', 5)">+</button>
+            </div>
+            <div class="slider-group">
+                <label>Cỡ sọc:</label>
+                <button class="btn-step" onclick="adjust('sz', -1)">-</button>
+                <input type="range" id="sizeSlider" min="2" max="10" value="4">
+                <button class="btn-step" onclick="adjust('sz', 1)">+</button>
+            </div>
+            <button id="resetBtn">🔄 VÁN MỚI / ĐỔI VỊ TRÍ</button>
+            <div id="auto-msg" class="msg-alert">🔥 Tuyệt vời! Độ khó đã tự tăng (Giảm 5% độ rõ).</div>
+        </div>
+
+        <div class="journal-section">
+            <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between;">
+                <span>NHẬT KÝ TẬP</span>
+                <span style="color:red; cursor:pointer; font-size: 11px;" onclick="clearJournal()">Xóa hết</span>
+            </div>
+            <ul id="journal-list"></ul>
+        </div>
     </div>
 
     <script>
         const grid = document.getElementById('grid-container');
         const opS = document.getElementById('opSlider');
         const sizeS = document.getElementById('sizeSlider');
+        const journalList = document.getElementById('journal-list');
+        const timerEl = document.getElementById('timer');
+        const autoMsg = document.getElementById('auto-msg');
         
-        // --- KHỞI TẠO ÂM THANH (Giống bản Anaglyph Piano của anh) ---
         const dingSound = new Audio('sounds/Ding.wav');
         const failSound = new Audio('sounds/Fail.wav');
-        dingSound.preload = 'auto';
-        failSound.preload = 'auto';
+        dingSound.preload = 'auto'; failSound.preload = 'auto';
 
         let cardData = [], first = null, second = null, pairs = 6, canClick = true;
+        let startTime, timerInterval, gameRunning = false, finalTimeSec = 0;
+
+        function adjust(type, step) {
+            const s = type === 'op' ? opS : sizeS;
+            s.value = parseInt(s.value) + step;
+            updateStyles();
+            autoMsg.style.display = 'none';
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                finalTimeSec = Math.floor((Date.now() - startTime) / 1000);
+                let m = Math.floor(finalTimeSec / 60).toString().padStart(2, '0');
+                let s = (finalTimeSec % 60).toString().padStart(2, '0');
+                timerEl.innerText = `${m}:${s}`;
+            }, 1000);
+        }
+
+        function saveRecord(timeStr) {
+            const now = new Date();
+            const dateStr = `${now.getDate()}/${now.getMonth()+1}`;
+            const records = JSON.parse(localStorage.getItem('gabor_records') || '[]');
+            const sessionNum = records.filter(r => r.date === dateStr).length + 1;
+            
+            const newRecord = {
+                date: dateStr,
+                session: sessionNum,
+                op: opS.value,
+                sz: sizeS.value,
+                time: timeStr
+            };
+            
+            records.unshift(newRecord);
+            localStorage.setItem('gabor_records', JSON.stringify(records.slice(0, 50)));
+            renderJournal();
+
+            // LOGIC TỰ ĐỘNG GIẢM ĐỘ RÕ NẾU < 12 GIÂY
+            if (finalTimeSec < 12 && opS.value > 5) {
+                setTimeout(() => {
+                    opS.value = parseInt(opS.value) - 5;
+                    updateStyles();
+                    autoMsg.style.display = 'block';
+                }, 500);
+            } else {
+                autoMsg.style.display = 'none';
+            }
+        }
+
+        function renderJournal() {
+            const records = JSON.parse(localStorage.getItem('gabor_records') || '[]');
+            journalList.innerHTML = records.map(r => 
+                `<li>${r.date}-L${r.session}-Rõ ${r.op}%-Sọc ${r.sz}-${r.time}</li>`
+            ).join('');
+        }
+
+        function clearJournal() { if(confirm("Xóa hết nhật ký?")) { localStorage.removeItem('gabor_records'); renderJournal(); } }
 
         function init() {
             grid.innerHTML = ''; cardData = []; first = null; second = null; pairs = 6; canClick = true;
             document.getElementById('pairs-left').innerText = pairs;
+            
             let angles = ["0deg", "45deg", "90deg", "135deg", "30deg", "60deg"];
             let pool = [...angles, ...angles].sort(() => Math.random() - 0.5);
 
-            pool.forEach((ang, i) => {
+            pool.forEach((ang) => {
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `<div class="gabor-content" style="--ang: ${ang};"></div>`;
@@ -55,32 +155,31 @@
                 let data = { dom: card, ang: ang, matched: false };
                 card.onclick = () => {
                     if (!canClick || data.matched || data === first) return;
+                    if (!gameRunning) { gameRunning = true; startTimer(); autoMsg.style.display = 'none'; }
                     card.classList.add('selected');
                     if (!first) { first = data; } 
                     else {
                         second = data;
                         if (first.ang === second.ang) {
-                            // CHỌN ĐÚNG
-                            dingSound.currentTime = 0; // Reset để phát liên tục được
-                            dingSound.play();
+                            dingSound.currentTime = 0; dingSound.play();
                             first.dom.classList.replace('selected', 'matched');
                             second.dom.classList.replace('selected', 'matched');
                             first.matched = second.matched = true;
                             pairs--;
                             document.getElementById('pairs-left').innerText = pairs;
                             first = null; second = null;
-                            if(pairs === 0) setTimeout(() => alert("Hoàn thành bài tập!"), 300);
+                            if(pairs === 0) {
+                                clearInterval(timerInterval);
+                                gameRunning = false;
+                                saveRecord(timerEl.innerText);
+                            }
                         } else {
-                            // CHỌN SAI
-                            canClick = false;
-                            failSound.currentTime = 0;
-                            failSound.play();
+                            canClick = false; failSound.currentTime = 0; failSound.play();
                             setTimeout(() => {
                                 first.dom.classList.remove('selected');
                                 second.dom.classList.remove('selected');
-                                first = null; second = null;
-                                canClick = true;
-                            }, 500);
+                                first = null; second = null; canClick = true;
+                            }, 400);
                         }
                     }
                 };
@@ -101,7 +200,9 @@
 
         opS.oninput = updateStyles;
         sizeS.oninput = updateStyles;
-        document.getElementById('resetBtn').onclick = init;
+        document.getElementById('resetBtn').onclick = () => { clearInterval(timerInterval); timerEl.innerText="00:00"; gameRunning=false; init(); };
+        
+        renderJournal();
         init();
     </script>
 </body>
