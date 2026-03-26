@@ -43,7 +43,7 @@
         }
         .hidden-link:hover { color: #fff; }
 
-        /* Lưới Menu App - 2 cột cân đối cho 8 game */
+        /* Lưới Menu App - 2 cột */
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -84,7 +84,7 @@
         }
 
         .app-title {
-            font-size: 22px; /* Giảm nhẹ để vừa các tên dài */
+            font-size: 22px;
             font-weight: bold;
         }
 
@@ -134,6 +134,14 @@
             font-weight: bold;
         }
         .footer-link:hover { text-decoration: underline; }
+
+        /* Logic căn giữa item thứ 9 trên PC */
+        @media (min-width: 601px) {
+            .menu-grid .app-card:last-child:nth-child(odd) {
+                grid-column: 1 / -1;
+                max-width: 380px;
+            }
+        }
 
         @media (max-width: 600px) {
             h1 { font-size: 32px; }
@@ -190,6 +198,11 @@
             <a href="cross/index.html" class="app-card">
                 <img src="assets/cross.png" alt="Circle Cross">
                 <div class="app-title">Circle Cross Training</div>
+            </a>
+
+            <a href="brock/index.html" class="app-card">
+                <img src="assets/brock.png" alt="Brockstring">
+                <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Brockstring</div>
             </a>
 
         </div>
