@@ -6,7 +6,13 @@
     <title>Snellen & Sloan - Shine Vision</title>
     <style>
         body { margin: 0; background: white; font-family: Arial, sans-serif; overflow: hidden; touch-action: none; }
-        canvas { display: block; background: white; }
+        /* Thêm thuộc tính hỗ trợ render ảnh mượt */
+        canvas { 
+            display: block; 
+            background: white; 
+            image-rendering: -webkit-optimize-contrast; 
+            image-rendering: crisp-edges;
+        }
         #info-layer { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
         .status { font-size: 18px; font-weight: bold; margin-bottom: 5px; color: black; }
         #swipe-hint { display: none; color: rgb(100,100,100); font-size: 12px; font-style: italic; margin-top: 5px; }
@@ -179,8 +185,18 @@
         }
 
         function draw() {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Tối ưu High-DPI cho Canvas sắc nét
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+            
+            ctx.scale(dpr, dpr);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high'; // Quan trọng để chống vỡ hình khi zoom nhỏ
+            
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
             const chartData = CHARTS[currentChart], level = chartData.levels[currentIndex];
             let visionScale = (currentChart === 'landolt') ? (0.1 / level) : (level / 50);
             const finalScale = baseScale * visionScale * chartData.internalScale;
@@ -191,7 +207,7 @@
                 const w = img.width * finalScale, h = img.height * finalScale;
                 ctx.save();
                 if(isMobile && isStageActive) ctx.globalAlpha = 0.2;
-                ctx.translate(canvas.width / 2, canvas.height / 2 - (isMobile ? 0 : 40));
+                ctx.translate(window.innerWidth / 2, window.innerHeight / 2 - (isMobile ? 0 : 40));
                 if(currentChart === 'landolt') ctx.rotate(rotation * Math.PI / 180);
                 ctx.drawImage(img, -w / 2, -h / 2, w, h); ctx.restore();
             }
@@ -199,18 +215,18 @@
             if(!isMobile && imgCache[chartData.rule]) {
                 const rs = baseScale * chartData.internalScale;
                 const rW = imgCache[chartData.rule].width * rs, rH = imgCache[chartData.rule].height * rs;
-                const rY = canvas.height - 180;
-                ctx.drawImage(imgCache[chartData.rule], (canvas.width - rW) / 2, rY, rW, rH);
+                const rY = window.innerHeight - 180;
+                ctx.drawImage(imgCache[chartData.rule], (window.innerWidth - rW) / 2, rY, rW, rH);
                 ctx.textAlign = "center"; ctx.fillStyle = "rgb(100, 100, 100)"; ctx.font = "13px Arial";
-                ctx.fillText("Chỉnh thước đúng 10cm khi kiểm tra ở 5m và 5cm khi kiểm tra ở 2,5m", canvas.width / 2, rY + rH + 20);
+                ctx.fillText("Chỉnh thước đúng 10cm khi kiểm tra ở 5m và 5cm khi kiểm tra ở 2,5m", window.innerWidth / 2, rY + rH + 20);
             }
 
-            const startY = canvas.height / 2 - (chartData.levels.length * 30) / 2;
+            const startY = window.innerHeight / 2 - (chartData.levels.length * 30) / 2;
             ctx.textAlign = "right"; ctx.font = isMobile ? "bold 14px Arial" : "bold 20px Arial";
             chartData.levels.forEach((v, i) => {
                 ctx.fillStyle = (i === currentIndex) ? "red" : "#ccc";
                 if(isMobile && isStageActive) ctx.globalAlpha = 0.1;
-                ctx.fillText(chartData.labels(v), canvas.width - 20, startY + i * 30);
+                ctx.fillText(chartData.labels(v), window.innerWidth - 20, startY + i * 30);
             });
             
             document.getElementById('pc-scale-display').innerText = (baseScale * 100).toFixed(1) + "%";
@@ -218,7 +234,7 @@
             document.getElementById('input-display').innerText = inputBuffer ? "Input: " + inputBuffer : "";
         }
 
-        // --- PC EVENTS (MOUSE & KEYBOARD) ---
+        // --- PC EVENTS ---
         let holdTimer, isHold = false;
         window.onmousedown = (e) => {
             if(window.innerWidth <= 768) return;
@@ -227,7 +243,7 @@
                 isHold = false; 
                 holdTimer = setTimeout(() => { 
                     isHold = true; 
-                    currentIndex = Math.max(0, currentIndex - 1); // Lên hàng
+                    currentIndex = Math.max(0, currentIndex - 1);
                     sessionCount = 0; sessionCorrect = 0; changeRandom(); draw();
                 }, 500); 
             }
@@ -237,7 +253,7 @@
             if(e.button === 2) { 
                 clearTimeout(holdTimer); 
                 if(!isHold) { 
-                    currentIndex = Math.min(CHARTS[currentChart].levels.length - 1, currentIndex + 1); // Xuống hàng
+                    currentIndex = Math.min(CHARTS[currentChart].levels.length - 1, currentIndex + 1);
                     sessionCount = 0; sessionCorrect = 0; changeRandom(); draw();
                 } 
             }
