@@ -64,12 +64,26 @@
         }
         .log-entry { border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
         .log-entry:last-child { border-bottom: none; }
+
+        /* Hiệu ứng nhấp nháy cho REC */
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+        .rec-indicator {
+            position: absolute; top: 30px; left: 30px;
+            display: none; align-items: center; gap: 8px;
+            font-family: monospace; font-weight: bold; color: #ff0000;
+            pointer-events: none; z-index: 10;
+        }
+        .dot { width: 12px; height: 12px; background-color: #ff0000; border-radius: 50%; animation: blink 1s infinite; }
     </style>
 </head>
 <body>
 
 <div id="appContainer">
     <div id="canvasContainer">
+        <div id="recOverlay" class="rec-indicator">
+            <div class="dot"></div>
+            <span>REC</span>
+        </div>
         <canvas id="brockCanvas"></canvas>
     </div>
 
@@ -99,7 +113,7 @@
         </div>
 
         <div class="control-group">
-            <label>Màu Cyan (Phải)</label>
+            <label>Dấu sắc (Mắt phải)</label>
             <input type="range" id="rL" min="0" max="255" value="0">
             <input type="range" id="gL" min="0" max="255" value="255">
             <input type="range" id="bL" min="0" max="255" value="255">
@@ -107,7 +121,7 @@
         </div>
 
         <div class="control-group">
-            <label>Màu Đỏ (Trái)</label>
+            <label>Dấu huyền (Mắt trái)</label>
             <input type="range" id="rR" min="0" max="255" value="255">
             <input type="range" id="gR" min="0" max="255" value="69">
             <input type="range" id="bR" min="0" max="255" value="0">
@@ -129,6 +143,7 @@
     const angleInfo = document.getElementById('angleInfo');
     const moveStatus = document.getElementById('moveStatus');
     const logContainer = document.getElementById('logContainer');
+    const recOverlay = document.getElementById('recOverlay');
     
     const posMinInp = document.getElementById('posMin');
     const posMaxInp = document.getElementById('posMax');
@@ -263,6 +278,7 @@
             sessionStartTime = performance.now();
             moveStatus.textContent = "ĐANG CHẠY";
             moveStatus.className = "status-tag status-active";
+            recOverlay.style.display = "flex"; // Hiện chấm đỏ REC
         } else {
             if (sessionStartTime > 0) {
                 totalTrainingTimeToday += (performance.now() - sessionStartTime);
@@ -271,6 +287,7 @@
             }
             moveStatus.textContent = "ĐANG DỪNG";
             moveStatus.className = "status-tag";
+            recOverlay.style.display = "none"; // Ẩn chấm đỏ REC
         }
     }
 
