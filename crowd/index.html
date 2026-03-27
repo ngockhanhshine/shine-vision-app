@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
-    <title>Advanced Crowding Training - Shine (v2.4)</title>
+    <title>Advanced Crowding Training - Shine (v2.5 - Speed Logic)</title>
     <style>
         :root {
             --primary-bg: #E8F5F1;
@@ -37,7 +37,7 @@
             max-height: 95vh;
         }
 
-        /* --- Desktop Order --- */
+        /* --- Desktop Layout --- */
         #training-area { display: flex; flex-direction: column; align-items: center; gap: 15px; }
         #display-board {
             width: 320px; height: 320px; background: white; border-radius: 15px;
@@ -65,7 +65,6 @@
 
         .control-label { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: block; }
         .slider-wrapper { display: flex; flex-direction: column; gap: 5px; }
-        .slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: #888; }
         
         .slider-control-hub { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; }
         .step-btn { width: 28px; height: 28px; background: #F5F7F9; border: 1px solid var(--btn-border); border-radius: 6px; cursor: pointer; font-weight: bold; }
@@ -78,10 +77,11 @@
             border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;
         }
 
-        #stats-panel { font-size: 12px; display: flex; flex-direction: column; gap: 5px; }
+        #stats-panel { font-size: 11px; display: flex; flex-direction: column; gap: 5px; }
         .stat-row { display: flex; align-items: center; gap: 8px; }
         .stat-correct { color: var(--sh-green); }
         .stat-wrong { color: var(--sh-red); }
+        .stat-speed { color: var(--sh-blue); font-weight: bold; border-top: 1px dashed #eee; padding-top: 5px; margin-top: 2px; }
 
         #log-panel {
             height: 180px; overflow-y: auto; font-family: 'Courier New', Courier, monospace;
@@ -107,42 +107,22 @@
             font-size: 9px; color: #bbb; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 5px;
         }
 
-        /* --- TỐI ƯU MOBILE (FIX ORDER) --- */
+        /* --- Mobile Layout --- */
         @media (max-width: 600px) {
             body { height: auto; overflow-y: auto; padding: 10px 0; }
             #app-container {
-                flex-direction: column;
-                width: 95%;
-                margin: 0 auto;
-                padding: 15px;
-                max-height: none;
-                gap: 15px;
-                background: none;
-                box-shadow: none;
+                flex-direction: column; width: 95%; margin: 0 auto; padding: 15px;
+                max-height: none; gap: 15px; background: none; box-shadow: none;
             }
-
-            /* 1. Nhóm Slider */
             .control-group { order: 1; width: 100%; box-sizing: border-box; }
-            
-            /* 2. Nút Randomize */
             #btn-randomize { order: 2; width: 100%; padding: 15px; font-size: 14px; }
-
-            /* 3. Ô tập (Chữ) */
             #training-area { order: 3; width: 100%; gap: 10px; }
             #display-board { width: 100%; max-width: 300px; height: auto; aspect-ratio: 1/1; margin: 0 auto; }
-            
-            /* 4. Đáp án */
             #quiz-area { order: 4; width: 100%; margin-top: 10px; }
             .answer-btn { width: 55px; height: 55px; font-size: 22px; }
-
-            /* 5. Nhật ký */
             #log-panel { order: 5; width: 100%; box-sizing: border-box; height: 160px; }
-
-            /* 6. Thống kê & Clear data */
             #stats-panel { order: 6; width: 100%; box-sizing: border-box; }
             .clear-data { order: 7; width: 100%; margin-bottom: 20px; }
-
-            /* Ẩn bớt container cha để layout panel con trực tiếp điều khiển order */
             #controls-panel { display: contents; } 
         }
     </style>
@@ -152,7 +132,7 @@
     <div id="app-container">
         <div id="training-area">
             <div id="display-board">
-                <div id="target-letter">D</div>
+                <div id="target-letter"></div>
                 <div id="f-t" class="flanker"></div><div id="f-tr" class="flanker"></div>
                 <div id="f-r" class="flanker"></div><div id="f-br" class="flanker"></div>
                 <div id="f-b" class="flanker"></div><div id="f-bl" class="flanker"></div>
@@ -203,6 +183,7 @@
             <div id="stats-panel">
                 <div class="stat-row stat-correct">✓ LẦN ĐÚNG: <strong id="score-correct">0</strong></div>
                 <div class="stat-row stat-wrong">🛇 LẦN SAI: <strong id="score-wrong">0</strong></div>
+                <div class="stat-speed">⚡ CHUỖI SIÊU TỐC (<2s): <strong id="score-speed">0</strong>/5</div>
             </div>
             <div class="clear-data" onclick="clearAllData()">Xóa toàn bộ lịch sử</div>
         </div>
@@ -217,7 +198,7 @@
         const logContainerEl = document.getElementById('log-container');
         const logPanelEl = document.getElementById('log-panel');
 
-        let currentTarget = '', correctCount = 0, wrongCount = 0, consecutiveCorrect = 0, totalQuestions = 0, isProcessing = false, startTime;
+        let currentTarget = '', correctCount = 0, wrongCount = 0, consecutiveSpeedCorrect = 0, totalQuestions = 0, isProcessing = false, startTime;
         let gameLogs = [];
 
         function init() {
@@ -240,13 +221,30 @@
             const savedStats = localStorage.getItem('shine_stats');
             if (savedSize) sizeInput.value = savedSize;
             if (savedCrowd) crowdInput.value = savedCrowd;
-            if (savedStats) { const stats = JSON.parse(savedStats); correctCount = stats.correct || 0; wrongCount = stats.wrong || 0; totalQuestions = stats.total || 0; document.getElementById('score-correct').innerText = correctCount; document.getElementById('score-wrong').innerText = wrongCount; }
+            if (savedStats) { 
+                const stats = JSON.parse(savedStats); 
+                correctCount = stats.correct || 0; 
+                wrongCount = stats.wrong || 0; 
+                totalQuestions = stats.total || 0; 
+                consecutiveSpeedCorrect = stats.speedChain || 0;
+                document.getElementById('score-correct').innerText = correctCount; 
+                document.getElementById('score-wrong').innerText = wrongCount;
+                document.getElementById('score-speed').innerText = consecutiveSpeedCorrect;
+            }
             if (savedLogs) { gameLogs = JSON.parse(savedLogs); gameLogs.forEach(log => renderLogEntry(log, false)); }
             updateVisuals();
         }
 
         function saveSettings() { localStorage.setItem('shine_size', sizeInput.value); localStorage.setItem('shine_crowd', crowdInput.value); }
-        function saveGameData() { localStorage.setItem('shine_logs', JSON.stringify(gameLogs)); localStorage.setItem('shine_stats', JSON.stringify({ correct: correctCount, wrong: wrongCount, total: totalQuestions })); }
+        function saveGameData() { 
+            localStorage.setItem('shine_logs', JSON.stringify(gameLogs)); 
+            localStorage.setItem('shine_stats', JSON.stringify({ 
+                correct: correctCount, 
+                wrong: wrongCount, 
+                total: totalQuestions,
+                speedChain: consecutiveSpeedCorrect
+            })); 
+        }
         function clearAllData() { if(confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử và cài đặt?")) { localStorage.clear(); location.reload(); } }
         function step(v, el) { el.value = Math.max(el.min, Math.min(el.max, parseInt(el.value) + v)); updateVisuals(); }
 
@@ -275,13 +273,43 @@
 
         function check(sel) {
             if (isProcessing) return; isProcessing = true;
-            const time = ((performance.now() - startTime) / 1000).toFixed(2);
+            const timeRaw = (performance.now() - startTime) / 1000;
+            const time = timeRaw.toFixed(2);
             const isCorrect = sel === currentTarget;
-            if (isCorrect) { correctCount++; consecutiveCorrect++; document.getElementById('score-correct').innerText = correctCount; if (consecutiveCorrect === 5) { step(-1, sizeInput); step(-1, crowdInput); consecutiveCorrect = 0; saveSettings(); } beep(880, 0.1); } else { wrongCount++; consecutiveCorrect = 0; document.getElementById('score-wrong').innerText = wrongCount; beep(220, 0.3); }
+            
+            if (isCorrect) {
+                correctCount++;
+                // LOGIC MỚI: Chỉ tính vào chuỗi nếu < 2 giây
+                if (timeRaw < 2.0) {
+                    consecutiveSpeedCorrect++;
+                }
+                // Nếu đúng nhưng > 2s: Không tăng chuỗi, nhưng cũng không reset chuỗi.
+                
+                document.getElementById('score-correct').innerText = correctCount;
+                
+                // Đạt 5 câu siêu tốc -> Giảm độ khó 2 điểm
+                if (consecutiveSpeedCorrect >= 5) {
+                    step(-2, sizeInput);
+                    step(-2, crowdInput);
+                    consecutiveSpeedCorrect = 0;
+                    saveSettings();
+                }
+                beep(880, 0.1);
+            } else {
+                wrongCount++;
+                consecutiveSpeedCorrect = 0; // Sai cái là reset chuỗi siêu tốc ngay
+                document.getElementById('score-wrong').innerText = wrongCount;
+                beep(220, 0.3);
+            }
+
+            document.getElementById('score-speed').innerText = consecutiveSpeedCorrect;
+
             const newLog = { n: ++totalQuestions, res: isCorrect, s: sizeInput.value, c: crowdInput.value, t: time };
             gameLogs.unshift(newLog);
             if (gameLogs.length > 100) gameLogs.pop();
-            renderLogEntry(newLog, true); saveGameData();
+            renderLogEntry(newLog, true); 
+            saveGameData();
+            
             setTimeout(() => { isProcessing = false; randomize(); }, 800);
         }
 
