@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Anaglyph Piano Hardcore V3 - Shine Vision</title>
     <style>
         body { margin: 0; padding: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
@@ -78,8 +78,13 @@
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
 
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         const WIDTH = 1920, HEIGHT = 1080;
-        const HIT_ZONE_Y = HEIGHT * 0.85, HIT_WINDOW = 180, NOTE_HEIGHT = 100;
+        
+        // --- CHỈNH MOBILE: Hitzone nâng lên cao (60% từ trên xuống = 40% vùng bấm), Note dài gấp đôi ---
+        const HIT_ZONE_Y = isMobile ? HEIGHT * 0.6 : HEIGHT * 0.85;
+        const HIT_WINDOW = isMobile ? 250 : 180;
+        const NOTE_HEIGHT = isMobile ? 200 : 100;
 
         let numLanes = 4;
         const KEY_MAPS = {
@@ -101,7 +106,29 @@
         let startTime = 0, currentAudio = null, feedbackTimer = 0, feedbackText = "";
         let colorRed = {r:255, g:131, b:55}, colorCyan = {r:0, g:255, b:255};
 
-        const dingSound = new Audio('sounds/Ding.wav');
+        // --- XỬ LÝ AUDIO KHÔNG TRỄ (WEB AUDIO API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let dingBuffer = null;
+        async function loadDing() {
+            try {
+                const response = await fetch('sounds/Ding.wav');
+                const arrayBuffer = await response.arrayBuffer();
+                dingBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            } catch(e) { console.warn("Ding.wav load failed, using fallback."); }
+        }
+        loadDing();
+
+        function playDing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (dingBuffer) {
+                const source = audioCtx.createBufferSource();
+                source.buffer = dingBuffer;
+                source.connect(audioCtx.destination);
+                source.start(0);
+            } else {
+                new Audio('sounds/Ding.wav').cloneNode().play();
+            }
+        }
         const failSound = new Audio('sounds/Fail.wav');
 
         // --- HỆ THỐNG HIỆU ỨNG NỔ ---
@@ -136,7 +163,6 @@
             }
         }
 
-        // --- LOCAL STORAGE ---
         function saveConfig() {
             localStorage.setItem('anaglyph_config', JSON.stringify({
                 colorRed, colorCyan, numLanes
@@ -150,7 +176,6 @@
                 colorRed = config.colorRed;
                 colorCyan = config.colorCyan;
                 setMode(config.numLanes || 4);
-                // Cập nhật UI
                 document.getElementById('r1').value = colorRed.r;
                 document.getElementById('g1').value = colorRed.g;
                 document.getElementById('b1').value = colorRed.b;
@@ -205,6 +230,14 @@
         }
 
         async function handleStart() {
+            // --- FULLSCREEN CHỈ TRÊN MOBILE ---
+            if (isMobile) {
+                if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+                else if (document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen();
+            }
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
             const fileInput = document.getElementById('audio-upload');
             let bpm = (fileInput.files.length > 0) ? parseInt(document.getElementById('custom-bpm').value) : SONGS[selectedSongIdx].bpm;
             let audioSrc = (fileInput.files.length > 0) ? URL.createObjectURL(fileInput.files[0]) : SONGS[selectedSongIdx].file;
@@ -233,15 +266,12 @@
 
             ctx.fillStyle = "white"; ctx.fillRect(0, 0, WIDTH, HEIGHT);
             
-            // Vẽ lưới
             ctx.strokeStyle = "#f5f5f5"; ctx.lineWidth = 2;
             for(let i=1; i<numLanes; i++) { ctx.beginPath(); ctx.moveTo(i * laneW, 0); ctx.lineTo(i * laneW, HEIGHT); ctx.stroke(); }
 
-            // Hit zone
             ctx.strokeStyle = "#ddd"; ctx.lineWidth = 4;
             ctx.beginPath(); ctx.moveTo(0, HIT_ZONE_Y); ctx.lineTo(WIDTH, HIT_ZONE_Y); ctx.stroke();
 
-            // Notes
             for (let i = notes.length - 1; i >= 0; i--) {
                 let n = notes[i]; n.update(currentTime);
                 if (!n.hit) {
@@ -250,14 +280,12 @@
                 } else { notes.splice(i, 1); }
             }
 
-            // Particles (Hiệu ứng nổ)
             for (let i = particles.length - 1; i >= 0; i--) {
                 particles[i].update();
                 particles[i].draw();
                 if (particles[i].alpha <= 0) particles.splice(i, 1);
             }
 
-            // Keys
             const fontSize = numLanes > 8 ? 35 : 50;
             ctx.font = `bold ${fontSize}px Arial`; ctx.textAlign = "center";
             laneKeys.forEach((key, i) => {
@@ -266,7 +294,6 @@
                 ctx.fillText(key.toUpperCase(), i * laneW + (laneW/2), HIT_ZONE_Y + fontSize + 25);
             });
 
-            // Score & Feedback
             ctx.textAlign = "left"; ctx.fillStyle = "#333"; ctx.font = "bold 45px Arial";
             ctx.fillText(`SCORE: ${score}`, 50, 80);
             if (feedbackTimer > 0) {
@@ -275,7 +302,11 @@
                 feedbackTimer--;
             }
 
-            if (currentAudio.ended) { gameState = 'MENU'; uiLayer.style.display = 'flex'; }
+            if (currentAudio.ended) { 
+                gameState = 'MENU'; 
+                uiLayer.style.display = 'flex'; 
+                if (isMobile && document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+            }
             requestAnimationFrame(gameLoop);
         }
 
@@ -285,9 +316,9 @@
             for (let n of notes) {
                 if (n.lane === laneIdx && !n.hit && Math.abs(n.y - HIT_ZONE_Y) < HIT_WINDOW) {
                     n.hit = true; found = true;
-                    dingSound.cloneNode().play();
+                    playDing();
                     score += 10; feedbackText = "PERFECT"; feedbackTimer = 20;
-                    createExplosion(laneIdx); // Kích hoạt hiệu ứng nổ
+                    createExplosion(laneIdx);
                     break;
                 }
             }
