@@ -13,13 +13,13 @@
             background-color: #000000;
             color: #FFFFFF;
             margin: 0;
-            padding: 20px; /* Giảm padding để tối ưu không gian */
+            padding: 20px;
             display: flex;
             justify-content: center;
         }
 
         .container {
-            max-width: 1000px; /* Tăng độ rộng để chứa 3 cột thoải mái hơn */
+            max-width: 1000px;
             width: 100%;
             text-align: center;
         }
@@ -43,18 +43,18 @@
         }
         .hidden-link:hover { color: #fff; }
 
-        /* --- CẬP NHẬT LƯỚI 3 CỘT (3x3) --- */
+        /* Menu Grid 3 cột */
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* Chia 3 cột đều nhau */
-            gap: 15px; /* Giảm khoảng cách giữa các ô một chút cho gọn */
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
             margin-bottom: 40px;
             justify-items: center;
         }
 
         .app-card {
             border: 2px solid #FFFFFF;
-            border-radius: 20px; /* Giảm bo góc nhẹ cho cân đối */
+            border-radius: 20px;
             padding: 15px 10px;
             text-decoration: none;
             color: white;
@@ -64,7 +64,7 @@
             align-items: center;
             background: transparent;
             width: 100%;
-            max-width: 300px; /* Thu nhỏ card lại để vừa 3 cột */
+            max-width: 300px;
             box-sizing: border-box;
         }
 
@@ -75,7 +75,7 @@
         }
 
         .app-card img {
-            width: 100%; /* Để ảnh tự co dãn theo card */
+            width: 100%;
             max-width: 140px;
             height: 90px;
             object-fit: cover;
@@ -85,7 +85,7 @@
         }
 
         .app-title {
-            font-size: 18px; /* Giảm size chữ để tránh bị tràn hàng */
+            font-size: 17px;
             font-weight: bold;
             line-height: 1.2;
         }
@@ -100,7 +100,6 @@
             margin: 30px auto;
         }
 
-        /* Lưới ảnh kết quả */
         .results-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -136,14 +135,14 @@
         }
         .footer-link:hover { text-decoration: underline; }
 
-        /* --- Responsive: Tự động điều chỉnh theo màn hình --- */
+        /* Responsive */
         @media (max-width: 900px) {
-            .menu-grid { grid-template-columns: repeat(2, 1fr); } /* Màn hình vừa: 2 cột */
+            .menu-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 600px) {
             h1 { font-size: 28px; }
-            .menu-grid { grid-template-columns: 1fr; } /* Mobile: 1 cột */
+            .menu-grid { grid-template-columns: 1fr; }
             .results-grid { grid-template-columns: 1fr 1fr; }
             .app-card { max-width: 100%; }
         }
@@ -202,6 +201,11 @@
             <a href="brock/index.html" class="app-card">
                 <img src="assets/brock.png" alt="Brockstring">
                 <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Brockstring</div>
+            </a>
+
+            <a href="pianoh/index.html" class="app-card">
+                <img src="assets/pianoh.png" alt="Piano Hardcore">
+                <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano Hardcore</div>
             </a>
 
         </div>
