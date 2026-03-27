@@ -99,7 +99,7 @@
         </div>
 
         <div class="control-group">
-            <label>Màu dấu Sắc</label>
+            <label>Màu Cyan (Phải)</label>
             <input type="range" id="rL" min="0" max="255" value="0">
             <input type="range" id="gL" min="0" max="255" value="255">
             <input type="range" id="bL" min="0" max="255" value="255">
@@ -107,7 +107,7 @@
         </div>
 
         <div class="control-group">
-            <label>Màu dấu Huyền</label>
+            <label>Màu Đỏ (Trái)</label>
             <input type="range" id="rR" min="0" max="255" value="255">
             <input type="range" id="gR" min="0" max="255" value="69">
             <input type="range" id="bR" min="0" max="255" value="0">
@@ -144,6 +144,33 @@
     let touchStartX = 0;
     let sessionStartTime = 0; 
     let totalTrainingTimeToday = 0; 
+
+    // --- LOGIC LƯU TRỮ ---
+    function saveSettings() {
+        const config = {
+            y: ySlider.value,
+            min: posMinInp.value,
+            max: posMaxInp.value,
+            cycle: cycleInp.value,
+            cL: { r: colors.left.r.value, g: colors.left.g.value, b: colors.left.b.value },
+            cR: { r: colors.right.r.value, g: colors.right.g.value, b: colors.right.b.value }
+        };
+        localStorage.setItem('brockSettings', JSON.stringify(config));
+    }
+
+    function loadSettings() {
+        const saved = localStorage.getItem('brockSettings');
+        if (saved) {
+            const c = JSON.parse(saved);
+            ySlider.value = c.y || 50;
+            posMinInp.value = c.min || 10;
+            posMaxInp.value = c.max || 50;
+            cycleInp.value = c.cycle || 4;
+            if(c.cL) { colors.left.r.value = c.cL.r; colors.left.g.value = c.cL.g; colors.left.b.value = c.cL.b; }
+            if(c.cR) { colors.right.r.value = c.cR.r; colors.right.g.value = c.cR.g; colors.right.b.value = c.cR.b; }
+            currentYVal = parseFloat(ySlider.value);
+        }
+    }
 
     function getRGB(side) {
         return `rgb(${side.r.value}, ${side.g.value}, ${side.b.value})`;
@@ -247,6 +274,11 @@
         }
     }
 
+    // --- EVENTS ---
+    document.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', saveSettings);
+    });
+
     document.addEventListener('touchstart', e => {
         if (e.target.type === 'range' || e.target.type === 'number') return;
         touchStartX = e.changedTouches[0].screenX;
@@ -271,6 +303,7 @@
         let val = parseFloat(ySlider.value);
         ySlider.value = e.deltaY < 0 ? Math.min(100, val + 1) : Math.max(0, val - 1);
         currentYVal = parseFloat(ySlider.value);
+        saveSettings();
     }, { passive: false });
 
     window.addEventListener('beforeunload', () => {
@@ -286,6 +319,9 @@
     }
 
     window.addEventListener('resize', resize);
+    
+    // Khởi tạo
+    loadSettings();
     resize();
     renderLog();
     requestAnimationFrame(draw);
