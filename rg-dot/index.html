@@ -10,14 +10,13 @@
         
         #ui-layer { position: absolute; background: white; padding: 20px; border-radius: 12px; display: flex; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 95%; z-index: 10; max-height: 90vh; overflow-y: auto; }
         
-        /* Responsive Menu cho Mobile */
         @media (max-width: 600px) {
             #ui-layer { flex-direction: column; gap: 10px; padding: 15px; top: 10px; }
             .column { min-width: unset !important; width: 100%; }
             h2 { font-size: 16px !important; margin-bottom: 5px; }
             .btn { padding: 10px; font-size: 14px; }
             .btn-start { padding: 12px; margin-top: 10px; }
-            p { display: none; } /* Ẩn bớt text hướng dẫn trên Mobile cho gọn */
+            p { display: none; }
         }
 
         .column { display: flex; flex-direction: column; min-width: 250px; }
@@ -39,6 +38,12 @@
 
     <div id="ui-layer">
         <div class="column">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <a href="https://shinevisioncenter.com" target="_blank" 
+                   style="text-decoration: none; color: #d32f2f; font-weight: bold; font-size: 22px;">
+                   KHÔI PHỤC THỊ LỰC SHINE
+                </a>
+            </div>
             <h2>1. ĐỘ KHÓ</h2>
             <div class="difficulty-btns">
                 <button class="btn" id="diff-3" onclick="setDiff(3)">DỄ (3 Giây)</button>
@@ -80,7 +85,6 @@
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
 
-        // Kiểm tra xem thiết bị có phải là điện thoại/máy tính bảng không
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth < 600);
 
         function resize() {
@@ -91,8 +95,6 @@
         resize();
 
         let score = 0, level = 1, timeLimit = 2;
-        
-        // KÍCH THƯỚC: Nếu là Mobile thì giảm một nửa so với PC
         const baseRadius = isMobile ? 40 : 80;
         const baseLetterSize = isMobile ? 45 : 90;
 
@@ -101,9 +103,47 @@
         let currentRound = null;
         let roundStartTime = 0;
 
-        // Âm thanh (anh nhớ đặt file vào đúng thư mục sounds)
-        const dingSound = new Audio('sounds/Ding.wav');
-        const failSound = new Audio('sounds/Fail.wav');
+        // --- WEB AUDIO API SIÊU TỐC ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let soundBuffers = {};
+
+        async function loadSound(name, url) {
+            try {
+                const response = await fetch(url);
+                const arrayBuffer = await response.arrayBuffer();
+                soundBuffers[name] = await audioCtx.decodeAudioData(arrayBuffer);
+            } catch (e) {
+                console.warn(`Lưu ý: Không tìm thấy file ${url}, sử dụng âm thanh mặc định.`);
+                generateFallbackSound(name);
+            }
+        }
+
+        // Tạo âm thanh "tích" và "tùng" nếu file bị lỗi hoặc không tải được
+        function generateFallbackSound(name) {
+            const duration = 0.1;
+            const sampleRate = audioCtx.sampleRate;
+            const buffer = audioCtx.createBuffer(1, sampleRate * duration, sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < data.length; i++) {
+                if (name === 'ding') data[i] = Math.sin(2 * Math.PI * 880 * i / sampleRate) * Math.exp(-9 * i / (sampleRate * duration));
+                else data[i] = (Math.random() * 2 - 1) * Math.exp(-12 * i / (sampleRate * duration));
+            }
+            soundBuffers[name] = buffer;
+        }
+
+        function playSound(name) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (soundBuffers[name]) {
+                const source = audioCtx.createBufferSource();
+                source.buffer = soundBuffers[name];
+                source.connect(audioCtx.destination);
+                source.start(0);
+            }
+        }
+
+        // Tải âm thanh ngay khi load trang
+        loadSound('ding', 'sounds/Ding.wav');
+        loadSound('fail', 'sounds/Fail.wav');
 
         let colorRed = { r: 255, g: 131, b: 55 };
         let colorCyan = { r: 0, g: 255, b: 255 };
@@ -146,6 +186,7 @@
         }
 
         function startGame() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             gameState = 'PLAYING';
             uiLayer.style.display = 'none';
             score = 0; level = 1;
@@ -154,9 +195,7 @@
         }
 
         function nextRound() {
-            // Padding để Dot không sát mép (tránh tai thỏ mobile)
             const padding = isMobile ? 60 : 100;
-            
             const isRed = Math.random() > 0.5;
             const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             currentRound = {
@@ -173,7 +212,7 @@
 
             const elapsed = (Date.now() - roundStartTime) / 1000;
             if (elapsed > timeLimit) {
-                failSound.cloneNode().play();
+                playSound('fail');
                 score--;
                 nextRound();
             }
@@ -181,20 +220,17 @@
             ctx.fillStyle = "#f5f5f5";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Vẽ Dot
             ctx.beginPath();
             ctx.fillStyle = `rgb(${currentRound.color.r},${currentRound.color.g},${currentRound.color.b})`;
             ctx.arc(currentRound.x, currentRound.y, radius, 0, Math.PI * 2);
             ctx.fill();
 
-            // Vẽ Letter
             ctx.fillStyle = "#f5f5f5";
             ctx.font = `bold ${letterSize}px Arial`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText(currentRound.letter, currentRound.x, currentRound.y);
 
-            // UI HUD (Giảm size HUD trên mobile cho đỡ vướng)
             ctx.fillStyle = "black";
             ctx.font = isMobile ? "14px Arial" : "16px Arial";
             ctx.textAlign = "left";
@@ -204,12 +240,10 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // --- ĐIỀU KHIỂN CHẠM (TOUCH) ---
         canvas.addEventListener('touchstart', (e) => {
             if (gameState !== 'PLAYING') return;
             e.preventDefault();
 
-            // Thoát bằng 2 ngón chạm cùng lúc
             if (e.touches.length >= 2) {
                 gameState = 'MENU';
                 uiLayer.style.display = 'flex';
@@ -221,20 +255,17 @@
             const touchX = touch.clientX - rect.left;
             const touchY = touch.clientY - rect.top;
 
-            // Kiểm tra chạm trúng Dot (Pytago)
             const dist = Math.sqrt((touchX - currentRound.x)**2 + (touchY - currentRound.y)**2);
-            // Vùng chạm trên mobile rộng hơn bán kính 1 chút (20px) cho dễ bấm
             const hitZone = isMobile ? radius + 20 : radius;
             
             if (dist < hitZone) { 
-                dingSound.cloneNode().play();
+                playSound('ding');
                 score++;
                 level++;
                 nextRound();
             }
         }, { passive: false });
 
-        // --- ĐIỀU KHIỂN PHÍM (PC) ---
         window.addEventListener('keydown', (e) => {
             if (gameState === 'PLAYING') {
                 if (e.key === 'Escape') {
@@ -249,10 +280,10 @@
                 const pressed = e.key.toUpperCase();
                 if (pressed.length === 1 && pressed >= 'A' && pressed <= 'Z') {
                     if (pressed === currentRound.letter) {
-                        dingSound.cloneNode().play();
+                        playSound('ding');
                         score++; level++; nextRound();
                     } else {
-                        failSound.cloneNode().play();
+                        playSound('fail');
                         score--; nextRound();
                     }
                 }
