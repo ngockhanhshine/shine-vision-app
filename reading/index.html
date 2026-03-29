@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anaglyph Reading Pro - Gray Display</title>
+    <title>Anaglyph Reading Pro - Shine Vision</title>
+    <script src="readme.js"></script>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, sans-serif; 
             padding: 20px; 
-            background-color: #e0e0e0; /* Nền ngoài tối hơn chút */
+            background-color: #e0e0e0;
             color: #333;
         }
 
@@ -54,7 +55,6 @@
             border: 1px solid #ccc; 
         }
 
-        /* --- CẬP NHẬT QUAN TRỌNG: NỀN KHUNG ĐỌC MÀU XÁM --- */
         #reading-content { 
             font-size: 28px; 
             font-weight: 700; 
@@ -63,16 +63,17 @@
             padding: 40px; 
             border: 2px solid #ccc; 
             border-radius: 10px; 
-            
-            /* Màu xám mục tiêu của anh */
             background-color: rgb(245, 245, 245); 
-            
             min-height: 400px;
             margin-bottom: 20px;
             text-align: justify;
         }
 
         /* Biến màu cho chữ Anaglyph */
+        :root {
+            --red-final: rgb(255,0,0);
+            --blue-final: rgb(0,0,255);
+        }
         .color-1 { color: var(--red-final); }
         .color-2 { color: var(--blue-final); }
         .color-3 { color: #000000; }
@@ -80,11 +81,25 @@
         select, textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
         button { background: #2c3e50; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         label { font-weight: bold; margin-bottom: 5px; display: block; }
+
+        /* Style cho trang Hướng dẫn */
+        #readme-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); color: white; z-index: 9999;
+            display: none; padding: 40px; box-sizing: border-box; overflow-y: auto;
+        }
+        #readme-inner { 
+            max-width: 800px; margin: 0 auto; line-height: 1.6; font-size: 16px; 
+            background: #fff; color: #333; padding: 30px; border-radius: 12px;
+            position: relative;
+        }
+        #close-btn { 
+            position: absolute; top: 10px; right: 20px; font-size: 30px; 
+            color: #333; cursor: pointer; font-weight: bold; 
+        }
     </style>
 </head>
-<body>
-
-<div class="container">
+<body oncontextmenu="return false;"> <div class="container">
     <h2 style="margin-top:0">Anaglyph Reading Pro</h2>
     
     <div style="margin-bottom: 20px;">
@@ -119,6 +134,13 @@
     </div>
 </div>
 
+<div id="readme-overlay" onclick="closeReadme()">
+    <div id="readme-inner" onclick="event.stopPropagation()">
+        <span id="close-btn" onclick="closeReadme()">&times;</span>
+        <div id="readme-content">Đang tải hướng dẫn...</div>
+    </div>
+</div>
+
 <script src="data.js"></script>
 <script>
     const contentDiv = document.getElementById('reading-content');
@@ -126,13 +148,16 @@
 
     function init() {
         if (typeof stories !== 'undefined') {
+            storySelect.innerHTML = '<option value="">-- Chọn bài đọc --</option>';
             stories.forEach((s, index) => {
                 storySelect.add(new Option(s.title, index));
             });
         }
         const saved = JSON.parse(localStorage.getItem('ana-reading-rgb'));
         if(saved) {
-            ['r1','g1','b1','r2','g2','b2'].forEach(id => document.getElementById(id).value = saved[id]);
+            ['r1','g1','b1','r2','g2','b2'].forEach(id => {
+                if(document.getElementById(id)) document.getElementById(id).value = saved[id];
+            });
         }
         updateRGB();
     }
@@ -140,7 +165,8 @@
     function updateRGB() {
         const s = {};
         ['r1','g1','b1','r2','g2','b2'].forEach(id => {
-            s[id] = document.getElementById(id).value;
+            const el = document.getElementById(id);
+            s[id] = el.value;
             document.getElementById('v-' + id).innerText = s[id];
         });
         const c1 = `rgb(${s.r1},${s.g1},${s.b1})`;
@@ -165,6 +191,33 @@
         const t = document.getElementById('quick-input').value;
         if(t.trim()) { storySelect.value = ""; contentDiv.innerHTML = processText(t); }
     }
+
+    // --- TÍNH NĂNG MỚI: HƯỚNG DẪN & CHẶN PHÍM ---
+    function showReadme() {
+        const overlay = document.getElementById('readme-overlay');
+        const content = document.getElementById('readme-content');
+        if (typeof README_CONTENT !== 'undefined') {
+            content.innerHTML = README_CONTENT;
+        } else {
+            content.innerText = "Không tìm thấy nội dung hướng dẫn (Biến README_CONTENT chưa được định nghĩa trong readme.js)";
+        }
+        overlay.style.display = 'block';
+    }
+
+    function closeReadme() {
+        document.getElementById('readme-overlay').style.display = 'none';
+    }
+
+    window.addEventListener('keydown', (e) => {
+        // Ctrl + S hoặc F12
+        if (e.key === 'F12' || (e.ctrlKey && e.key.toLowerCase() === 's')) {
+            e.preventDefault();
+            showReadme();
+        }
+    });
+
+    // Chặn chuột phải trên mọi phần tử (bao gồm canvas nếu có sau này)
+    document.addEventListener('contextmenu', event => event.preventDefault());
 
     init();
 </script>
