@@ -33,12 +33,29 @@
         .demo-box { height: 30px; margin-top: 5px; border-radius: 3px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: bold; }
         .start-btn { background: #d32f2f; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         #rotate-message { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #fff; z-index: 999; justify-content: center; align-items: center; text-align: center; }
+        
+        /* CSS CHO BẢNG HƯỚNG DẪN */
+        #guide-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 15px; max-width: 600px; width: 90%;
+            max-height: 80vh; overflow-y: auto; position: relative; font-size: 14px; line-height: 1.6;
+        }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; font-weight: bold; color: #d32f2f; }
+        
         @media screen and (orientation: portrait) and (max-width: 900px) { #rotate-message { display: flex; } }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;"> <div id="rotate-message"><div>🔄 Vui lòng xoay ngang điện thoại!</div></div>
 
-    <div id="rotate-message"><div>🔄 Vui lòng xoay ngang điện thoại!</div></div>
+    <div id="guide-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="toggleGuide(false)">&times;</span>
+            <div id="guide-body">Đang tải hướng dẫn...</div>
+        </div>
+    </div>
 
     <div id="ui-layer">
         <div class="column">
@@ -73,7 +90,7 @@
 
     <canvas id="gameCanvas" width="1920" height="1080"></canvas>
 
-    <script>
+    <script src="readme.js"></script> <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
@@ -81,7 +98,6 @@
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         const WIDTH = 1920, HEIGHT = 1080;
         
-        // --- CHỈNH MOBILE: Hitzone nâng lên cao (60% từ trên xuống = 40% vùng bấm), Note dài gấp đôi ---
         const HIT_ZONE_Y = isMobile ? HEIGHT * 0.6 : HEIGHT * 0.85;
         const HIT_WINDOW = isMobile ? 250 : 180;
         const NOTE_HEIGHT = isMobile ? 200 : 100;
@@ -106,7 +122,7 @@
         let startTime = 0, currentAudio = null, feedbackTimer = 0, feedbackText = "";
         let colorRed = {r:255, g:131, b:55}, colorCyan = {r:0, g:255, b:255};
 
-        // --- XỬ LÝ AUDIO KHÔNG TRỄ (WEB AUDIO API) ---
+        // --- WEB AUDIO API ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let dingBuffer = null;
         async function loadDing() {
@@ -114,7 +130,7 @@
                 const response = await fetch('sounds/Ding.wav');
                 const arrayBuffer = await response.arrayBuffer();
                 dingBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-            } catch(e) { console.warn("Ding.wav load failed, using fallback."); }
+            } catch(e) { console.warn("Audio load failed."); }
         }
         loadDing();
 
@@ -131,7 +147,43 @@
         }
         const failSound = new Audio('sounds/Fail.wav');
 
-        // --- HỆ THỐNG HIỆU ỨNG NỔ ---
+        // --- MODAL & HOTKEYS ---
+        function toggleGuide(show) {
+            const modal = document.getElementById('guide-modal');
+            const body = document.getElementById('guide-body');
+            if (show) {
+                // Giả sử biến contentGuide nằm trong readme.js
+                body.innerHTML = typeof contentGuide !== 'undefined' ? contentGuide : "Chưa có nội dung hướng dẫn.";
+                modal.style.display = 'flex';
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            // F12 hoặc Ctrl + S
+            if (e.key === 'F12' || (e.ctrlKey && e.key === 's')) {
+                e.preventDefault();
+                toggleGuide(true);
+            }
+            if (e.key === 'Escape') { 
+                if (document.getElementById('guide-modal').style.display === 'flex') {
+                    toggleGuide(false);
+                } else if(currentAudio) {
+                    currentAudio.pause(); gameState = 'MENU'; uiLayer.style.display = 'flex'; 
+                }
+            }
+
+            if (gameState === 'PLAYING') {
+                let idx = laneKeys.indexOf(e.key.toLowerCase());
+                if (idx !== -1) checkHit(idx);
+            }
+        });
+
+        // Chặn chuột phải trên Canvas cụ thể (đã có oncontextmenu ở body nhưng thêm cho chắc)
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        // --- PHẦN LOGIC GIỮ NGUYÊN ---
         class Particle {
             constructor(x, y, color) {
                 this.x = x; this.y = y; this.color = color;
@@ -140,16 +192,11 @@
                 this.alpha = 1;
                 this.size = Math.random() * 8 + 4;
             }
-            update() {
-                this.x += this.vx; this.y += this.vy;
-                this.alpha -= 0.03;
-            }
+            update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.03; }
             draw() {
                 ctx.globalAlpha = this.alpha;
                 ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
                 ctx.globalAlpha = 1.0;
             }
         }
@@ -158,33 +205,20 @@
             const laneW = WIDTH / numLanes;
             const centerX = laneIdx * laneW + laneW / 2;
             const color = (laneIdx % 2 === 0) ? `rgb(${colorRed.r},${colorRed.g},${colorRed.b})` : `rgb(${colorCyan.r},${colorCyan.g},${colorCyan.b})`;
-            for (let i = 0; i < 15; i++) {
-                particles.push(new Particle(centerX, HIT_ZONE_Y, color));
-            }
+            for (let i = 0; i < 15; i++) { particles.push(new Particle(centerX, HIT_ZONE_Y, color)); }
         }
 
-        function saveConfig() {
-            localStorage.setItem('anaglyph_config', JSON.stringify({
-                colorRed, colorCyan, numLanes
-            }));
-        }
+        function saveConfig() { localStorage.setItem('anaglyph_config', JSON.stringify({ colorRed, colorCyan, numLanes })); }
 
         function loadConfig() {
             const data = localStorage.getItem('anaglyph_config');
             if (data) {
                 const config = JSON.parse(data);
-                colorRed = config.colorRed;
-                colorCyan = config.colorCyan;
+                colorRed = config.colorRed; colorCyan = config.colorCyan;
                 setMode(config.numLanes || 4);
-                document.getElementById('r1').value = colorRed.r;
-                document.getElementById('g1').value = colorRed.g;
-                document.getElementById('b1').value = colorRed.b;
-                document.getElementById('r2').value = colorCyan.r;
-                document.getElementById('g2').value = colorCyan.g;
-                document.getElementById('b2').value = colorCyan.b;
-            } else {
-                setMode(4);
-            }
+                document.getElementById('r1').value = colorRed.r; document.getElementById('g1').value = colorRed.g; document.getElementById('b1').value = colorRed.b;
+                document.getElementById('r2').value = colorCyan.r; document.getElementById('g2').value = colorCyan.g; document.getElementById('b2').value = colorCyan.b;
+            } else { setMode(4); }
             updateUIColors();
         }
 
@@ -230,28 +264,21 @@
         }
 
         async function handleStart() {
-            // --- FULLSCREEN CHỈ TRÊN MOBILE ---
             if (isMobile) {
                 if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
                 else if (document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen();
             }
-
             if (audioCtx.state === 'suspended') audioCtx.resume();
-
             const fileInput = document.getElementById('audio-upload');
             let bpm = (fileInput.files.length > 0) ? parseInt(document.getElementById('custom-bpm').value) : SONGS[selectedSongIdx].bpm;
             let audioSrc = (fileInput.files.length > 0) ? URL.createObjectURL(fileInput.files[0]) : SONGS[selectedSongIdx].file;
 
-            gameState = 'PLAYING';
-            uiLayer.style.display = 'none';
+            gameState = 'PLAYING'; uiLayer.style.display = 'none';
             score = 0; notes = []; particles = [];
-            
             const beatInterval = 60 / bpm;
             const noteSpeed = HIT_ZONE_Y / (beatInterval * 2);
 
-            for (let i = 0; i < 1000; i++) {
-                notes.push(new Note(Math.floor(Math.random() * numLanes), 3.0 + i * beatInterval, noteSpeed));
-            }
+            for (let i = 0; i < 1000; i++) { notes.push(new Note(Math.floor(Math.random() * numLanes), 3.0 + i * beatInterval, noteSpeed)); }
 
             currentAudio = new Audio(audioSrc);
             currentAudio.play();
@@ -263,12 +290,9 @@
             if (gameState !== 'PLAYING') return;
             let currentTime = (performance.now() - startTime) / 1000;
             const laneW = WIDTH / numLanes;
-
             ctx.fillStyle = "white"; ctx.fillRect(0, 0, WIDTH, HEIGHT);
-            
             ctx.strokeStyle = "#f5f5f5"; ctx.lineWidth = 2;
             for(let i=1; i<numLanes; i++) { ctx.beginPath(); ctx.moveTo(i * laneW, 0); ctx.lineTo(i * laneW, HEIGHT); ctx.stroke(); }
-
             ctx.strokeStyle = "#ddd"; ctx.lineWidth = 4;
             ctx.beginPath(); ctx.moveTo(0, HIT_ZONE_Y); ctx.lineTo(WIDTH, HIT_ZONE_Y); ctx.stroke();
 
@@ -279,13 +303,10 @@
                     if (n.y > HIT_ZONE_Y + 150) { failSound.cloneNode().play(); notes.splice(i, 1); feedbackText = "MISS"; feedbackTimer = 20; }
                 } else { notes.splice(i, 1); }
             }
-
             for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update();
-                particles[i].draw();
+                particles[i].update(); particles[i].draw();
                 if (particles[i].alpha <= 0) particles.splice(i, 1);
             }
-
             const fontSize = numLanes > 8 ? 35 : 50;
             ctx.font = `bold ${fontSize}px Arial`; ctx.textAlign = "center";
             laneKeys.forEach((key, i) => {
@@ -293,7 +314,6 @@
                 ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
                 ctx.fillText(key.toUpperCase(), i * laneW + (laneW/2), HIT_ZONE_Y + fontSize + 25);
             });
-
             ctx.textAlign = "left"; ctx.fillStyle = "#333"; ctx.font = "bold 45px Arial";
             ctx.fillText(`SCORE: ${score}`, 50, 80);
             if (feedbackTimer > 0) {
@@ -301,10 +321,8 @@
                 ctx.textAlign = "center"; ctx.fillText(feedbackText, WIDTH/2, 250);
                 feedbackTimer--;
             }
-
-            if (currentAudio.ended) { 
-                gameState = 'MENU'; 
-                uiLayer.style.display = 'flex'; 
+            if (currentAudio.ended) { 
+                gameState = 'MENU'; uiLayer.style.display = 'flex'; 
                 if (isMobile && document.fullscreenElement) document.exitFullscreen().catch(()=>{});
             }
             requestAnimationFrame(gameLoop);
@@ -324,14 +342,6 @@
             }
             if (!found) failSound.cloneNode().play();
         }
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') { if(currentAudio) currentAudio.pause(); gameState = 'MENU'; uiLayer.style.display = 'flex'; }
-            if (gameState === 'PLAYING') {
-                let idx = laneKeys.indexOf(e.key.toLowerCase());
-                if (idx !== -1) checkHit(idx);
-            }
-        });
 
         canvas.addEventListener('touchstart', (e) => {
             if (gameState !== 'PLAYING') return;
