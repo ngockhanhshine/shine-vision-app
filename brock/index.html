@@ -53,19 +53,17 @@
         .status-tag { font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; background: #eee; color: #666; }
         .status-active { background: #e8f5e9; color: #2e7d32; font-weight: bold; }
         
-        /* Ô Nhật ký được kéo dài gấp 5 lần */
         #logContainer {
             background: #fff; border: 1px solid #eee; border-radius: 4px;
             padding: 10px; font-family: monospace; font-size: 0.8rem;
-            min-height: 400px; /* Độ dài tối thiểu mới */
-            max-height: 1250px; /* Độ dài tối đa mới (gấp 5 lần bản cũ) */
+            min-height: 400px;
+            max-height: 1250px;
             overflow-y: auto; color: #444; line-height: 1.8;
             box-shadow: inset 0 0 5px rgba(0,0,0,0.02);
         }
         .log-entry { border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
         .log-entry:last-child { border-bottom: none; }
 
-        /* Hiệu ứng nhấp nháy cho REC */
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
         .rec-indicator {
             position: absolute; top: 30px; left: 30px;
@@ -74,9 +72,34 @@
             pointer-events: none; z-index: 10;
         }
         .dot { width: 12px; height: 12px; background-color: #ff0000; border-radius: 50%; animation: blink 1s infinite; }
+
+        /* Overlay Hướng dẫn */
+        #guideOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); color: white; z-index: 2000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .guide-modal {
+            background: #fff; color: #333; padding: 30px; border-radius: 12px;
+            max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
+            position: relative; line-height: 1.6;
+        }
+        .guide-modal h2 { font-size: 1.5rem; margin-bottom: 20px; color: #000; border-bottom: 2px solid #f0f0f0; }
+        .close-guide {
+            position: absolute; top: 15px; right: 20px;
+            font-size: 24px; cursor: pointer; color: #999;
+        }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
+
+<div id="guideOverlay">
+    <div class="guide-modal">
+        <span class="close-guide" id="closeGuide">&times;</span>
+        <div id="guideContent">Đang tải hướng dẫn...</div>
+    </div>
+</div>
 
 <div id="appContainer">
     <div id="canvasContainer">
@@ -135,6 +158,7 @@
     </div>
 </div>
 
+<script src="readme.js"></script>
 <script>
     const canvas = document.getElementById('brockCanvas');
     const ctx = canvas.getContext('2d');
@@ -144,6 +168,9 @@
     const moveStatus = document.getElementById('moveStatus');
     const logContainer = document.getElementById('logContainer');
     const recOverlay = document.getElementById('recOverlay');
+    const guideOverlay = document.getElementById('guideOverlay');
+    const guideContent = document.getElementById('guideContent');
+    const closeGuide = document.getElementById('closeGuide');
     
     const posMinInp = document.getElementById('posMin');
     const posMaxInp = document.getElementById('posMax');
@@ -159,6 +186,27 @@
     let touchStartX = 0;
     let sessionStartTime = 0; 
     let totalTrainingTimeToday = 0; 
+
+    // --- LOGIC HƯỚNG DẪN ---
+    function showGuide() {
+        if (typeof readmeContent !== 'undefined') {
+            guideContent.innerHTML = readmeContent;
+        } else {
+            guideContent.innerHTML = "<h2>Hướng dẫn sử dụng</h2><p>Vui lòng kiểm tra file readme.js</p>";
+        }
+        guideOverlay.style.display = 'flex';
+    }
+
+    closeGuide.onclick = () => guideOverlay.style.display = 'none';
+    window.onclick = (e) => { if (e.target == guideOverlay) guideOverlay.style.display = 'none'; };
+
+    // --- PHÍM TẮT & CHUỘT PHẢI ---
+    window.addEventListener('keydown', e => {
+        if ((e.ctrlKey && e.key === 's') || e.key === 'F12') {
+            e.preventDefault();
+            showGuide();
+        }
+    });
 
     // --- LOGIC LƯU TRỮ ---
     function saveSettings() {
@@ -278,7 +326,7 @@
             sessionStartTime = performance.now();
             moveStatus.textContent = "ĐANG CHẠY";
             moveStatus.className = "status-tag status-active";
-            recOverlay.style.display = "flex"; // Hiện chấm đỏ REC
+            recOverlay.style.display = "flex";
         } else {
             if (sessionStartTime > 0) {
                 totalTrainingTimeToday += (performance.now() - sessionStartTime);
@@ -287,7 +335,7 @@
             }
             moveStatus.textContent = "ĐANG DỪNG";
             moveStatus.className = "status-tag";
-            recOverlay.style.display = "none"; // Ẩn chấm đỏ REC
+            recOverlay.style.display = "none";
         }
     }
 
@@ -337,7 +385,6 @@
 
     window.addEventListener('resize', resize);
     
-    // Khởi tạo
     loadSettings();
     resize();
     renderLog();
