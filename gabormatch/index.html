@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shine Vision - Adaptive Gabor</title>
+    <script src="readme.js"></script>
     <style>
         body { margin: 0; padding: 0; background-color: #7F7F7F; overflow: hidden; font-family: sans-serif; touch-action: none; display: flex; flex-direction: column; height: 100vh; }
         #game-ui { text-align: center; color: white; font-size: 16px; font-weight: bold; padding: 10px; background: rgba(0,0,0,0.2); }
@@ -31,14 +32,17 @@
         
         .msg-alert { color: #d32f2f; font-size: 11px; font-weight: bold; margin-top: 5px; display: none; }
 
+        /* Modal hướng dẫn đơn giản */
+        #instruction-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; color: white; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        #instruction-content { background: #fff; color: #333; padding: 20px; border-radius: 10px; max-width: 600px; margin: 40px auto; white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
+
         @media (max-width: 600px) {
             .journal-section { border-left: none; padding-left: 0; border-top: 1px solid #eee; padding-top: 10px; }
             .card { width: 75px; height: 75px; }
         }
     </style>
 </head>
-<body>
-    <div id="game-ui">Cặp còn lại: <span id="pairs-left">6</span> | <span id="timer">00:00</span></div>
+<body oncontextmenu="return false;"> <div id="game-ui">Cặp còn lại: <span id="pairs-left">6</span> | <span id="timer">00:00</span></div>
     <div id="grid-container"></div>
     
     <div id="controls-wrapper">
@@ -68,6 +72,13 @@
         </div>
     </div>
 
+    <div id="instruction-modal" onclick="this.style.display='none'">
+        <div id="instruction-content" onclick="event.stopPropagation()">
+            <div id="readme-text"></div>
+            <button onclick="document.getElementById('instruction-modal').style.display='none'" style="margin-top:20px; width:100%; padding:10px; cursor:pointer;">ĐÓNG</button>
+        </div>
+    </div>
+
     <script>
         const grid = document.getElementById('grid-container');
         const opS = document.getElementById('opSlider');
@@ -83,6 +94,29 @@
         let cardData = [], first = null, second = null, pairs = 6, canClick = true;
         let startTime, timerInterval, gameRunning = false, finalTimeSec = 0;
 
+        // --- XỬ LÝ PHÍM TẮT & HƯỚNG DẪN ---
+        function showInstructions() {
+            const modal = document.getElementById('instruction-modal');
+            const content = document.getElementById('readme-text');
+            // Giả sử file readme.js có biến: var instructions = "...";
+            content.innerText = typeof instructions !== 'undefined' ? instructions : "Không tìm thấy file readme.js hoặc nội dung hướng dẫn.";
+            modal.style.display = 'block';
+        }
+
+        window.addEventListener('keydown', function(e) {
+            // Chặn Ctrl + S
+            if ((e.ctrlKey || e.metaKey) && e.keyCode === 83) {
+                e.preventDefault();
+                showInstructions();
+            }
+            // Chặn F12
+            if (e.keyCode === 123) {
+                e.preventDefault();
+                showInstructions();
+            }
+        });
+
+        // --- GIỮ NGUYÊN LOGIC CŨ ---
         function adjust(type, step) {
             const s = type === 'op' ? opS : sizeS;
             s.value = parseInt(s.value) + step;
@@ -119,7 +153,6 @@
             localStorage.setItem('gabor_records', JSON.stringify(records.slice(0, 50)));
             renderJournal();
 
-            // LOGIC TỰ ĐỘNG GIẢM ĐỘ RÕ NẾU < 12 GIÂY
             if (finalTimeSec < 12 && opS.value > 5) {
                 setTimeout(() => {
                     opS.value = parseInt(opS.value) - 5;
