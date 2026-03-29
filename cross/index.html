@@ -119,9 +119,8 @@
                 position: absolute;
                 left: 0;
                 top: 0;
-                transform: translateX(-100%); /* Đưa stage tập sang bên TRÁI */
+                transform: translateX(-100%);
             }
-            /* Khi Training Mode: Đẩy Cài đặt sang PHẢI (100%), đưa Stage về 0 */
             body.training-mode #controls { transform: translateX(100%); }
             body.training-mode #game-stage { transform: translateX(0); }
         }
@@ -178,9 +177,48 @@
             border-radius: 10px;
             pointer-events: none;
         }
+
+        /* --- CSS Hướng dẫn sử dụng (Giống Piano) --- */
+        #readme-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #readme-content {
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            padding: 30px;
+            border-radius: 15px;
+            position: relative;
+            overflow-y: auto;
+            line-height: 1.6;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+        }
+        .close-readme {
+            position: absolute;
+            top: 15px; right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        #readme-text-container h1, #readme-text-container h2 { color: #007bff; }
+        #readme-text-container ul { padding-left: 20px; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
+
+    <div id="readme-modal">
+        <div id="readme-content">
+            <span class="close-readme" onclick="closeReadme()">&times;</span>
+            <div id="readme-text-container"></div>
+        </div>
+    </div>
 
     <div id="game-stage" onclick="handleStageClick()">
         <div id="rec-indicator">
@@ -262,6 +300,8 @@
         <div style="text-align: center; color: #aaa; font-size: 11px; padding-bottom: 20px;">Vuốt trái qua phải để tập</div>
     </div>
 
+    <script src="readme.js"></script>
+
     <script>
         let mode = 1;
         let isRecording = false;
@@ -277,6 +317,33 @@
             slider.addEventListener('input', updateStyles);
         });
 
+        // --- Chặn Chuột Phải ---
+        window.addEventListener('contextmenu', e => e.preventDefault());
+
+        // --- Xử lý Phím tắt (F12, Ctrl + S) ---
+        window.addEventListener('keydown', e => {
+            if (e.key === "F12" || (e.ctrlKey && e.key === "s")) {
+                e.preventDefault();
+                openReadme();
+            }
+            if (e.key === "Escape") closeReadme();
+        });
+
+        function openReadme() {
+            const container = document.getElementById('readme-text-container');
+            // readmeContent được lấy từ file readme.js
+            if (typeof readmeContent !== 'undefined') {
+                container.innerHTML = readmeContent;
+            } else {
+                container.innerHTML = "<h2>Hướng dẫn</h2><p>Vui lòng kiểm tra file readme.js</p>";
+            }
+            document.getElementById('readme-modal').style.display = 'flex';
+        }
+
+        function closeReadme() {
+            document.getElementById('readme-modal').style.display = 'none';
+        }
+
         // --- Xử lý Vuốt: Trái qua phải -> Tập, Phải qua trái -> Cài đặt ---
         let touchStartX = 0;
         document.addEventListener('touchstart', e => {
@@ -291,10 +358,8 @@
 
             if (Math.abs(diff) > 60) {
                 if (diff < 0) {
-                    // Vuốt từ Trái qua Phải (diff âm) -> Sang màn hình tập
                     document.body.classList.add('training-mode');
                 } else {
-                    // Vuốt từ Phải qua Trái (diff dương) -> Về cài đặt
                     document.body.classList.remove('training-mode');
                 }
             }
