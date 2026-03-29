@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Snellen & Sloan - Shine Vision</title>
+    <script src="readme.js"></script> 
     <style>
         body { margin: 0; background: white; font-family: Arial, sans-serif; overflow: hidden; touch-action: none; }
         /* Thêm thuộc tính hỗ trợ render ảnh mượt */
@@ -50,10 +51,26 @@
         
         #credit { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #505050; font-size: 13px; line-height: 1.4; pointer-events: none; z-index: 5; }
 
+        /* Style cho trang Hướng dẫn */
+        #readme-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); color: white; z-index: 1000;
+            display: none; padding: 40px; box-sizing: border-box; overflow-y: auto;
+        }
+        #readme-content { 
+            max-width: 800px; margin: 0 auto; line-height: 1.6; font-size: 16px; 
+            background: #fff; color: #333; padding: 30px; border-radius: 12px;
+        }
+        #close-btn { 
+            position: fixed; top: 20px; right: 30px; font-size: 30px; 
+            color: white; cursor: pointer; font-weight: bold; 
+        }
+
         @media (max-width: 768px) { 
             #menu-layer, #log-container { display: none; } 
             #pc-scale-display { display: none; }
             #swipe-hint { display: block; }
+            #readme-content { padding: 15px; font-size: 14px; }
         }
     </style>
 </head>
@@ -92,6 +109,13 @@
     <div id="credit">
         Phần mềm được phát triển Miễn Phí bởi<br>
         <b>Khôi phục thị lực Shine: Đơn vị đầu tiên tại VN sở hữu phương pháp tập mắt dành cho Lác Lé và Nhược Thị - 0973370148</b>
+    </div>
+
+    <div id="readme-overlay" onclick="closeReadme()">
+        <span id="close-btn">&times;</span>
+        <div id="readme-content" onclick="event.stopPropagation()">
+            Đang tải hướng dẫn...
+        </div>
     </div>
 
     <canvas id="snellenCanvas"></canvas>
@@ -185,7 +209,6 @@
         }
 
         function draw() {
-            // Tối ưu High-DPI cho Canvas sắc nét
             const dpr = window.devicePixelRatio || 1;
             canvas.width = window.innerWidth * dpr;
             canvas.height = window.innerHeight * dpr;
@@ -194,7 +217,7 @@
             
             ctx.scale(dpr, dpr);
             ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high'; // Quan trọng để chống vỡ hình khi zoom nhỏ
+            ctx.imageSmoothingQuality = 'high'; 
             
             ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
             const chartData = CHARTS[currentChart], level = chartData.levels[currentIndex];
@@ -234,6 +257,22 @@
             document.getElementById('input-display').innerText = inputBuffer ? "Input: " + inputBuffer : "";
         }
 
+        // --- NEW: README FUNCTIONS ---
+        function showReadme() {
+            const overlay = document.getElementById('readme-overlay');
+            const content = document.getElementById('readme-content');
+            // Giả định trong readme.js có biến README_CONTENT hoặc hàm getReadme()
+            if (typeof README_CONTENT !== 'undefined') {
+                content.innerHTML = README_CONTENT;
+            } else {
+                content.innerText = "Vui lòng kiểm tra file readme.js (Biến README_CONTENT chưa định nghĩa)";
+            }
+            overlay.style.display = 'block';
+        }
+        function closeReadme() {
+            document.getElementById('readme-overlay').style.display = 'none';
+        }
+
         // --- PC EVENTS ---
         let holdTimer, isHold = false;
         window.onmousedown = (e) => {
@@ -260,6 +299,13 @@
         };
 
         window.addEventListener('keydown', (e) => {
+            // Tính năng mới: Ctrl + S hoặc F12
+            if (e.key === 'F12' || (e.ctrlKey && e.key.toLowerCase() === 's')) {
+                e.preventDefault(); // Chặn lưu trang hoặc devtools
+                showReadme();
+                return;
+            }
+
             if (/^\d$/.test(e.key)) { inputBuffer += e.key; draw(); return; }
             if (e.key === 'Enter' && inputBuffer) {
                 baseScale = Math.max(0.1, Math.min(5.0, parseFloat(inputBuffer) / 1000));
