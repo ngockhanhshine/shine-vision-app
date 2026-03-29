@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
-    <title>Advanced Crowding Training - Shine (v2.5 - Speed Logic)</title>
+    <title>Advanced Crowding Training - Shine (v2.6 - Guide & Secure)</title>
+    <script src="readme.js"></script>
     <style>
         :root {
             --primary-bg: #E8F5F1;
@@ -107,6 +108,27 @@
             font-size: 9px; color: #bbb; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 5px;
         }
 
+        /* --- Modal Hướng dẫn (Giống Anaglyph Piano) --- */
+        #guide-modal {
+            display: none; position: fixed; z-index: 9999; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #fff; margin: 5% auto; padding: 30px;
+            border-radius: 20px; width: 80%; max-width: 600px;
+            max-height: 80vh; overflow-y: auto; position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown { from {transform: translateY(-50px); opacity: 0;} to {transform: translateY(0); opacity: 1;} }
+        .close-guide {
+            position: absolute; right: 20px; top: 15px; font-size: 28px;
+            font-weight: bold; color: #aaa; cursor: pointer;
+        }
+        .close-guide:hover { color: var(--sh-red); }
+        .guide-body { line-height: 1.6; color: #444; white-space: pre-wrap; font-size: 15px; }
+
         /* --- Mobile Layout --- */
         @media (max-width: 600px) {
             body { height: auto; overflow-y: auto; padding: 10px 0; }
@@ -127,7 +149,7 @@
         }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
     <div id="app-container">
         <div id="training-area">
@@ -189,6 +211,14 @@
         </div>
     </div>
 
+    <div id="guide-modal">
+        <div class="modal-content">
+            <span class="close-guide" onclick="toggleGuide()">&times;</span>
+            <h2 style="color: var(--sh-blue); border-bottom: 2px solid #eee; padding-bottom: 10px;">Hướng dẫn sử dụng</h2>
+            <div id="guide-content" class="guide-body"></div>
+        </div>
+    </div>
+
     <script>
         const possibleLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const targetEl = document.getElementById('target-letter');
@@ -203,6 +233,10 @@
 
         function init() {
             loadData();
+            // Load nội dung từ readme.js
+            const content = (typeof readmeContent !== 'undefined') ? readmeContent : "Vui lòng kiểm tra file readme.js";
+            document.getElementById('guide-content').innerText = content;
+
             sizeInput.oninput = () => { updateVisuals(); saveSettings(); };
             crowdInput.oninput = () => { updateVisuals(); saveSettings(); };
             document.getElementById('size-minus').onclick = () => { step(-1, sizeInput); saveSettings(); };
@@ -211,7 +245,24 @@
             document.getElementById('crowd-plus').onclick = () => { step(1, crowdInput); saveSettings(); };
             document.getElementById('btn-randomize').onclick = randomize;
             document.querySelectorAll('.answer-btn').forEach(btn => btn.onclick = () => check(btn.innerText));
+            
+            // Chặn chuột phải
+            document.addEventListener('contextmenu', e => e.preventDefault());
+
+            // Chặn Ctrl+S và F12
+            document.addEventListener('keydown', e => {
+                if (e.key === 'F12' || (e.ctrlKey && e.key === 's')) {
+                    e.preventDefault();
+                    toggleGuide();
+                }
+            });
+
             randomize();
+        }
+
+        function toggleGuide() {
+            const modal = document.getElementById('guide-modal');
+            modal.style.display = (modal.style.display === 'block') ? 'none' : 'block';
         }
 
         function loadData() {
@@ -279,15 +330,10 @@
             
             if (isCorrect) {
                 correctCount++;
-                // LOGIC MỚI: Chỉ tính vào chuỗi nếu < 2 giây
                 if (timeRaw < 2.0) {
                     consecutiveSpeedCorrect++;
                 }
-                // Nếu đúng nhưng > 2s: Không tăng chuỗi, nhưng cũng không reset chuỗi.
-                
                 document.getElementById('score-correct').innerText = correctCount;
-                
-                // Đạt 5 câu siêu tốc -> Giảm độ khó 2 điểm
                 if (consecutiveSpeedCorrect >= 5) {
                     step(-2, sizeInput);
                     step(-2, crowdInput);
@@ -297,19 +343,17 @@
                 beep(880, 0.1);
             } else {
                 wrongCount++;
-                consecutiveSpeedCorrect = 0; // Sai cái là reset chuỗi siêu tốc ngay
+                consecutiveSpeedCorrect = 0;
                 document.getElementById('score-wrong').innerText = wrongCount;
                 beep(220, 0.3);
             }
 
             document.getElementById('score-speed').innerText = consecutiveSpeedCorrect;
-
             const newLog = { n: ++totalQuestions, res: isCorrect, s: sizeInput.value, c: crowdInput.value, t: time };
             gameLogs.unshift(newLog);
             if (gameLogs.length > 100) gameLogs.pop();
             renderLogEntry(newLog, true); 
             saveGameData();
-            
             setTimeout(() => { isProcessing = false; randomize(); }, 800);
         }
 
