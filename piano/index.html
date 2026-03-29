@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Anaglyph Piano V2 Mobile - Shine Vision</title>
+    <script src="readme.js"></script>
     <style>
         body { 
             margin: 0; 
@@ -58,9 +59,43 @@
         .start-btn { background: #d32f2f; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .start-btn:hover { background: #b71c1c; transform: translateY(-2px); }
         input[type=number], input[type=file] { width: 100%; margin: 5px 0; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+
+        /* CSS cho Modal Hướng dẫn */
+        #readme-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 600px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 100px rgba(0,0,0,0.8);
+            z-index: 9999;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #readme-modal h1 { color: #d32f2f; margin-top: 0; }
+        #readme-close {
+            background: #333; color: white; border: none; padding: 10px 20px;
+            border-radius: 5px; cursor: pointer; margin-top: 20px; float: right;
+        }
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 9998;
+        }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;"> <div id="modal-overlay"></div>
+    <div id="readme-modal">
+        <h1>HƯỚNG DẪN SỬ DỤNG</h1>
+        <div id="readme-content">Nội dung đang tải...</div>
+        <button id="readme-close">ĐÓNG</button>
+    </div>
 
     <div id="ui-layer">
         <div class="column">
@@ -105,7 +140,28 @@
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
 
-        // --- CẤU HÌNH ---
+        // --- CHẶN CHUỘT PHẢI TRÊN CANVAS ---
+        canvas.oncontextmenu = function(e) { e.preventDefault(); e.stopPropagation(); return false; };
+
+        // --- XỬ LÝ README MODAL ---
+        const modal = document.getElementById('readme-modal');
+        const overlay = document.getElementById('modal-overlay');
+        const readmeContainer = document.getElementById('readme-content');
+        
+        function showReadme() {
+            // Lấy nội dung từ biến readmeContent trong file readme.js
+            readmeContainer.innerHTML = (typeof readmeContent !== 'undefined') ? readmeContent : "Không tìm thấy file readme.js hoặc nội dung trống.";
+            modal.style.display = 'block';
+            overlay.style.display = 'block';
+            if(currentAudio) currentAudio.pause(); // Tạm dừng nhạc nếu đang chơi
+        }
+
+        document.getElementById('readme-close').onclick = () => {
+            modal.style.display = 'none';
+            overlay.style.display = 'none';
+        };
+
+        // --- CẤU HÌNH GAME ---
         const WIDTH = canvas.width; 
         const HEIGHT = canvas.height; 
         const LANE_WIDTH = WIDTH / 4; 
@@ -129,7 +185,6 @@
         let selectedSongIdx = 0, gameState = 'MENU', score = 0, notes = [], particles = [];
         let startTime = 0, currentAudio = null, feedbackTimer = 0, feedbackText = "";
 
-        // Web Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let dingBuffer = null, failBuffer = null;
 
@@ -154,7 +209,6 @@
             source.start(0);
         }
 
-        // Particle System (Hiệu ứng nổ)
         class Particle {
             constructor(x, y, color) {
                 this.x = x; this.y = y;
@@ -257,11 +311,9 @@
             if (gameState !== 'PLAYING') return;
             let currentTime = (performance.now() - startTime) / 1000;
             ctx.fillStyle = "white"; ctx.fillRect(0, 0, WIDTH, HEIGHT);
-            
             ctx.fillStyle = "#fcfcfc"; ctx.fillRect(0, HIT_ZONE_Y - HIT_WINDOW/2, WIDTH, HIT_WINDOW);
             ctx.strokeStyle = "#eee"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, HIT_ZONE_Y); ctx.lineTo(WIDTH, HIT_ZONE_Y); ctx.stroke();
             
-            // Cập nhật nốt
             for (let i = notes.length - 1; i >= 0; i--) {
                 let n = notes[i]; n.update(currentTime);
                 if (!n.hit) {
@@ -270,7 +322,6 @@
                 } else { notes.splice(i, 1); }
             }
 
-            // Cập nhật hiệu ứng nổ
             for (let i = particles.length - 1; i >= 0; i--) {
                 particles[i].update();
                 particles[i].draw();
@@ -305,7 +356,6 @@
                     playSound(dingBuffer); 
                     score += 10;
                     feedbackText = "CHÍNH XÁC!"; feedbackTimer = 30; 
-                    // Tạo hiệu ứng nổ tại vị trí nốt bị bấm
                     const color = (n.lane % 2 === 0) ? `rgb(${colorRed.r},${colorRed.g},${colorRed.b})` : `rgb(${colorCyan.r},${colorCyan.g},${colorCyan.b})`;
                     createExplosion(n.lane * LANE_WIDTH + LANE_WIDTH/2, n.y + NOTE_HEIGHT/2, color);
                     break;
@@ -314,7 +364,15 @@
             if (!hit) playSound(failBuffer);
         }
 
+        // --- LẮNG NGHE PHÍM TẮT ---
         window.addEventListener('keydown', (e) => {
+            // F12 hoặc Ctrl + S
+            if (e.key === "F12" || (e.ctrlKey && e.key === "s")) {
+                e.preventDefault();
+                showReadme();
+                return;
+            }
+
             if (gameState === 'PLAYING') {
                 if (e.key === 'Escape') { currentAudio.pause(); gameState = 'MENU'; uiLayer.style.display = 'flex'; return; }
                 let laneIdx = ['f', 'g', 'h', 'j'].indexOf(e.key.toLowerCase());
