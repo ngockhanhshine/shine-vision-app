@@ -3,48 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Anaglyph Piano V2 Mobile - Shine Vision</title>
+    <title>Anaglyph Piano V2 - Shine Vision App</title>
     <script src="readme.js"></script>
     <style>
-        body { 
-            margin: 0; 
-            padding: 0;
-            background: #000; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            overflow: hidden; 
-        }
-        
-        canvas { 
-            background: white; 
-            box-shadow: 0 0 30px rgba(255,255,255,0.2); 
-            height: 100vh; 
-            aspect-ratio: 9 / 16; 
-            object-fit: contain; 
-        }
-
-        #ui-layer { 
-            position: absolute; 
-            background: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            max-width: 90%; 
-            max-height: 90%;
-            overflow-y: auto; 
-            z-index: 10; 
-        }
-        
-        @media (min-width: 768px) {
-            #ui-layer { flex-direction: row; padding: 25px; gap: 30px; }
-        }
-
+        body { margin: 0; padding: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
+        #game-container { position: relative; width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        canvas { background: white; box-shadow: 0 0 30px rgba(255,255,255,0.2); height: 100vh; aspect-ratio: 9 / 16; object-fit: contain; }
+        #ui-layer { position: absolute; background: white; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 90%; max-height: 90%; overflow-y: auto; z-index: 10; }
+        @media (min-width: 768px) { #ui-layer { flex-direction: row; padding: 25px; gap: 30px; } }
         .column { display: flex; flex-direction: column; min-width: 280px; }
         h2 { margin-top: 0; color: #333; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .song-list { height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; }
@@ -57,121 +23,96 @@
         input[type=range] { flex: 1; cursor: pointer; }
         .demo-box { height: 50px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; border-radius: 4px; }
         .start-btn { background: #d32f2f; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .start-btn:hover { background: #b71c1c; transform: translateY(-2px); }
         input[type=number], input[type=file] { width: 100%; margin: 5px 0; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-
-        /* CSS cho Modal Hướng dẫn */
-        #readme-modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 600px;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 100px rgba(0,0,0,0.8);
-            z-index: 9999;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        #readme-modal h1 { color: #d32f2f; margin-top: 0; }
-        #readme-close {
-            background: #333; color: white; border: none; padding: 10px 20px;
-            border-radius: 5px; cursor: pointer; margin-top: 20px; float: right;
-        }
-        #modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 9998;
-        }
+        #readme-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 600px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 0 100px rgba(0,0,0,0.8); z-index: 9999; max-height: 80vh; overflow-y: auto; }
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998; }
+        
+        /* Giao diện Tạm dừng */
+        .pause-screen { position: absolute; inset: 0; background: #000; display: flex; justify-content: center; align-items: center; z-index: 10000; color: white; font-size: 40px; font-weight: bold; border: 5px solid #d32f2f; }
     </style>
 </head>
-<body oncontextmenu="return false;"> <div id="modal-overlay"></div>
-    <div id="readme-modal">
-        <h1>HƯỚNG DẪN SỬ DỤNG</h1>
-        <div id="readme-content">Nội dung đang tải...</div>
-        <button id="readme-close">ĐÓNG</button>
-    </div>
+<body oncontextmenu="return false;">
 
-    <div id="ui-layer">
-        <div class="column">
-            <h2>1. CHỌN BÀI HÁT</h2>
-            <div id="song-list" class="song-list"></div>
-            
-            <h2>2. TỰ THÊM NHẠC CỦA BẠN</h2>
-            <div class="custom-upload">
-                <input type="file" id="audio-upload" accept="audio/*">
-                <label style="font-size: 12px; font-weight: bold;">Nhập BPM:</label>
-                <input type="number" id="custom-bpm" value="120" min="40" max="300">
-            </div>
-
-            <p style="font-size: 12px; color: #666; margin: 5px 0;">Phím: <b>F G H J</b> | Chạm màn hình | Thoát: <b>ESC</b></p>
-            <button class="start-btn" onclick="handleStart()">BẮT ĐẦU CHƠI</button>
+    <div id="game-container">
+        <div id="modal-overlay"></div>
+        <div id="readme-modal">
+            <h1>HƯỚNG DẪN SỬ DỤNG</h1>
+            <div id="readme-content">Nội dung đang tải...</div>
+            <button id="readme-close" style="background: #333; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px; float: right;">ĐÓNG</button>
         </div>
 
-        <div class="column">
-            <h2>3. CÂN CHỈNH ANAGLYPH</h2>
-            <div class="color-control">
-                <span style="font-weight: bold; color: #d32f2f; font-size: 13px;">KÍNH TRÁI (MÀU ĐỎ)</span>
-                <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
-                <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="131"></div>
-                <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="55"></div>
-                <div id="demo1" class="demo-box">DEMO ĐỎ</div>
+        <div id="ui-layer">
+            <div class="column">
+                <h2>1. CHỌN BÀI HÁT</h2>
+                <div id="song-list" class="song-list"></div>
+                <h2>2. TỰ THÊM NHẠC CỦA BẠN</h2>
+                <div class="custom-upload">
+                    <input type="file" id="audio-upload" accept="audio/*">
+                    <label style="font-size: 12px; font-weight: bold;">Nhập BPM:</label>
+                    <input type="number" id="custom-bpm" value="120" min="40" max="300">
+                </div>
+                <p style="font-size: 12px; color: #666; margin: 5px 0;">Phím: <b>F G H J</b> | Chạm | Thoát: <b>ESC</b></p>
+                <button class="start-btn" onclick="handleStart()">BẮT ĐẦU CHƠI</button>
             </div>
-
-            <div class="color-control">
-                <span style="font-weight: bold; color: #008b8b; font-size: 13px;">KÍNH PHẢI (MÀU XANH)</span>
-                <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
-                <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
-                <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
-                <div id="demo2" class="demo-box">DEMO XANH</div>
+            <div class="column">
+                <h2>3. CÂN CHỈNH ANAGLYPH</h2>
+                <div class="color-control">
+                    <span style="font-weight: bold; color: #d32f2f; font-size: 13px;">KÍNH TRÁI (MÀU ĐỎ)</span>
+                    <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
+                    <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="131"></div>
+                    <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="55"></div>
+                    <div id="demo1" class="demo-box">DEMO ĐỎ</div>
+                </div>
+                <div class="color-control">
+                    <span style="font-weight: bold; color: #008b8b; font-size: 13px;">KÍNH PHẢI (MÀU XANH)</span>
+                    <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
+                    <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
+                    <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
+                    <div id="demo2" class="demo-box">DEMO XANH</div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <canvas id="gameCanvas" width="1080" height="1920"></canvas>
+        <canvas id="gameCanvas" width="1080" height="1920"></canvas>
+    </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const uiLayer = document.getElementById('ui-layer');
+        const container = document.getElementById('game-container');
+        let canvas = document.getElementById('gameCanvas');
+        let ctx = canvas.getContext('2d');
+        let backupNodes = null; // Lưu trữ các Node DOM thật
 
-        // --- CHẶN CHUỘT PHẢI TRÊN CANVAS ---
-        canvas.oncontextmenu = function(e) { e.preventDefault(); e.stopPropagation(); return false; };
+        // --- CƠ CHẾ BẢO VỆ: RỜI CHUỘT XÓA SẠCH ---
+        container.addEventListener('mouseleave', () => {
+            if (gameState === 'PLAYING' && currentAudio) currentAudio.pause();
+            
+            // Lưu lại các node thật vào mảng trước khi xóa
+            backupNodes = Array.from(container.childNodes);
+            // Làm rỗng container và chỉ để lại thông báo
+            container.innerHTML = '<div class="pause-screen">Tạm Dừng</div>';
+        });
 
-        // --- XỬ LÝ README MODAL ---
-        const modal = document.getElementById('readme-modal');
-        const overlay = document.getElementById('modal-overlay');
-        const readmeContainer = document.getElementById('readme-content');
-        
-        function showReadme() {
-            // Lấy nội dung từ biến readmeContent trong file readme.js
-            readmeContainer.innerHTML = (typeof readmeContent !== 'undefined') ? readmeContent : "Không tìm thấy file readme.js hoặc nội dung trống.";
-            modal.style.display = 'block';
-            overlay.style.display = 'block';
-            if(currentAudio) currentAudio.pause(); // Tạm dừng nhạc nếu đang chơi
-        }
+        container.addEventListener('mouseenter', () => {
+            if (backupNodes) {
+                container.innerHTML = ''; // Xóa chữ Tạm dừng
+                backupNodes.forEach(node => container.appendChild(node)); // Trả lại các node cũ
+                
+                // Re-link các biến quan trọng
+                canvas = document.getElementById('gameCanvas');
+                ctx = canvas.getContext('2d');
+                
+                // Gán lại sự kiện cho các slider mới nạp lại
+                document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
+                document.getElementById('readme-close').onclick = closeReadme;
 
-        document.getElementById('readme-close').onclick = () => {
-            modal.style.display = 'none';
-            overlay.style.display = 'none';
-        };
+                if (gameState === 'PLAYING' && currentAudio) currentAudio.play();
+                backupNodes = null;
+            }
+        });
 
-        // --- CẤU HÌNH GAME ---
-        const WIDTH = canvas.width; 
-        const HEIGHT = canvas.height; 
-        const LANE_WIDTH = WIDTH / 4; 
-
-        const HIT_ZONE_Y_PCT = 0.75; 
-        const HIT_ZONE_Y = HEIGHT * HIT_ZONE_Y_PCT;
-        const HIT_WINDOW_PCT = 0.45; 
-        const HIT_WINDOW = HEIGHT * HIT_WINDOW_PCT;
-        const NOTE_HEIGHT_PCT = 0.15; 
-        const NOTE_HEIGHT = HEIGHT * NOTE_HEIGHT_PCT;
+        // --- LOGIC GAME GỐC ---
+        const WIDTH = 1080, HEIGHT = 1920, LANE_WIDTH = WIDTH / 4;
+        const HIT_ZONE_Y = HEIGHT * 0.75, HIT_WINDOW = HEIGHT * 0.45, NOTE_HEIGHT = HEIGHT * 0.15;
 
         const SONGS = [
             {name: "Shape Of You (96 BPM)", bpm: 96, file: "sounds/Shape-Of-You.mp3"},
@@ -184,59 +125,19 @@
 
         let selectedSongIdx = 0, gameState = 'MENU', score = 0, notes = [], particles = [];
         let startTime = 0, currentAudio = null, feedbackTimer = 0, feedbackText = "";
-
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let dingBuffer = null, failBuffer = null;
 
-        async function loadSound(url) {
-            try {
-                const response = await fetch(url);
-                const arrayBuffer = await response.arrayBuffer();
-                return await audioCtx.decodeAudioData(arrayBuffer);
-            } catch(e) { return null; }
-        }
-
-        async function initSounds() {
-            dingBuffer = await loadSound('sounds/Ding.wav');
-            failBuffer = await loadSound('sounds/Fail.wav');
-        }
-
-        function playSound(buffer) {
-            if (!buffer || audioCtx.state === 'suspended') return;
-            const source = audioCtx.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioCtx.destination);
-            source.start(0);
-        }
+        async function loadSound(url) { try { const r = await fetch(url); const ab = await r.arrayBuffer(); return await audioCtx.decodeAudioData(ab); } catch(e) { return null; } }
+        async function initSounds() { dingBuffer = await loadSound('sounds/Ding.wav'); failBuffer = await loadSound('sounds/Fail.wav'); }
+        function playSound(buffer) { if (!buffer || audioCtx.state === 'suspended') return; const s = audioCtx.createBufferSource(); s.buffer = buffer; s.connect(audioCtx.destination); s.start(0); }
 
         class Particle {
-            constructor(x, y, color) {
-                this.x = x; this.y = y;
-                this.color = color;
-                this.size = Math.random() * 20 + 10;
-                this.speedX = (Math.random() - 0.5) * 30;
-                this.speedY = (Math.random() - 0.5) * 30;
-                this.life = 1.0;
-                this.decay = Math.random() * 0.05 + 0.02;
-            }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                this.life -= this.decay;
-            }
-            draw() {
-                ctx.globalAlpha = this.life;
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.size, this.size);
-                ctx.globalAlpha = 1.0;
-            }
+            constructor(x, y, color) { this.x = x; this.y = y; this.color = color; this.size = Math.random() * 20 + 10; this.speedX = (Math.random() - 0.5) * 30; this.speedY = (Math.random() - 0.5) * 30; this.life = 1.0; this.decay = Math.random() * 0.05 + 0.02; }
+            update() { this.x += this.speedX; this.y += this.speedY; this.life -= this.decay; }
+            draw() { ctx.globalAlpha = this.life; ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.size, this.size); ctx.globalAlpha = 1.0; }
         }
-
-        function createExplosion(x, y, color) {
-            for (let i = 0; i < 15; i++) {
-                particles.push(new Particle(x, y, color));
-            }
-        }
+        function createExplosion(x, y, color) { for (let i = 0; i < 15; i++) particles.push(new Particle(x, y, color)); }
 
         let colorRed = {r:255, g:131, b:55}, colorCyan = {r:0, g:255, b:255};
 
@@ -248,7 +149,8 @@
         }
 
         function updateUIColors() {
-            colorRed = { r: document.getElementById('r1').value, g: document.getElementById('g1').value, b: document.getElementById('b1').value };
+            const r1 = document.getElementById('r1'); if(!r1) return;
+            colorRed = { r: r1.value, g: document.getElementById('g1').value, b: document.getElementById('b1').value };
             colorCyan = { r: document.getElementById('r2').value, g: document.getElementById('g2').value, b: document.getElementById('b2').value };
             localStorage.setItem('anaglyph_red', JSON.stringify(colorRed));
             localStorage.setItem('anaglyph_cyan', JSON.stringify(colorCyan));
@@ -256,14 +158,11 @@
             document.getElementById('demo2').style.backgroundColor = `rgb(${colorCyan.r},${colorCyan.g},${colorCyan.b})`;
         }
 
-        document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
-
         function renderSongList() {
-            const list = document.getElementById('song-list');
+            const list = document.getElementById('song-list'); if(!list) return;
             list.innerHTML = '';
             SONGS.forEach((song, i) => {
-                const div = document.createElement('div');
-                div.className = `song-item ${i === selectedSongIdx ? 'selected' : ''}`;
+                const div = document.createElement('div'); div.className = `song-item ${i === selectedSongIdx ? 'selected' : ''}`;
                 div.innerHTML = (i === selectedSongIdx ? "▶ " : "　") + song.name;
                 div.onclick = () => { selectedSongIdx = i; document.getElementById('audio-upload').value = ""; renderSongList(); };
                 list.appendChild(div);
@@ -274,76 +173,44 @@
             constructor(lane, hitTime, speed) { this.lane = lane; this.hitTime = hitTime; this.speed = speed; this.hit = false; this.y = -NOTE_HEIGHT; }
             update(currentTime) { this.y = HIT_ZONE_Y - ((this.hitTime - currentTime) * this.speed); }
             draw() {
-                const c = (this.lane % 2 === 0) ? colorRed : colorCyan;
-                ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
-                const padding = LANE_WIDTH * 0.08;
-                ctx.fillRect(this.lane * LANE_WIDTH + padding, this.y, LANE_WIDTH - padding*2, NOTE_HEIGHT);
+                const c = (this.lane % 2 === 0) ? colorRed : colorCyan; ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+                const p = LANE_WIDTH * 0.08; ctx.fillRect(this.lane * LANE_WIDTH + p, this.y, LANE_WIDTH - p*2, NOTE_HEIGHT);
             }
         }
 
         async function handleStart() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            const fileInput = document.getElementById('audio-upload');
-            let bpm, audioSrc;
-            if (fileInput.files.length > 0) {
-                bpm = parseInt(document.getElementById('custom-bpm').value);
-                audioSrc = URL.createObjectURL(fileInput.files[0]);
-            } else {
-                const song = SONGS[selectedSongIdx];
-                bpm = song.bpm;
-                audioSrc = song.file;
-            }
-            gameState = 'PLAYING';
-            uiLayer.style.display = 'none';
+            const f = document.getElementById('audio-upload');
+            let bpm, src;
+            if (f.files.length > 0) { bpm = parseInt(document.getElementById('custom-bpm').value); src = URL.createObjectURL(f.files[0]); }
+            else { const s = SONGS[selectedSongIdx]; bpm = s.bpm; src = s.file; }
+            gameState = 'PLAYING'; document.getElementById('ui-layer').style.display = 'none';
             score = 0; notes = []; particles = [];
-            const beatInterval = 60 / bpm;
-            const noteSpeed = HIT_ZONE_Y / (beatInterval * 2);
-            for (let i = 0; i < 800; i++) {
-                notes.push(new Note(Math.floor(Math.random() * 4), 3.0 + i * beatInterval, noteSpeed));
-            }
-            currentAudio = new Audio(audioSrc);
-            currentAudio.play();
-            startTime = performance.now();
+            const beat = 60 / bpm; const spd = HIT_ZONE_Y / (beat * 2);
+            for (let i = 0; i < 800; i++) notes.push(new Note(Math.floor(Math.random() * 4), 3.0 + i * beat, spd));
+            currentAudio = new Audio(src); currentAudio.play(); startTime = performance.now();
             requestAnimationFrame(gameLoop);
         }
 
         function gameLoop() {
-            if (gameState !== 'PLAYING') return;
+            if (gameState !== 'PLAYING' || !ctx) return;
             let currentTime = (performance.now() - startTime) / 1000;
             ctx.fillStyle = "white"; ctx.fillRect(0, 0, WIDTH, HEIGHT);
             ctx.fillStyle = "#fcfcfc"; ctx.fillRect(0, HIT_ZONE_Y - HIT_WINDOW/2, WIDTH, HIT_WINDOW);
             ctx.strokeStyle = "#eee"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, HIT_ZONE_Y); ctx.lineTo(WIDTH, HIT_ZONE_Y); ctx.stroke();
-            
             for (let i = notes.length - 1; i >= 0; i--) {
                 let n = notes[i]; n.update(currentTime);
-                if (!n.hit) {
-                    n.draw();
-                    if (n.y > (HIT_ZONE_Y + HIT_WINDOW / 2)) { playSound(failBuffer); notes.splice(i, 1); }
-                } else { notes.splice(i, 1); }
+                if (!n.hit) { n.draw(); if (n.y > (HIT_ZONE_Y + HIT_WINDOW / 2)) { playSound(failBuffer); notes.splice(i, 1); } }
+                else notes.splice(i, 1);
             }
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update();
-                particles[i].draw();
-                if (particles[i].life <= 0) particles.splice(i, 1);
-            }
-
-            const chars = ['F','G','H','J'];
-            const fontSize = LANE_WIDTH * 0.45;
-            ctx.font = `bold ${fontSize}px Arial`;
+            for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); particles[i].draw(); if (particles[i].life <= 0) particles.splice(i, 1); }
+            const chars = ['F','G','H','J']; ctx.font = `bold ${LANE_WIDTH * 0.45}px Arial`;
             chars.forEach((char, i) => {
-                const c = (i % 2 === 0) ? colorRed : colorCyan;
-                ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
-                const textWidth = ctx.measureText(char).width;
-                ctx.fillText(char, i * LANE_WIDTH + (LANE_WIDTH / 2) - (textWidth / 2), HIT_ZONE_Y + fontSize);
+                const c = (i % 2 === 0) ? colorRed : colorCyan; ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+                ctx.fillText(char, i * LANE_WIDTH + (LANE_WIDTH/2) - (ctx.measureText(char).width/2), HIT_ZONE_Y + LANE_WIDTH * 0.45);
             });
-
-            ctx.fillStyle = "black"; ctx.font = `bold ${HEIGHT * 0.03}px Arial`; ctx.fillText(`Điểm: ${score}`, WIDTH * 0.05, HEIGHT * 0.04);
-            if (feedbackTimer > 0) { 
-                ctx.fillStyle = "#2e7d32"; ctx.font = `bold ${HEIGHT * 0.045}px Arial`;
-                ctx.fillText(feedbackText, (WIDTH/2) - (ctx.measureText(feedbackText).width/2), HEIGHT * 0.25); 
-                feedbackTimer--; 
-            }
+            ctx.fillStyle = "black"; ctx.font = `bold 50px Arial`; ctx.fillText(`Điểm: ${score}`, 50, 80);
+            if (feedbackTimer > 0) { ctx.fillStyle = "#2e7d32"; ctx.font = "bold 80px Arial"; ctx.fillText(feedbackText, (WIDTH/2) - (ctx.measureText(feedbackText).width/2), HEIGHT * 0.25); feedbackTimer--; }
             requestAnimationFrame(gameLoop);
         }
 
@@ -352,47 +219,44 @@
             let hit = false;
             for (let n of notes) {
                 if (n.lane === laneIdx && !n.hit && Math.abs(n.y - HIT_ZONE_Y) < HIT_WINDOW / 2) {
-                    n.hit = true; hit = true; 
-                    playSound(dingBuffer); 
-                    score += 10;
-                    feedbackText = "CHÍNH XÁC!"; feedbackTimer = 30; 
-                    const color = (n.lane % 2 === 0) ? `rgb(${colorRed.r},${colorRed.g},${colorRed.b})` : `rgb(${colorCyan.r},${colorCyan.g},${colorCyan.b})`;
-                    createExplosion(n.lane * LANE_WIDTH + LANE_WIDTH/2, n.y + NOTE_HEIGHT/2, color);
+                    n.hit = true; hit = true; playSound(dingBuffer); score += 10; feedbackText = "CHÍNH XÁC!"; feedbackTimer = 30;
+                    const c = (n.lane % 2 === 0) ? colorRed : colorCyan; createExplosion(n.lane * LANE_WIDTH + LANE_WIDTH/2, n.y + NOTE_HEIGHT/2, `rgb(${c.r},${c.g},${c.b})`);
                     break;
                 }
             }
             if (!hit) playSound(failBuffer);
         }
 
-        // --- LẮNG NGHE PHÍM TẮT ---
+        // --- SỰ KIỆN ---
         window.addEventListener('keydown', (e) => {
-            // F12 hoặc Ctrl + S
-            if (e.key === "F12" || (e.ctrlKey && e.key === "s")) {
-                e.preventDefault();
-                showReadme();
-                return;
-            }
-
+            if (e.key === "F12" || (e.ctrlKey && e.key === "s")) { e.preventDefault(); showReadme(); return; }
             if (gameState === 'PLAYING') {
-                if (e.key === 'Escape') { currentAudio.pause(); gameState = 'MENU'; uiLayer.style.display = 'flex'; return; }
-                let laneIdx = ['f', 'g', 'h', 'j'].indexOf(e.key.toLowerCase());
-                if (laneIdx !== -1) checkHit(laneIdx);
+                if (e.key === 'Escape') { currentAudio.pause(); gameState = 'MENU'; document.getElementById('ui-layer').style.display = 'flex'; return; }
+                let idx = ['f', 'g', 'h', 'j'].indexOf(e.key.toLowerCase());
+                if (idx !== -1) checkHit(idx);
             }
         });
 
         canvas.addEventListener('touchstart', (e) => {
-            if (gameState !== 'PLAYING') return;
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = WIDTH / rect.width;
+            if (gameState !== 'PLAYING') return; e.preventDefault();
+            const rect = canvas.getBoundingClientRect(); const sX = WIDTH / rect.width;
             for (let i = 0; i < e.changedTouches.length; i++) {
-                let touch = e.changedTouches[i];
-                let laneIdx = Math.floor(((touch.clientX - rect.left) * scaleX) / LANE_WIDTH);
-                if (laneIdx >= 0 && laneIdx < 4) checkHit(laneIdx);
+                let t = e.changedTouches[i];
+                let idx = Math.floor(((t.clientX - rect.left) * sX) / LANE_WIDTH);
+                if (idx >= 0 && idx < 4) checkHit(idx);
             }
         }, {passive: false});
 
+        function showReadme() {
+            const m = document.getElementById('readme-modal'); const o = document.getElementById('modal-overlay');
+            document.getElementById('readme-content').innerHTML = (typeof readmeContent !== 'undefined') ? readmeContent : "No readme found.";
+            m.style.display = 'block'; o.style.display = 'block'; if(currentAudio) currentAudio.pause();
+        }
+        function closeReadme() { document.getElementById('readme-modal').style.display = 'none'; document.getElementById('modal-overlay').style.display = 'none'; }
+        document.getElementById('readme-close').onclick = closeReadme;
+
         initSounds(); loadSavedColors(); renderSongList();
+        document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
     </script>
 </body>
 </html>
