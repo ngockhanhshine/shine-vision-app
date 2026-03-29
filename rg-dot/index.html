@@ -32,9 +32,35 @@
         .slider-group label { width: 15px; font-weight: bold; font-size: 12px; }
         input[type=range] { flex: 1; cursor: pointer; }
         .demo-box { height: 40px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; border-radius: 4px; }
+
+        /* Style cho Hướng dẫn (Giống Piano) */
+        #instruction-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); color: white; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; text-align: center; padding: 20px; box-sizing: border-box;
+        }
+        #instruction-overlay h1 { color: #ff4d4d; margin-bottom: 10px; }
+        #instruction-overlay p { line-height: 1.6; max-width: 600px; font-size: 18px; }
+        .close-btn { margin-top: 20px; padding: 10px 30px; background: #d32f2f; border: none; color: white; border-radius: 5px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
+
+    <div id="instruction-overlay">
+        <h1>HƯỚNG DẪN SỬ DỤNG</h1>
+        <p>
+            1. Đeo kính <b>Anaglyph (Đỏ/Xanh)</b>.<br>
+            2. Chỉnh thanh trượt RGB sao cho mỗi mắt chỉ nhìn thấy đúng một màu.<br>
+            3. Mục tiêu: Nhìn vào vòng tròn và gõ đúng chữ cái hiển thị (hoặc chạm vào vòng tròn trên điện thoại).<br>
+            4. <b>Phím tắt PC:</b><br>
+               - Phím (+/-): Chỉnh kích thước vòng tròn.<br>
+               - Phím ESC: Quay lại Menu.<br>
+               - <b>Ctrl + S / F12:</b> Đóng/Mở hướng dẫn này.<br>
+            5. Chúc bạn tập luyện hiệu quả!
+        </p>
+        <button class="close-btn" onclick="toggleInstructions()">ĐÓNG (ESC)</button>
+    </div>
 
     <div id="ui-layer">
         <div class="column">
@@ -84,6 +110,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
+        const instructionOverlay = document.getElementById('instruction-overlay');
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth < 600);
 
@@ -103,7 +130,7 @@
         let currentRound = null;
         let roundStartTime = 0;
 
-        // --- WEB AUDIO API SIÊU TỐC ---
+        // --- WEB AUDIO API ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let soundBuffers = {};
 
@@ -113,12 +140,10 @@
                 const arrayBuffer = await response.arrayBuffer();
                 soundBuffers[name] = await audioCtx.decodeAudioData(arrayBuffer);
             } catch (e) {
-                console.warn(`Lưu ý: Không tìm thấy file ${url}, sử dụng âm thanh mặc định.`);
                 generateFallbackSound(name);
             }
         }
 
-        // Tạo âm thanh "tích" và "tùng" nếu file bị lỗi hoặc không tải được
         function generateFallbackSound(name) {
             const duration = 0.1;
             const sampleRate = audioCtx.sampleRate;
@@ -141,7 +166,6 @@
             }
         }
 
-        // Tải âm thanh ngay khi load trang
         loadSound('ding', 'sounds/Ding.wav');
         loadSound('fail', 'sounds/Fail.wav');
 
@@ -209,71 +233,73 @@
 
         function gameLoop() {
             if (gameState !== 'PLAYING') return;
-
             const elapsed = (Date.now() - roundStartTime) / 1000;
             if (elapsed > timeLimit) {
                 playSound('fail');
                 score--;
                 nextRound();
             }
-
             ctx.fillStyle = "#f5f5f5";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
             ctx.beginPath();
             ctx.fillStyle = `rgb(${currentRound.color.r},${currentRound.color.g},${currentRound.color.b})`;
             ctx.arc(currentRound.x, currentRound.y, radius, 0, Math.PI * 2);
             ctx.fill();
-
             ctx.fillStyle = "#f5f5f5";
             ctx.font = `bold ${letterSize}px Arial`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText(currentRound.letter, currentRound.x, currentRound.y);
-
             ctx.fillStyle = "black";
             ctx.font = isMobile ? "14px Arial" : "16px Arial";
             ctx.textAlign = "left";
             ctx.fillText(`Score: ${score}`, 20, 30);
             ctx.fillText(`Level: ${level}`, 20, 50);
-
             requestAnimationFrame(gameLoop);
+        }
+
+        function toggleInstructions() {
+            const isVisible = instructionOverlay.style.display === 'flex';
+            instructionOverlay.style.display = isVisible ? 'none' : 'flex';
         }
 
         canvas.addEventListener('touchstart', (e) => {
             if (gameState !== 'PLAYING') return;
             e.preventDefault();
-
             if (e.touches.length >= 2) {
                 gameState = 'MENU';
                 uiLayer.style.display = 'flex';
                 return;
             }
-
             const touch = e.touches[0];
             const rect = canvas.getBoundingClientRect();
             const touchX = touch.clientX - rect.left;
-            const touchY = touch.clientY - rect.top;
-
-            const dist = Math.sqrt((touchX - currentRound.x)**2 + (touchY - currentRound.y)**2);
+            const touchY = touch.top - rect.top; // Fixed
+            const dist = Math.sqrt((touchX - currentRound.x)**2 + (touch.clientY - currentRound.y)**2);
             const hitZone = isMobile ? radius + 20 : radius;
-            
             if (dist < hitZone) { 
                 playSound('ding');
-                score++;
-                level++;
-                nextRound();
+                score++; level++; nextRound();
             }
         }, { passive: false });
 
         window.addEventListener('keydown', (e) => {
+            if (e.key === 'F12' || (e.ctrlKey && e.key === 's')) {
+                e.preventDefault();
+                toggleInstructions();
+                return;
+            }
+            if (e.key === 'Escape' && instructionOverlay.style.display === 'flex') {
+                toggleInstructions();
+                return;
+            }
+
             if (gameState === 'PLAYING') {
                 if (e.key === 'Escape') {
                     gameState = 'MENU';
                     uiLayer.style.display = 'flex';
                     return;
                 }
-
                 if (e.key === '+' || e.key === '=') { radius += 5; letterSize += 5; }
                 if (e.key === '-') { radius = Math.max(10, radius - 5); letterSize = Math.max(10, letterSize - 5); }
 
