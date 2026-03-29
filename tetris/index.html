@@ -56,9 +56,21 @@
         .btn-ctrl:active { background: #ccc; box-shadow: 0 2px #999; transform: translateY(2px); }
         .btn-ctrl svg { width: 35px; height: 35px; fill: #333; pointer-events: none; }
         #back-btn { background: #555; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+
+        /* Style cho overlay hướng dẫn */
+        #readme-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 9999; color: white;
+            padding: 30px; overflow-y: auto; font-size: 16px; line-height: 1.6;
+        }
+        #readme-content { max-width: 600px; margin: 0 auto; white-space: pre-wrap; }
+        #close-readme { position: fixed; top: 10px; right: 20px; font-size: 30px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;"> <div id="readme-overlay">
+        <div id="close-readme">&times;</div>
+        <div id="readme-content">Đang tải hướng dẫn...</div>
+    </div>
 
     <div id="setup-scene">
         <h3 style="margin:0 0 10px 0;">Cấu hình Dichoptic</h3>
@@ -101,7 +113,47 @@
         </div>
     </div>
 
+<script src="readme.js"></script>
+
 <script>
+// --- CHẶN CHUỘT PHẢI (CONTEXT MENU) ---
+document.addEventListener('contextmenu', event => event.preventDefault());
+
+// --- XỬ LÝ HIỂN THỊ HƯỚNG DẪN (Ctrl+S, F12) ---
+const overlay = document.getElementById('readme-overlay');
+const readmeContent = document.getElementById('readme-content');
+
+function showHelp() {
+    // readmeData là biến chứa nội dung text trong file readme.js của anh
+    if (typeof readmeData !== 'undefined') {
+        readmeContent.innerText = readmeData;
+    } else {
+        readmeContent.innerText = "Không tìm thấy nội dung hướng dẫn (readme.js).";
+    }
+    overlay.style.display = 'block';
+    gameActive = false; // Tạm dừng game khi xem hướng dẫn
+}
+
+document.getElementById('close-readme').onclick = () => {
+    overlay.style.display = 'none';
+    if(document.getElementById('game-scene').style.display === 'flex') {
+        gameActive = true;
+    }
+};
+
+window.addEventListener('keydown', e => {
+    // Chặn F12
+    if (e.key === "F12") {
+        e.preventDefault();
+        showHelp();
+    }
+    // Chặn Ctrl + S
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        showHelp();
+    }
+});
+
 // --- PHẦN ÂM THANH (ĐÃ SỬA ĐƯỜNG DẪN THEO CẤU TRÚC: tetris/index.html & tetris/sounds/) ---
 const sounds = {};
 const soundPaths = {
@@ -368,8 +420,13 @@ btnConfigs.forEach(config => {
     }
 });
 
+// Điều khiển bàn phím gốc (có lồng ghép showHelp để đồng bộ)
 document.onkeydown = e => {
-    if(!gameActive) return;
+    if(!gameActive && overlay.style.display !== 'block') return;
+    
+    // Nếu đang mở hướng dẫn, nhấn phím bất kỳ (trừ F12/Ctrl+S) có thể cho đóng hoặc giữ nguyên tùy ý
+    if(overlay.style.display === 'block') return;
+
     if(e.keyCode===37) move(-1); 
     else if(e.keyCode===39) move(1);
     else if(e.keyCode===40) drop(); 
