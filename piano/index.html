@@ -26,8 +26,6 @@
         input[type=number], input[type=file] { width: 100%; margin: 5px 0; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
         #readme-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 600px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 0 100px rgba(0,0,0,0.8); z-index: 9999; max-height: 80vh; overflow-y: auto; }
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998; }
-        
-        /* Giao diện Tạm dừng */
         .pause-screen { position: absolute; inset: 0; background: #000; display: flex; justify-content: center; align-items: center; z-index: 10000; color: white; font-size: 40px; font-weight: bold; border: 5px solid #d32f2f; }
     </style>
 </head>
@@ -81,20 +79,27 @@
         let canvas = document.getElementById('gameCanvas');
         let ctx = canvas.getContext('2d');
         let backupNodes = null; 
-        let isPaused = false; // Biến trạng thái để khóa audio
+        let isPaused = false; 
+        let pauseTimeStart = 0; // Biến phụ để tính thời gian lệch
 
         // --- CƠ CHẾ BẢO VỆ: RỜI CHUỘT XÓA SẠCH ---
         container.addEventListener('mouseleave', () => {
-            isPaused = true; // Kích hoạt trạng thái tạm dừng âm thanh
-            if (gameState === 'PLAYING' && currentAudio) currentAudio.pause();
-            
-            backupNodes = Array.from(container.childNodes);
-            container.innerHTML = '<div class="pause-screen">Tạm Dừng</div>';
+            if (gameState === 'PLAYING') {
+                isPaused = true;
+                pauseTimeStart = performance.now(); // Lưu lúc bắt đầu tạm dừng
+                if (currentAudio) currentAudio.pause();
+                
+                backupNodes = Array.from(container.childNodes);
+                container.innerHTML = '<div class="pause-screen">Tạm Dừng</div>';
+            }
         });
 
         container.addEventListener('mouseenter', () => {
-            isPaused = false; // Mở khóa âm thanh
-            if (backupNodes) {
+            if (backupNodes && isPaused) {
+                isPaused = false;
+                const pauseDuration = performance.now() - pauseTimeStart;
+                startTime += pauseDuration; // Cộng bù thời gian bị dừng vào startTime
+
                 container.innerHTML = ''; 
                 backupNodes.forEach(node => container.appendChild(node)); 
                 
@@ -104,7 +109,10 @@
                 document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
                 document.getElementById('readme-close').onclick = closeReadme;
 
-                if (gameState === 'PLAYING' && currentAudio) currentAudio.play();
+                if (gameState === 'PLAYING') {
+                    if (currentAudio) currentAudio.play();
+                    requestAnimationFrame(gameLoop); // Kích hoạt lại vòng lặp
+                }
                 backupNodes = null;
             }
         });
@@ -130,7 +138,6 @@
         async function loadSound(url) { try { const r = await fetch(url); const ab = await r.arrayBuffer(); return await audioCtx.decodeAudioData(ab); } catch(e) { return null; } }
         async function initSounds() { dingBuffer = await loadSound('sounds/Ding.wav'); failBuffer = await loadSound('sounds/Fail.wav'); }
         
-        // CẬP NHẬT: Hàm playSound kiểm tra biến isPaused
         function playSound(buffer) { 
             if (isPaused || !buffer || audioCtx.state === 'suspended') return; 
             const s = audioCtx.createBufferSource(); 
@@ -200,7 +207,7 @@
         }
 
         function gameLoop() {
-            if (isPaused || gameState !== 'PLAYING' || !ctx) return; // Thêm check isPaused
+            if (isPaused || gameState !== 'PLAYING' || !ctx) return; 
             let currentTime = (performance.now() - startTime) / 1000;
             ctx.fillStyle = "white"; ctx.fillRect(0, 0, WIDTH, HEIGHT);
             ctx.fillStyle = "#fcfcfc"; ctx.fillRect(0, HIT_ZONE_Y - HIT_WINDOW/2, WIDTH, HIT_WINDOW);
@@ -222,7 +229,7 @@
         }
 
         function checkHit(laneIdx) {
-            if (gameState !== 'PLAYING' || isPaused) return; // Thêm check isPaused
+            if (gameState !== 'PLAYING' || isPaused) return;
             let hit = false;
             for (let n of notes) {
                 if (n.lane === laneIdx && !n.hit && Math.abs(n.y - HIT_ZONE_Y) < HIT_WINDOW / 2) {
@@ -234,7 +241,6 @@
             if (!hit) playSound(failBuffer);
         }
 
-        // --- SỰ KIỆN ---
         window.addEventListener('keydown', (e) => {
             if (e.key === "F12" || (e.ctrlKey && e.key === "s")) { e.preventDefault(); showReadme(); return; }
             if (gameState === 'PLAYING' && !isPaused) {
