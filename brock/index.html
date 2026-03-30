@@ -54,7 +54,7 @@
     </div>
 </div>
 
-<div id="mainAppWrapper"></div>
+<div id="mainAppWrapper" style="width:100%; height:100%;"></div>
 
 <script src="readme.js"></script>
 <script>
@@ -64,20 +64,20 @@
     const shield = document.getElementById('securityShield');
     const wrapper = document.getElementById('mainAppWrapper');
     
-    // --- BẢO MẬT TẢI XUỐNG ---
+    // --- BẢO MẬT DOMAIN ---
     const isLocal = window.location.protocol === 'file:';
-    const isWrongDomain = window.location.hostname !== 'localhost' && 
-                          window.location.hostname !== 'shinevisionapp.com'; // Thay domain của anh vào đây
+    // Anh thay đổi domain thật của anh vào đây nhé
+    const isWrongDomain = window.location.hostname !== 'localhost' && window.location.hostname !== 'shinevisionapp.com'; 
 
     if (isLocal || isWrongDomain) {
         document.getElementById('shieldContent').innerHTML = `
             <h2 style="color:#ff4444">SECURITY ERROR</h2>
-            <p>Ứng dụng không thể chạy trực tiếp từ file tải xuống hoặc sai tên miền.<br>Vui lòng truy cập website chính thức.</p>
+            <p>Không thể chạy trực tiếp file đã tải xuống.<br>Vui lòng truy cập website chính thức.</p>
         `;
-        return; // Khóa chết code tại đây
+        return; 
     }
 
-    // --- BIẾN CHỨA TOÀN BỘ HTML GỐC CỦA ANH ---
+    // BIẾN CHỨA NỘI DUNG GỐC CỦA ANH
     const rawHTML = `
         <div id="guideOverlay"><div class="guide-modal"><span class="close-guide" id="closeGuide">&times;</span><div id="guideContent">Đang tải...</div></div></div>
         <div id="appContainer">
@@ -94,38 +94,35 @@
     `;
 
     function initApp() {
-        wrapper.innerHTML = rawHTML;
-        shield.style.display = 'none';
-        runOriginalLogic(); // Chạy lại logic của anh
+        if (wrapper.innerHTML === "") { // Chỉ dựng lại nếu đang trống
+            wrapper.innerHTML = rawHTML;
+            shield.style.display = 'none';
+            runOriginalLogic(); 
+        }
     }
 
     function purgeApp() {
-        wrapper.innerHTML = ""; // XÓA SẠCH DOM TRONG NHÁY MẮT
+        wrapper.innerHTML = ""; // XOÁ SẠCH DOM
         shield.style.display = 'flex';
     }
 
-    // Trigger bảo mật
+    // --- XỬ LÝ RỜI CHUỘT VÀ MẤT FOCUS ---
     shield.addEventListener('mouseenter', initApp);
-    window.addEventListener('blur', purgeApp); // Mất focus (đổi tab) là xóa sạch
+    wrapper.onmouseleave = purgeApp; // NGAY KHI RỜI CHUỘT KHỎI APP
+    window.onblur = purgeApp;       // KHI CHUYỂN TAB
 
-    // --- GIỮ NGUYÊN 100% LOGIC GỐC CỦA ANH ---
+    // LOGIC GỐC CỦA ANH
     function runOriginalLogic() {
         const canvas = document.getElementById('brockCanvas');
         const ctx = canvas.getContext('2d');
-        const appContainer = document.getElementById('appContainer');
         const ySlider = document.getElementById('ySlider');
         const angleInfo = document.getElementById('angleInfo');
         const moveStatus = document.getElementById('moveStatus');
         const logContainer = document.getElementById('logContainer');
         const recOverlay = document.getElementById('recOverlay');
-        const guideOverlay = document.getElementById('guideOverlay');
-        const guideContent = document.getElementById('guideContent');
-        const closeGuide = document.getElementById('closeGuide');
-        
         const posMinInp = document.getElementById('posMin');
         const posMaxInp = document.getElementById('posMax');
         const cycleInp = document.getElementById('cycleTime');
-
         const colors = {
             left: { r: document.getElementById('rL'), g: document.getElementById('gL'), b: document.getElementById('bL'), pre: document.getElementById('preL') },
             right: { r: document.getElementById('rR'), g: document.getElementById('gR'), b: document.getElementById('bR'), pre: document.getElementById('preR') }
@@ -133,31 +130,11 @@
 
         let isAutoMoving = false;
         let currentYVal = 50;
-        let touchStartX = 0;
         let sessionStartTime = 0; 
-        let totalTrainingTimeToday = 0; 
-
-        function showGuide() {
-            if (typeof readmeContent !== 'undefined') guideContent.innerHTML = readmeContent;
-            else guideContent.innerHTML = "<h2>Hướng dẫn</h2><p>Vui lòng kiểm tra file readme.js</p>";
-            guideOverlay.style.display = 'flex';
-        }
-
-        closeGuide.onclick = () => guideOverlay.style.display = 'none';
-
-        window.onkeydown = e => {
-            if ((e.ctrlKey && e.key === 's') || e.key === 'F12') {
-                e.preventDefault();
-                showGuide();
-            }
-        };
+        let totalTrainingTimeToday = 0;
 
         function getRGB(side) { return `rgb(${side.r.value}, ${side.g.value}, ${side.b.value})`; }
-        function formatTime(ms) {
-            let s = Math.floor(ms / 1000);
-            return [Math.floor(s/3600), Math.floor((s%3600)/60), s%60].map(v => v < 10 ? "0"+v : v).join(":");
-        }
-
+        
         function saveLog() {
             let logs = JSON.parse(localStorage.getItem('brockLogs') || "{}");
             let key = new Date().toLocaleDateString('vi-VN').slice(0, 5);
@@ -173,49 +150,40 @@
             Object.keys(logs).reverse().forEach(date => {
                 const div = document.createElement('div');
                 div.className = 'log-entry';
-                div.textContent = `${date} - Tổng: ${formatTime(logs[date])}`;
+                const s = Math.floor(logs[date]/1000);
+                div.textContent = `${date} - Tổng: ${[Math.floor(s/3600), Math.floor((s%3600)/60), s%60].map(v=>v<10?"0"+v:v).join(":")}`;
                 logContainer.appendChild(div);
             });
         }
 
         function draw(timestamp) {
-            if (!document.getElementById('brockCanvas')) return; // Quan trọng: dừng khi bị purge
+            if (!document.getElementById('brockCanvas')) return; 
             if (isAutoMoving) {
                 const duration = parseFloat(cycleInp.value) || 4;
                 const progress = (Math.sin((2 * Math.PI * timestamp / 1000 / duration) - Math.PI/2) + 1) / 2;
-                const min = parseFloat(posMinInp.value);
-                const max = parseFloat(posMaxInp.value);
-                currentYVal = min + (max - min) * progress;
+                currentYVal = parseFloat(posMinInp.value) + (parseFloat(posMaxInp.value) - parseFloat(posMinInp.value)) * progress;
                 ySlider.value = currentYVal.toFixed(1);
-            } else {
-                currentYVal = parseFloat(ySlider.value);
-            }
+            } else { currentYVal = parseFloat(ySlider.value); }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const cX = canvas.width / 2;
-            const cY = canvas.height - (currentYVal / 100) * canvas.height;
+            const cX = canvas.width / 2, cY = canvas.height - (currentYVal / 100) * canvas.height;
             const angleDeg = 60 + (currentYVal / 100) * 20;
             angleInfo.textContent = `Góc: ${angleDeg.toFixed(1)}°`;
-            
-            const rad = (angleDeg * Math.PI) / 180;
-            const dx = Math.cos(rad) * 2000, dy = Math.sin(rad) * 2000;
+            const rad = (angleDeg * Math.PI) / 180, dx = Math.cos(rad) * 2000, dy = Math.sin(rad) * 2000;
 
             ctx.lineWidth = 10; ctx.lineCap = "round";
             ctx.beginPath(); ctx.strokeStyle = getRGB(colors.left);
             ctx.moveTo(cX + dx, cY - dy); ctx.lineTo(cX - dx, cY + dy); ctx.stroke();
-
             ctx.beginPath(); ctx.strokeStyle = getRGB(colors.right);
             ctx.moveTo(cX - dx, cY - dy); ctx.lineTo(cX + dx, cY + dy); ctx.stroke();
-
             ctx.beginPath(); ctx.arc(cX, cY, 18, 0, Math.PI * 2); ctx.fillStyle = "black"; ctx.fill();
 
             colors.left.pre.style.backgroundColor = getRGB(colors.left);
             colors.right.pre.style.backgroundColor = getRGB(colors.right);
-
             requestAnimationFrame(draw);
         }
 
-        function toggleAuto() {
+        canvas.onclick = () => {
             isAutoMoving = !isAutoMoving;
             if (isAutoMoving) {
                 sessionStartTime = performance.now();
@@ -230,19 +198,15 @@
                 moveStatus.textContent = "ĐANG DỪNG"; moveStatus.className = "status-tag";
                 recOverlay.style.display = "none";
             }
-        }
-
-        canvas.onclick = () => { if (window.innerWidth > 768) toggleAuto(); };
+        };
 
         const resize = () => {
             canvas.width = document.getElementById('canvasContainer').clientWidth - 20;
             canvas.height = document.getElementById('canvasContainer').clientHeight - 20;
         };
-
         window.onresize = resize;
         resize(); renderLog(); requestAnimationFrame(draw);
     }
-
 })();
 </script>
 </body>
