@@ -5,14 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Anaglyph Brockstring - Final Pro Max</title>
     <style>
-        /* GIỮ NGUYÊN CSS GỐC CỦA ANH */
-        body { margin: 0; padding: 0; display: flex; height: 100vh; background-color: rgb(242, 242, 242); font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; touch-action: none; }
-        #appContainer { display: flex; width: 100%; height: 100%; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        #canvasContainer { flex: 1; display: flex; justify-content: center; align-items: center; padding: 10px; position: relative; }
-        canvas { background-color: rgb(242, 242, 242); box-shadow: 0 0 20px rgba(0,0,0,0.05); border-radius: 4px; cursor: pointer; max-width: 100%; max-height: 100%; }
-        #controlsPanel { width: 320px; min-width: 320px; background-color: #ffffff; border-left: 1px solid #ddd; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; z-index: 100; }
-        @media (max-width: 768px) { #canvasContainer { min-width: 100vw; } #appContainer.config-open { transform: translateX(-320px); } }
-        @media (min-width: 769px) { #appContainer { transform: none !important; } }
+        body {
+            margin: 0; padding: 0; display: flex; height: 100vh;
+            background-color: rgb(242, 242, 242);
+            font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden;
+            touch-action: none;
+        }
+        #appContainer { 
+            display: flex; width: 100%; height: 100%; 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #canvasContainer {
+            flex: 1; display: flex; justify-content: center; align-items: center;
+            padding: 10px; position: relative;
+        }
+        canvas {
+            background-color: rgb(242, 242, 242);
+            box-shadow: 0 0 20px rgba(0,0,0,0.05); border-radius: 4px;
+            cursor: pointer; max-width: 100%; max-height: 100%;
+        }
+        #controlsPanel {
+            width: 320px; min-width: 320px; background-color: #ffffff; 
+            border-left: 1px solid #ddd; padding: 20px; box-sizing: border-box; 
+            display: flex; flex-direction: column; gap: 12px; overflow-y: auto;
+            z-index: 100;
+        }
+        
+        @media (max-width: 768px) {
+            #canvasContainer { min-width: 100vw; }
+            #appContainer.config-open { transform: translateX(-320px); }
+        }
+
+        @media (min-width: 769px) {
+            #appContainer { transform: none !important; }
+        }
+
         h2 { font-size: 1rem; margin: 0; color: #222; border-bottom: 2px solid #eee; padding-bottom: 5px; }
         h3 { font-size: 0.85rem; margin: 10px 0 5px 0; color: #333; text-transform: uppercase; }
         .control-group { display: flex; flex-direction: column; gap: 5px; }
@@ -25,189 +52,344 @@
         .auto-box { background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px dashed #bbb; }
         .status-tag { font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; background: #eee; color: #666; }
         .status-active { background: #e8f5e9; color: #2e7d32; font-weight: bold; }
-        #logContainer { background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 10px; font-family: monospace; font-size: 0.8rem; min-height: 400px; max-height: 1250px; overflow-y: auto; color: #444; line-height: 1.8; box-shadow: inset 0 0 5px rgba(0,0,0,0.02); }
-        .log-entry { border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
-        .rec-indicator { position: absolute; top: 30px; left: 30px; display: none; align-items: center; gap: 8px; font-family: monospace; font-weight: bold; color: #ff0000; pointer-events: none; z-index: 10; }
-        .dot { width: 12px; height: 12px; background-color: #ff0000; border-radius: 50%; animation: blink 1s infinite; }
-        #guideOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); color: white; z-index: 2000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .guide-modal { background: #fff; color: #333; padding: 30px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative; line-height: 1.6; }
-        .close-guide { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #999; }
-
-        /* MÀN HÌNH BẢO MẬT */
-        #securityShield {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #1a1a1a; color: #777; display: flex;
-            flex-direction: column; justify-content: center; align-items: center;
-            z-index: 9999; cursor: pointer; text-align: center;
+        
+        #logContainer {
+            background: #fff; border: 1px solid #eee; border-radius: 4px;
+            padding: 10px; font-family: monospace; font-size: 0.8rem;
+            min-height: 400px;
+            max-height: 1250px;
+            overflow-y: auto; color: #444; line-height: 1.8;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.02);
         }
-        #securityShield h2 { color: #fff; border: none; margin-bottom: 10px; }
-        .btn-start { border: 1px solid #444; padding: 10px 20px; border-radius: 20px; font-size: 0.8rem; }
+        .log-entry { border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
+        .log-entry:last-child { border-bottom: none; }
+
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+        .rec-indicator {
+            position: absolute; top: 30px; left: 30px;
+            display: none; align-items: center; gap: 8px;
+            font-family: monospace; font-weight: bold; color: #ff0000;
+            pointer-events: none; z-index: 10;
+        }
+        .dot { width: 12px; height: 12px; background-color: #ff0000; border-radius: 50%; animation: blink 1s infinite; }
+
+        /* Overlay Hướng dẫn */
+        #guideOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); color: white; z-index: 2000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .guide-modal {
+            background: #fff; color: #333; padding: 30px; border-radius: 12px;
+            max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
+            position: relative; line-height: 1.6;
+        }
+        .guide-modal h2 { font-size: 1.5rem; margin-bottom: 20px; color: #000; border-bottom: 2px solid #f0f0f0; }
+        .close-guide {
+            position: absolute; top: 15px; right: 20px;
+            font-size: 24px; cursor: pointer; color: #999;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-<div id="securityShield">
-    <div id="shieldContent">
-        <h2>SESSION PROTECTED</h2>
-        <div class="btn-start">Rê chuột vào đây để mở ứng dụng</div>
+<div id="guideOverlay">
+    <div class="guide-modal">
+        <span class="close-guide" id="closeGuide">&times;</span>
+        <div id="guideContent">Đang tải hướng dẫn...</div>
     </div>
 </div>
 
-<div id="mainAppWrapper" style="width:100%; height:100%;"></div>
+<div id="appContainer">
+    <div id="canvasContainer">
+        <div id="recOverlay" class="rec-indicator">
+            <div class="dot"></div>
+            <span>REC</span>
+        </div>
+        <canvas id="brockCanvas"></canvas>
+    </div>
+
+    <div id="controlsPanel">
+        <div class="label-row">
+            <h2>Cấu Hình</h2>
+            <span id="moveStatus" class="status-tag">ĐANG DỪNG</span>
+        </div>
+        
+        <div class="control-group">
+            <div class="label-row">
+                <label>Vị trí & Góc</label>
+                <span id="angleInfo" class="val-text">--°</span>
+            </div>
+            <input type="range" id="ySlider" min="0" max="100" step="0.1" value="50">
+        </div>
+
+        <div class="auto-box">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.8rem;">Auto-Move</label>
+            <div class="label-row" style="margin-bottom: 5px;">
+                <span>Từ: <input type="number" id="posMin" value="10">%</span>
+                <span>Đến: <input type="number" id="posMax" value="50">%</span>
+            </div>
+            <div class="label-row">
+                <span>Chu kỳ: <input type="number" id="cycleTime" step="0.1" value="4">s</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Dấu sắc (Mắt phải)</label>
+            <input type="range" id="rL" min="0" max="255" value="0">
+            <input type="range" id="gL" min="0" max="255" value="255">
+            <input type="range" id="bL" min="0" max="255" value="255">
+            <div id="preL" class="preview-box"></div>
+        </div>
+
+        <div class="control-group">
+            <label>Dấu huyền (Mắt trái)</label>
+            <input type="range" id="rR" min="0" max="255" value="255">
+            <input type="range" id="gR" min="0" max="255" value="69">
+            <input type="range" id="bR" min="0" max="255" value="0">
+            <div id="preR" class="preview-box"></div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #eee; margin: 5px 0;">
+        
+        <h3>Nhật ký tập luyện</h3>
+        <div id="logContainer"></div>
+    </div>
+</div>
 
 <script src="readme.js"></script>
 <script>
-(function() {
-    "use strict";
-
-    const shield = document.getElementById('securityShield');
-    const wrapper = document.getElementById('mainAppWrapper');
+    const canvas = document.getElementById('brockCanvas');
+    const ctx = canvas.getContext('2d');
+    const appContainer = document.getElementById('appContainer');
+    const ySlider = document.getElementById('ySlider');
+    const angleInfo = document.getElementById('angleInfo');
+    const moveStatus = document.getElementById('moveStatus');
+    const logContainer = document.getElementById('logContainer');
+    const recOverlay = document.getElementById('recOverlay');
+    const guideOverlay = document.getElementById('guideOverlay');
+    const guideContent = document.getElementById('guideContent');
+    const closeGuide = document.getElementById('closeGuide');
     
-    // --- BẢO MẬT DOMAIN ---
-    const isLocal = window.location.protocol === 'file:';
-    // Anh thay đổi domain thật của anh vào đây nhé
-    const isWrongDomain = window.location.hostname !== 'localhost' && window.location.hostname !== 'shinevisionapp.com'; 
+    const posMinInp = document.getElementById('posMin');
+    const posMaxInp = document.getElementById('posMax');
+    const cycleInp = document.getElementById('cycleTime');
 
-    if (isLocal || isWrongDomain) {
-        document.getElementById('shieldContent').innerHTML = `
-            <h2 style="color:#ff4444">SECURITY ERROR</h2>
-            <p>Không thể chạy trực tiếp file đã tải xuống.<br>Vui lòng truy cập website chính thức.</p>
-        `;
-        return; 
+    const colors = {
+        left: { r: document.getElementById('rL'), g: document.getElementById('gL'), b: document.getElementById('bL'), pre: document.getElementById('preL') },
+        right: { r: document.getElementById('rR'), g: document.getElementById('gR'), b: document.getElementById('bR'), pre: document.getElementById('preR') }
+    };
+
+    let isAutoMoving = false;
+    let currentYVal = 50;
+    let touchStartX = 0;
+    let sessionStartTime = 0; 
+    let totalTrainingTimeToday = 0; 
+
+    // --- LOGIC HƯỚNG DẪN ---
+    function showGuide() {
+        if (typeof readmeContent !== 'undefined') {
+            guideContent.innerHTML = readmeContent;
+        } else {
+            guideContent.innerHTML = "<h2>Hướng dẫn sử dụng</h2><p>Vui lòng kiểm tra file readme.js</p>";
+        }
+        guideOverlay.style.display = 'flex';
     }
 
-    // BIẾN CHỨA NỘI DUNG GỐC CỦA ANH
-    const rawHTML = `
-        <div id="guideOverlay"><div class="guide-modal"><span class="close-guide" id="closeGuide">&times;</span><div id="guideContent">Đang tải...</div></div></div>
-        <div id="appContainer">
-            <div id="canvasContainer"><div id="recOverlay" class="rec-indicator"><div class="dot"></div><span>REC</span></div><canvas id="brockCanvas"></canvas></div>
-            <div id="controlsPanel">
-                <div class="label-row"><h2>Cấu Hình</h2><span id="moveStatus" class="status-tag">ĐANG DỪNG</span></div>
-                <div class="control-group"><div class="label-row"><label>Vị trí & Góc</label><span id="angleInfo" class="val-text">--°</span></div><input type="range" id="ySlider" min="0" max="100" step="0.1" value="50"></div>
-                <div class="auto-box"><label style="font-weight:bold; font-size:0.8rem;">Auto-Move</label><div class="label-row"><span>Từ: <input type="number" id="posMin" value="10">%</span><span>Đến: <input type="number" id="posMax" value="50">%</span></div><div class="label-row"><span>Chu kỳ: <input type="number" id="cycleTime" step="0.1" value="4">s</span></div></div>
-                <div class="control-group"><label>Dấu sắc (Mắt phải)</label><input type="range" id="rL" min="0" max="255" value="0"><input type="range" id="gL" min="0" max="255" value="255"><input type="range" id="bL" min="0" max="255" value="255"><div id="preL" class="preview-box"></div></div>
-                <div class="control-group"><label>Dấu huyền (Mắt trái)</label><input type="range" id="rR" min="0" max="255" value="255"><input type="range" id="gR" min="0" max="255" value="69"><input type="range" id="bR" min="0" max="255" value="0"><div id="preR" class="preview-box"></div></div>
-                <hr style="border:none; border-top:1px solid #eee; margin: 5px 0;"><h3>Nhật ký tập luyện</h3><div id="logContainer"></div>
-            </div>
-        </div>
-    `;
+    closeGuide.onclick = () => guideOverlay.style.display = 'none';
+    window.onclick = (e) => { if (e.target == guideOverlay) guideOverlay.style.display = 'none'; };
 
-    function initApp() {
-        if (wrapper.innerHTML === "") { // Chỉ dựng lại nếu đang trống
-            wrapper.innerHTML = rawHTML;
-            shield.style.display = 'none';
-            runOriginalLogic(); 
+    // --- PHÍM TẮT & CHUỘT PHẢI ---
+    window.addEventListener('keydown', e => {
+        if ((e.ctrlKey && e.key === 's') || e.key === 'F12') {
+            e.preventDefault();
+            showGuide();
+        }
+    });
+
+    // --- LOGIC LƯU TRỮ ---
+    function saveSettings() {
+        const config = {
+            y: ySlider.value,
+            min: posMinInp.value,
+            max: posMaxInp.value,
+            cycle: cycleInp.value,
+            cL: { r: colors.left.r.value, g: colors.left.g.value, b: colors.left.b.value },
+            cR: { r: colors.right.r.value, g: colors.right.g.value, b: colors.right.b.value }
+        };
+        localStorage.setItem('brockSettings', JSON.stringify(config));
+    }
+
+    function loadSettings() {
+        const saved = localStorage.getItem('brockSettings');
+        if (saved) {
+            const c = JSON.parse(saved);
+            ySlider.value = c.y || 50;
+            posMinInp.value = c.min || 10;
+            posMaxInp.value = c.max || 50;
+            cycleInp.value = c.cycle || 4;
+            if(c.cL) { colors.left.r.value = c.cL.r; colors.left.g.value = c.cL.g; colors.left.b.value = c.cL.b; }
+            if(c.cR) { colors.right.r.value = c.cR.r; colors.right.g.value = c.cR.g; colors.right.b.value = c.cR.b; }
+            currentYVal = parseFloat(ySlider.value);
         }
     }
 
-    function purgeApp() {
-        wrapper.innerHTML = ""; // XOÁ SẠCH DOM
-        shield.style.display = 'flex';
+    function getRGB(side) {
+        return `rgb(${side.r.value}, ${side.g.value}, ${side.b.value})`;
     }
 
-    // --- XỬ LÝ RỜI CHUỘT VÀ MẤT FOCUS ---
-    shield.addEventListener('mouseenter', initApp);
-    wrapper.onmouseleave = purgeApp; // NGAY KHI RỜI CHUỘT KHỎI APP
-    window.onblur = purgeApp;       // KHI CHUYỂN TAB
+    function formatTime(ms) {
+        let s = Math.floor(ms / 1000);
+        let h = Math.floor(s / 3600);
+        let m = Math.floor((s % 3600) / 60);
+        s = s % 60;
+        return [h, m, s].map(v => v < 10 ? "0" + v : v).join(":");
+    }
 
-    // LOGIC GỐC CỦA ANH
-    function runOriginalLogic() {
-        const canvas = document.getElementById('brockCanvas');
-        const ctx = canvas.getContext('2d');
-        const ySlider = document.getElementById('ySlider');
-        const angleInfo = document.getElementById('angleInfo');
-        const moveStatus = document.getElementById('moveStatus');
-        const logContainer = document.getElementById('logContainer');
-        const recOverlay = document.getElementById('recOverlay');
-        const posMinInp = document.getElementById('posMin');
-        const posMaxInp = document.getElementById('posMax');
-        const cycleInp = document.getElementById('cycleTime');
-        const colors = {
-            left: { r: document.getElementById('rL'), g: document.getElementById('gL'), b: document.getElementById('bL'), pre: document.getElementById('preL') },
-            right: { r: document.getElementById('rR'), g: document.getElementById('gR'), b: document.getElementById('bR'), pre: document.getElementById('preR') }
-        };
+    function getTodayKey() {
+        const d = new Date();
+        return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+    }
 
-        let isAutoMoving = false;
-        let currentYVal = 50;
-        let sessionStartTime = 0; 
-        let totalTrainingTimeToday = 0;
+    function saveLog() {
+        let logs = JSON.parse(localStorage.getItem('brockLogs') || "{}");
+        let key = getTodayKey();
+        logs[key] = (logs[key] || 0) + totalTrainingTimeToday;
+        localStorage.setItem('brockLogs', JSON.stringify(logs));
+        totalTrainingTimeToday = 0;
+        renderLog();
+    }
 
-        function getRGB(side) { return `rgb(${side.r.value}, ${side.g.value}, ${side.b.value})`; }
+    function renderLog() {
+        let logs = JSON.parse(localStorage.getItem('brockLogs') || "{}");
+        logContainer.innerHTML = "";
+        Object.keys(logs).reverse().forEach(date => {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.textContent = `${date} - Tổng: ${formatTime(logs[date])}`;
+            logContainer.appendChild(div);
+        });
+    }
+
+    function draw(timestamp) {
+        if (isAutoMoving) {
+            const elapsed = timestamp / 1000;
+            const duration = parseFloat(cycleInp.value) || 4;
+            const progress = (Math.sin((2 * Math.PI * elapsed / duration) - Math.PI/2) + 1) / 2;
+            const min = parseFloat(posMinInp.value) || 0;
+            const max = parseFloat(posMaxInp.value) || 100;
+            currentYVal = min + (max - min) * progress;
+            ySlider.value = currentYVal.toFixed(1);
+        } else {
+            currentYVal = parseFloat(ySlider.value);
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height - (currentYVal / 100) * canvas.height;
+
+        const angleDeg = 60 + (currentYVal / 100) * 20;
+        angleInfo.textContent = `Góc: ${angleDeg.toFixed(1)}°`;
         
-        function saveLog() {
-            let logs = JSON.parse(localStorage.getItem('brockLogs') || "{}");
-            let key = new Date().toLocaleDateString('vi-VN').slice(0, 5);
-            logs[key] = (logs[key] || 0) + totalTrainingTimeToday;
-            localStorage.setItem('brockLogs', JSON.stringify(logs));
-            totalTrainingTimeToday = 0;
-            renderLog();
-        }
+        const angleRad = (angleDeg * Math.PI) / 180;
+        const lineLen = Math.max(canvas.width, canvas.height) * 2;
+        const dx = Math.cos(angleRad) * lineLen;
+        const dy = Math.sin(angleRad) * lineLen;
 
-        function renderLog() {
-            let logs = JSON.parse(localStorage.getItem('brockLogs') || "{}");
-            logContainer.innerHTML = "";
-            Object.keys(logs).reverse().forEach(date => {
-                const div = document.createElement('div');
-                div.className = 'log-entry';
-                const s = Math.floor(logs[date]/1000);
-                div.textContent = `${date} - Tổng: ${[Math.floor(s/3600), Math.floor((s%3600)/60), s%60].map(v=>v<10?"0"+v:v).join(":")}`;
-                logContainer.appendChild(div);
-            });
-        }
+        ctx.lineWidth = 10;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.strokeStyle = getRGB(colors.left);
+        ctx.moveTo(centerX + dx, centerY - dy); ctx.lineTo(centerX - dx, centerY + dy);
+        ctx.stroke();
 
-        function draw(timestamp) {
-            if (!document.getElementById('brockCanvas')) return; 
-            if (isAutoMoving) {
-                const duration = parseFloat(cycleInp.value) || 4;
-                const progress = (Math.sin((2 * Math.PI * timestamp / 1000 / duration) - Math.PI/2) + 1) / 2;
-                currentYVal = parseFloat(posMinInp.value) + (parseFloat(posMaxInp.value) - parseFloat(posMinInp.value)) * progress;
-                ySlider.value = currentYVal.toFixed(1);
-            } else { currentYVal = parseFloat(ySlider.value); }
+        ctx.beginPath();
+        ctx.strokeStyle = getRGB(colors.right);
+        ctx.moveTo(centerX - dx, centerY - dy); ctx.lineTo(centerX + dx, centerY + dy);
+        ctx.stroke();
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const cX = canvas.width / 2, cY = canvas.height - (currentYVal / 100) * canvas.height;
-            const angleDeg = 60 + (currentYVal / 100) * 20;
-            angleInfo.textContent = `Góc: ${angleDeg.toFixed(1)}°`;
-            const rad = (angleDeg * Math.PI) / 180, dx = Math.cos(rad) * 2000, dy = Math.sin(rad) * 2000;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 18, 0, Math.PI * 2);
+        ctx.fillStyle = "black";
+        ctx.fill();
 
-            ctx.lineWidth = 10; ctx.lineCap = "round";
-            ctx.beginPath(); ctx.strokeStyle = getRGB(colors.left);
-            ctx.moveTo(cX + dx, cY - dy); ctx.lineTo(cX - dx, cY + dy); ctx.stroke();
-            ctx.beginPath(); ctx.strokeStyle = getRGB(colors.right);
-            ctx.moveTo(cX - dx, cY - dy); ctx.lineTo(cX + dx, cY + dy); ctx.stroke();
-            ctx.beginPath(); ctx.arc(cX, cY, 18, 0, Math.PI * 2); ctx.fillStyle = "black"; ctx.fill();
+        colors.left.pre.style.backgroundColor = getRGB(colors.left);
+        colors.right.pre.style.backgroundColor = getRGB(colors.right);
 
-            colors.left.pre.style.backgroundColor = getRGB(colors.left);
-            colors.right.pre.style.backgroundColor = getRGB(colors.right);
-            requestAnimationFrame(draw);
-        }
-
-        canvas.onclick = () => {
-            isAutoMoving = !isAutoMoving;
-            if (isAutoMoving) {
-                sessionStartTime = performance.now();
-                moveStatus.textContent = "ĐANG CHẠY"; moveStatus.className = "status-tag status-active";
-                recOverlay.style.display = "flex";
-            } else {
-                if (sessionStartTime > 0) {
-                    totalTrainingTimeToday += (performance.now() - sessionStartTime);
-                    sessionStartTime = 0;
-                    saveLog();
-                }
-                moveStatus.textContent = "ĐANG DỪNG"; moveStatus.className = "status-tag";
-                recOverlay.style.display = "none";
-            }
-        };
-
-        const resize = () => {
-            canvas.width = document.getElementById('canvasContainer').clientWidth - 20;
-            canvas.height = document.getElementById('canvasContainer').clientHeight - 20;
-        };
-        window.onresize = resize;
-        resize(); renderLog(); requestAnimationFrame(draw);
+        requestAnimationFrame(draw);
     }
-})();
+
+    function toggleAuto() {
+        isAutoMoving = !isAutoMoving;
+        if (isAutoMoving) {
+            sessionStartTime = performance.now();
+            moveStatus.textContent = "ĐANG CHẠY";
+            moveStatus.className = "status-tag status-active";
+            recOverlay.style.display = "flex";
+        } else {
+            if (sessionStartTime > 0) {
+                totalTrainingTimeToday += (performance.now() - sessionStartTime);
+                sessionStartTime = 0;
+                saveLog();
+            }
+            moveStatus.textContent = "ĐANG DỪNG";
+            moveStatus.className = "status-tag";
+            recOverlay.style.display = "none";
+        }
+    }
+
+    // --- EVENTS ---
+    document.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', saveSettings);
+    });
+
+    document.addEventListener('touchstart', e => {
+        if (e.target.type === 'range' || e.target.type === 'number') return;
+        touchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    document.addEventListener('touchend', e => {
+        if (e.target.type === 'range' || e.target.type === 'number') return;
+        const diffX = touchStartX - e.changedTouches[0].screenX;
+        if (window.innerWidth <= 768 && Math.abs(diffX) > 60) {
+            if (diffX > 0) appContainer.classList.add('config-open');
+            else appContainer.classList.remove('config-open');
+        } else if (e.target === canvas) {
+            toggleAuto();
+        }
+    });
+
+    canvas.addEventListener('click', () => { if (window.innerWidth > 768) toggleAuto(); });
+
+    canvas.addEventListener('wheel', e => {
+        if (isAutoMoving) return;
+        e.preventDefault();
+        let val = parseFloat(ySlider.value);
+        ySlider.value = e.deltaY < 0 ? Math.min(100, val + 1) : Math.max(0, val - 1);
+        currentYVal = parseFloat(ySlider.value);
+        saveSettings();
+    }, { passive: false });
+
+    window.addEventListener('beforeunload', () => {
+        if (isAutoMoving && sessionStartTime > 0) {
+            totalTrainingTimeToday += (performance.now() - sessionStartTime);
+            saveLog();
+        }
+    });
+
+    function resize() {
+        canvas.width = document.getElementById('canvasContainer').clientWidth - 20;
+        canvas.height = document.getElementById('canvasContainer').clientHeight - 20;
+    }
+
+    window.addEventListener('resize', resize);
+    
+    loadSettings();
+    resize();
+    renderLog();
+    requestAnimationFrame(draw);
 </script>
+
 </body>
 </html>
