@@ -80,28 +80,27 @@
         const container = document.getElementById('game-container');
         let canvas = document.getElementById('gameCanvas');
         let ctx = canvas.getContext('2d');
-        let backupNodes = null; // Lưu trữ các Node DOM thật
+        let backupNodes = null; 
+        let isPaused = false; // Biến trạng thái để khóa audio
 
         // --- CƠ CHẾ BẢO VỆ: RỜI CHUỘT XÓA SẠCH ---
         container.addEventListener('mouseleave', () => {
+            isPaused = true; // Kích hoạt trạng thái tạm dừng âm thanh
             if (gameState === 'PLAYING' && currentAudio) currentAudio.pause();
             
-            // Lưu lại các node thật vào mảng trước khi xóa
             backupNodes = Array.from(container.childNodes);
-            // Làm rỗng container và chỉ để lại thông báo
             container.innerHTML = '<div class="pause-screen">Tạm Dừng</div>';
         });
 
         container.addEventListener('mouseenter', () => {
+            isPaused = false; // Mở khóa âm thanh
             if (backupNodes) {
-                container.innerHTML = ''; // Xóa chữ Tạm dừng
-                backupNodes.forEach(node => container.appendChild(node)); // Trả lại các node cũ
+                container.innerHTML = ''; 
+                backupNodes.forEach(node => container.appendChild(node)); 
                 
-                // Re-link các biến quan trọng
                 canvas = document.getElementById('gameCanvas');
                 ctx = canvas.getContext('2d');
                 
-                // Gán lại sự kiện cho các slider mới nạp lại
                 document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
                 document.getElementById('readme-close').onclick = closeReadme;
 
@@ -130,7 +129,15 @@
 
         async function loadSound(url) { try { const r = await fetch(url); const ab = await r.arrayBuffer(); return await audioCtx.decodeAudioData(ab); } catch(e) { return null; } }
         async function initSounds() { dingBuffer = await loadSound('sounds/Ding.wav'); failBuffer = await loadSound('sounds/Fail.wav'); }
-        function playSound(buffer) { if (!buffer || audioCtx.state === 'suspended') return; const s = audioCtx.createBufferSource(); s.buffer = buffer; s.connect(audioCtx.destination); s.start(0); }
+        
+        // CẬP NHẬT: Hàm playSound kiểm tra biến isPaused
+        function playSound(buffer) { 
+            if (isPaused || !buffer || audioCtx.state === 'suspended') return; 
+            const s = audioCtx.createBufferSource(); 
+            s.buffer = buffer; 
+            s.connect(audioCtx.destination); 
+            s.start(0); 
+        }
 
         class Particle {
             constructor(x, y, color) { this.x = x; this.y = y; this.color = color; this.size = Math.random() * 20 + 10; this.speedX = (Math.random() - 0.5) * 30; this.speedY = (Math.random() - 0.5) * 30; this.life = 1.0; this.decay = Math.random() * 0.05 + 0.02; }
@@ -193,7 +200,7 @@
         }
 
         function gameLoop() {
-            if (gameState !== 'PLAYING' || !ctx) return;
+            if (isPaused || gameState !== 'PLAYING' || !ctx) return; // Thêm check isPaused
             let currentTime = (performance.now() - startTime) / 1000;
             ctx.fillStyle = "white"; ctx.fillRect(0, 0, WIDTH, HEIGHT);
             ctx.fillStyle = "#fcfcfc"; ctx.fillRect(0, HIT_ZONE_Y - HIT_WINDOW/2, WIDTH, HIT_WINDOW);
@@ -215,7 +222,7 @@
         }
 
         function checkHit(laneIdx) {
-            if (gameState !== 'PLAYING') return;
+            if (gameState !== 'PLAYING' || isPaused) return; // Thêm check isPaused
             let hit = false;
             for (let n of notes) {
                 if (n.lane === laneIdx && !n.hit && Math.abs(n.y - HIT_ZONE_Y) < HIT_WINDOW / 2) {
@@ -230,7 +237,7 @@
         // --- SỰ KIỆN ---
         window.addEventListener('keydown', (e) => {
             if (e.key === "F12" || (e.ctrlKey && e.key === "s")) { e.preventDefault(); showReadme(); return; }
-            if (gameState === 'PLAYING') {
+            if (gameState === 'PLAYING' && !isPaused) {
                 if (e.key === 'Escape') { currentAudio.pause(); gameState = 'MENU'; document.getElementById('ui-layer').style.display = 'flex'; return; }
                 let idx = ['f', 'g', 'h', 'j'].indexOf(e.key.toLowerCase());
                 if (idx !== -1) checkHit(idx);
@@ -238,7 +245,7 @@
         });
 
         canvas.addEventListener('touchstart', (e) => {
-            if (gameState !== 'PLAYING') return; e.preventDefault();
+            if (gameState !== 'PLAYING' || isPaused) return; e.preventDefault();
             const rect = canvas.getBoundingClientRect(); const sX = WIDTH / rect.width;
             for (let i = 0; i < e.changedTouches.length; i++) {
                 let t = e.changedTouches[i];
