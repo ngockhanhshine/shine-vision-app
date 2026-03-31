@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Circle Cross Training - Pro Mobile</title>
+    <title>Circle Cross Training - Shine Vision App</title>
     <style>
         :root {
             --bg-color: rgb(245, 245, 245);
@@ -21,7 +21,6 @@
             touch-action: none;
         }
 
-        /* Bảng điều khiển - Mặc định nằm ở vị trí 0 */
         #controls {
             width: 380px;
             background: var(--panel-bg);
@@ -34,7 +33,6 @@
             box-sizing: border-box;
         }
 
-        /* Stage tập - Mặc định nằm bên trái (-100%) */
         #game-stage {
             flex: 1;
             display: flex;
@@ -178,7 +176,6 @@
             pointer-events: none;
         }
 
-        /* --- CSS Hướng dẫn sử dụng (Giống Piano) --- */
         #readme-modal {
             display: none;
             position: fixed;
@@ -254,9 +251,9 @@
         <div class="control-group">
             <label>KÍCH THƯỚC (SIZE): <span id="val-size">120</span>px</label>
             <div class="slider-row">
-                <div class="step-btn" onclick="stepSlider('slider-size', -1)">-</div>
+                <div class="step-btn" onclick="stepSlider('slider-size', -5)">-</div>
                 <input type="range" id="slider-size" min="50" max="400" value="120">
-                <div class="step-btn" onclick="stepSlider('slider-size', 1)">+</div>
+                <div class="step-btn" onclick="stepSlider('slider-size', 5)">+</div>
             </div>
         </div>
 
@@ -264,15 +261,15 @@
             <div class="control-group">
                 <label>KHOẢNG CÁCH NGANG: <span id="val-h-space">150</span>px</label>
                 <div class="slider-row">
-                    <div class="step-btn" onclick="stepSlider('slider-h-space', -1)">-</div>
+                    <div class="step-btn" onclick="stepSlider('slider-h-space', -2)">-</div>
                     <input type="range" id="slider-h-space" min="0" max="800" value="150">
-                    <div class="step-btn" onclick="stepSlider('slider-h-space', 1)">+</div>
+                    <div class="step-btn" onclick="stepSlider('slider-h-space', 2)">+</div>
                 </div>
                 <label>KHOẢNG CÁCH DỌC: <span id="val-v-space">0</span>px</label>
                 <div class="slider-row">
-                    <div class="step-btn" onclick="stepSlider('slider-v-space', -1)">-</div>
+                    <div class="step-btn" onclick="stepSlider('slider-v-space', -2)">-</div>
                     <input type="range" id="slider-v-space" min="-400" max="400" value="0">
-                    <div class="step-btn" onclick="stepSlider('slider-v-space', 1)">+</div>
+                    <div class="step-btn" onclick="stepSlider('slider-v-space', 2)">+</div>
                 </div>
             </div>
         </div>
@@ -317,21 +314,51 @@
             slider.addEventListener('input', updateStyles);
         });
 
-        // --- Chặn Chuột Phải ---
+        // --- CHẶN CHUỘT PHẢI ---
         window.addEventListener('contextmenu', e => e.preventDefault());
 
-        // --- Xử lý Phím tắt (F12, Ctrl + S) ---
+        // --- XỬ LÝ PHÍM TẮT & ĐIỀU KHIỂN PHÍM MŨI TÊN ---
         window.addEventListener('keydown', e => {
+            // F12, Ctrl+S
             if (e.key === "F12" || (e.ctrlKey && e.key === "s")) {
                 e.preventDefault();
                 openReadme();
             }
             if (e.key === "Escape") closeReadme();
+
+            // 2. Phím Trái/Phải (Khoảng cách ngang)
+            if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                stepSlider('slider-h-space', -2);
+            }
+            if (e.key === "ArrowRight") {
+                e.preventDefault();
+                stepSlider('slider-h-space', 2);
+            }
+
+            // 3. Phím Lên/Xuống (Khoảng cách dọc)
+            if (e.key === "ArrowUp") {
+                e.preventDefault();
+                stepSlider('slider-v-space', 2);
+            }
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                stepSlider('slider-v-space', -2);
+            }
         });
+
+        // --- 1. SỬ DỤNG CON LĂN CHUỘT THAY ĐỔI KÍCH THƯỚC ---
+        window.addEventListener('wheel', e => {
+            // Chỉ hoạt động khi không đang cuộn bảng điều khiển (để tránh xung đột)
+            if (document.body.classList.contains('training-mode') || e.target.closest('#game-stage')) {
+                e.preventDefault();
+                const step = e.deltaY < 0 ? 5 : -5;
+                stepSlider('slider-size', step);
+            }
+        }, { passive: false });
 
         function openReadme() {
             const container = document.getElementById('readme-text-container');
-            // readmeContent được lấy từ file readme.js
             if (typeof readmeContent !== 'undefined') {
                 container.innerHTML = readmeContent;
             } else {
@@ -344,7 +371,7 @@
             document.getElementById('readme-modal').style.display = 'none';
         }
 
-        // --- Xử lý Vuốt: Trái qua phải -> Tập, Phải qua trái -> Cài đặt ---
+        // --- Xử lý Vuốt ---
         let touchStartX = 0;
         document.addEventListener('touchstart', e => {
             if (isTouchingSlider) return;
