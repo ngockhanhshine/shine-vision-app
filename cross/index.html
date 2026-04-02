@@ -159,6 +159,22 @@
         }
         
         .demo-box { color: white; text-align: center; padding: 8px; font-weight: bold; border-radius: 6px; margin-top: 5px; font-size: 12px; text-transform: uppercase; }
+        
+        /* CSS cho nút đổi màu */
+        .swap-btn {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        .swap-btn:active { background: #0056b3; }
+
         #log-container { margin-top: 10px; max-height: 150px; overflow-y: auto; border-top: 1px solid #eee; padding-top: 10px; }
         .log-item { font-size: 13px; padding: 6px 0; border-bottom: 1px dashed #eee; color: #555; }
         .clear-log { font-size: 11px; color: #007bff; cursor: pointer; text-decoration: underline; float: right; }
@@ -274,11 +290,13 @@
             </div>
         </div>
 
+        <button class="swap-btn" onclick="swapColors()">Đổi màu nhanh</button>
+
         <div class="control-group">
             <label id="label-l">MÀU HÌNH TRÁI</label>
             <div class="slider-row"><span class="rgb-label">R</span><input type="range" id="r-l" min="0" max="255" value="0"></div>
             <div class="slider-row"><span class="rgb-label">G</span><input type="range" id="g-l" min="0" max="255" value="255"></div>
-            <div class="slider-row"><span class="rgb-label">B</span><input type="range" id="b-l" min="0" max="255" value="2255"></div>
+            <div class="slider-row"><span class="rgb-label">B</span><input type="range" id="b-l" min="0" max="255" value="255"></div>
             <div class="demo-box" id="demo-l">Màu hiện tại</div>
         </div>
 
@@ -314,19 +332,15 @@
             slider.addEventListener('input', updateStyles);
         });
 
-        // --- CHẶN CHUỘT PHẢI ---
         window.addEventListener('contextmenu', e => e.preventDefault());
 
-        // --- XỬ LÝ PHÍM TẮT & ĐIỀU KHIỂN PHÍM MŨI TÊN ---
         window.addEventListener('keydown', e => {
-            // F12, Ctrl+S
             if (e.key === "F12" || (e.ctrlKey && e.key === "s")) {
                 e.preventDefault();
                 openReadme();
             }
             if (e.key === "Escape") closeReadme();
 
-            // 2. Phím Trái/Phải (Khoảng cách ngang)
             if (e.key === "ArrowLeft") {
                 e.preventDefault();
                 stepSlider('slider-h-space', -2);
@@ -336,7 +350,6 @@
                 stepSlider('slider-h-space', 2);
             }
 
-            // 3. Phím Lên/Xuống (Khoảng cách dọc)
             if (e.key === "ArrowUp") {
                 e.preventDefault();
                 stepSlider('slider-v-space', 2);
@@ -347,9 +360,7 @@
             }
         });
 
-        // --- 1. SỬ DỤNG CON LĂN CHUỘT THAY ĐỔI KÍCH THƯỚC ---
         window.addEventListener('wheel', e => {
-            // Chỉ hoạt động khi không đang cuộn bảng điều khiển (để tránh xung đột)
             if (document.body.classList.contains('training-mode') || e.target.closest('#game-stage')) {
                 e.preventDefault();
                 const step = e.deltaY < 0 ? 5 : -5;
@@ -371,7 +382,6 @@
             document.getElementById('readme-modal').style.display = 'none';
         }
 
-        // --- Xử lý Vuốt ---
         let touchStartX = 0;
         document.addEventListener('touchstart', e => {
             if (isTouchingSlider) return;
@@ -435,6 +445,27 @@
         function stepSlider(id, step) {
             const slider = document.getElementById(id);
             slider.value = parseInt(slider.value) + step;
+            updateStyles();
+        }
+
+        // --- HÀM ĐỔI MÀU ---
+        function swapColors() {
+            const rL = document.getElementById('r-l');
+            const gL = document.getElementById('g-l');
+            const bL = document.getElementById('b-l');
+            const rR = document.getElementById('r-r');
+            const gR = document.getElementById('g-r');
+            const bR = document.getElementById('b-r');
+
+            // Lưu tạm giá trị bên trái
+            const temp = { r: rL.value, g: gL.value, b: bL.value };
+
+            // Gán phải cho trái
+            rL.value = rR.value; gL.value = gR.value; bL.value = bR.value;
+
+            // Gán tạm (trái cũ) cho phải
+            rR.value = temp.r; gR.value = temp.g; bR.value = temp.b;
+
             updateStyles();
         }
 
@@ -509,6 +540,7 @@
                 document.getElementById('spacing-controls').style.opacity = '0.3';
                 document.getElementById('spacing-controls').style.pointerEvents = 'none';
                 document.getElementById('color-right-group').style.display = 'none';
+                document.querySelector('.swap-btn').style.display = 'none';
                 document.getElementById('label-l').innerText = "MÀU HÌNH";
             } else {
                 rightCont.style.display = 'flex';
@@ -517,6 +549,7 @@
                 document.getElementById('spacing-controls').style.opacity = '1';
                 document.getElementById('spacing-controls').style.pointerEvents = 'all';
                 document.getElementById('color-right-group').style.display = 'block';
+                document.querySelector('.swap-btn').style.display = 'block';
                 document.getElementById('label-l').innerText = "MÀU HÌNH TRÁI";
             }
             saveData();
