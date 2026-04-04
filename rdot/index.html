@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>App Tập Mắt Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            overflow: hidden;
+            touch-action: none; /* Vô hiệu hóa thao tác mặc định của trình duyệt */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        #zoom-viewport {
+            width: 100%;
+            height: 100%;
+            transform-origin: center;
+            will-change: transform;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .target {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 5;
+            display: none; /* Ẩn mặc định cho đến khi spawn */
+        }
+
+        #stats {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            color: #333;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .instruction {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="stats">
+        <div style="font-weight: bold; color: #000;">Kích thước: <span id="current-size">200</span>px</div>
+        <div>Chuỗi tốc độ (< 1s): <span id="streak-count">0</span>/10</div>
+        <div class="instruction">● Dùng 2 ngón tay để Zoom In/Out</div>
+        <div class="instruction">● Ấn trúng hình tròn để tiếp tục</div>
+    </div>
+
+    <div id="zoom-viewport">
+        <div id="game-container" id="arena">
+            <div id="circle" class="target"></div>
+        </div>
+    </div>
+
+    <script>
+        // Cấu hình ban đầu
+        const colors = [
+            'rgb(255, 0, 0)',   // Red
+            'rgb(0, 0, 255)',   // Blue
+            'rgb(0, 255, 0)',   // Green
+            'rgb(0, 255, 255)'  // Cyan
+        ];
+
+        let currentSize = 200;
+        let fastHitStreak = 0;
+        let lastSpawnTime = 0;
+        let scale = 1;
+
+        const circle = document.getElementById('circle');
+        const viewport = document.getElementById('zoom-viewport');
+        const sizeDisplay = document.getElementById('current-size');
+        const streakDisplay = document.getElementById('streak-count');
+
+        // --- HỆ THỐNG ÂM THANH ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playDing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // --- HỆ THỐNG ZOOM (HAMMER JS) ---
+        const mc = new Hammer.Manager(document.body);
+        const pinch = new Hammer.Pinch();
+        mc.add(pinch);
+
+        mc.on("pinchstart pinmove", (e) => {
+            let currentScale = scale * e.scale;
+            if (currentScale > 0.3 && currentScale < 5) {
+                viewport.style.transform = `scale(${currentScale})`;
+            }
+        });
+
+        mc.on("pinchend", (e) => {
+            scale = scale * e.scale;
+            if (scale < 0.3) scale = 0.3;
+            if (scale > 5) scale = 5;
+        });
+
+        // --- LOGIC TRÒ CHƠI ---
+        function spawnCircle() {
+            // Lấy kích thước vùng chứa thực tế
+            const containerWidth = window.innerWidth;
+            const containerHeight = window.innerHeight;
+
+            // Đảm bảo hình tròn không bị văng ra ngoài mép màn hình
+            const maxX = containerWidth - currentSize;
+            const maxY = containerHeight - currentSize;
+
+            const randomX = Math.max(0, Math.floor(Math.random() * maxX));
+            const randomY = Math.max(0, Math.floor(Math.random() * maxY));
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+            circle.style.width = currentSize + 'px';
+            circle.style.height = currentSize + 'px';
+            circle.style.backgroundColor = randomColor;
+            circle.style.left = randomX + 'px';
+            circle.style.top = randomY + 'px';
+            circle.style.display = 'block';
+            
+            lastSpawnTime = Date.now();
+        }
+
+        function handleInteraction(e) {
+            // Ngăn chặn các hành động mặc định và sự kiện lan truyền
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
+            const now = Date.now();
+            const hitTime = (now - lastSpawnTime) / 1000;
+
+            playDing();
+
+            // Kiểm tra tốc độ phản xạ
+            if (hitTime < 1) {
+                fastHitStreak++;
+            } else {
+                fastHitStreak = 0;
+            }
+
+            // Đạt chuỗi 10 lần nhanh => Thu nhỏ hình tròn
+            if (fastHitStreak >= 10) {
+                currentSize = Math.max(15, currentSize - 5);
+                fastHitStreak = 0;
+                sizeDisplay.innerText = currentSize;
+            }
+
+            streakDisplay.innerText = fastHitStreak;
+            
+            // Ẩn hình cũ và hiện hình mới
+            circle.style.display = 'none';
+            setTimeout(spawnCircle, 50);
+        }
+
+        // Đăng ký sự kiện cho hình tròn (hỗ trợ cả Chuột và Cảm ứng)
+        circle.addEventListener('mousedown', handleInteraction);
+        circle.addEventListener('touchstart', handleInteraction, { passive: false });
+
+        // Khởi tạo hình tròn đầu tiên
+        window.onload = spawnCircle;
+
+        // Fix lỗi kích thước khi xoay màn hình điện thoại
+        window.addEventListener('resize', () => {
+            if (circle.style.display !== 'none') spawnCircle();
+        });
+    </script>
+</body>
+</html>
