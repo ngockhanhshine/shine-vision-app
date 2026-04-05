@@ -80,6 +80,7 @@
             top: 50%;
             left: 50%;
             pointer-events: none;
+            transition: transform 0.5s linear;
         }
 
         .circle-outer, .circle-inner {
@@ -160,7 +161,6 @@
         
         .demo-box { color: white; text-align: center; padding: 8px; font-weight: bold; border-radius: 6px; margin-top: 5px; font-size: 12px; text-transform: uppercase; }
         
-        /* CSS cho nút đổi màu */
         .swap-btn {
             width: 100%;
             padding: 10px;
@@ -174,6 +174,35 @@
             text-transform: uppercase;
         }
         .swap-btn:active { background: #0056b3; }
+
+        /* Auto Move Grid */
+        .auto-move-grid {
+            display: grid;
+            grid-template-columns: 40px 1fr 1fr;
+            gap: 8px;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .auto-move-grid input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .auto-btn {
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 12px;
+            text-transform: uppercase;
+        }
+        .auto-btn.active { background: #dc3545; }
 
         #log-container { margin-top: 10px; max-height: 150px; overflow-y: auto; border-top: 1px solid #eee; padding-top: 10px; }
         .log-item { font-size: 13px; padding: 6px 0; border-bottom: 1px dashed #eee; color: #555; }
@@ -220,8 +249,6 @@
             cursor: pointer;
             color: #666;
         }
-        #readme-text-container h1, #readme-text-container h2 { color: #007bff; }
-        #readme-text-container ul { padding-left: 20px; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -290,6 +317,24 @@
             </div>
         </div>
 
+        <div id="auto-move-section" class="control-group">
+            <label>AUTO MOVE (DI CHUYỂN TỰ ĐỘNG)</label>
+            <div class="auto-move-grid">
+                <div></div><div style="text-align:center; font-size:10px;">DỌC (Y)</div><div style="text-align:center; font-size:10px;">NGANG (X)</div>
+                <div style="font-size:11px;">TỪ:</div>
+                <input type="number" id="y-from" value="0">
+                <input type="number" id="x-from" value="0">
+                <div style="font-size:11px;">ĐẾN:</div>
+                <input type="number" id="y-to" value="100">
+                <input type="number" id="x-to" value="200">
+            </div>
+            <div style="margin-top:10px;">
+                <label>TỐC ĐỘ (MS): <span id="val-auto-speed">2000</span> ms</label>
+                <input type="range" id="auto-speed" min="500" max="20000" value="2000" style="width:100%">
+            </div>
+            <button id="btn-auto" class="auto-btn" onclick="toggleAutoMove()">BẬT AUTO MOVE</button>
+        </div>
+
         <button class="swap-btn" onclick="swapColors()">Đổi màu nhanh</button>
 
         <div class="control-group">
@@ -324,6 +369,10 @@
         let trainingLogs = JSON.parse(localStorage.getItem('trainingLogs')) || [];
         let isTouchingSlider = false;
 
+        let isAutoMoving = false;
+        let autoMoveInterval = null;
+        let movingToTarget = true;
+
         const sliders = document.querySelectorAll('input[type="range"]');
 
         sliders.forEach(slider => {
@@ -340,47 +389,26 @@
                 openReadme();
             }
             if (e.key === "Escape") closeReadme();
-
-            if (e.key === "ArrowLeft") {
-                e.preventDefault();
-                stepSlider('slider-h-space', -2);
-            }
-            if (e.key === "ArrowRight") {
-                e.preventDefault();
-                stepSlider('slider-h-space', 2);
-            }
-
-            if (e.key === "ArrowUp") {
-                e.preventDefault();
-                stepSlider('slider-v-space', 2);
-            }
-            if (e.key === "ArrowDown") {
-                e.preventDefault();
-                stepSlider('slider-v-space', -2);
-            }
+            if (e.key === "ArrowLeft") { e.preventDefault(); stepSlider('slider-h-space', -2); }
+            if (e.key === "ArrowRight") { e.preventDefault(); stepSlider('slider-h-space', 2); }
+            if (e.key === "ArrowUp") { e.preventDefault(); stepSlider('slider-v-space', 2); }
+            if (e.key === "ArrowDown") { e.preventDefault(); stepSlider('slider-v-space', -2); }
         });
 
         window.addEventListener('wheel', e => {
             if (document.body.classList.contains('training-mode') || e.target.closest('#game-stage')) {
                 e.preventDefault();
-                const step = e.deltaY < 0 ? 5 : -5;
-                stepSlider('slider-size', step);
+                stepSlider('slider-size', e.deltaY < 0 ? 5 : -5);
             }
         }, { passive: false });
 
         function openReadme() {
             const container = document.getElementById('readme-text-container');
-            if (typeof readmeContent !== 'undefined') {
-                container.innerHTML = readmeContent;
-            } else {
-                container.innerHTML = "<h2>Hướng dẫn</h2><p>Vui lòng kiểm tra file readme.js</p>";
-            }
+            container.innerHTML = (typeof readmeContent !== 'undefined') ? readmeContent : "<h2>Hướng dẫn</h2><p>Vui lòng kiểm tra file readme.js</p>";
             document.getElementById('readme-modal').style.display = 'flex';
         }
 
-        function closeReadme() {
-            document.getElementById('readme-modal').style.display = 'none';
-        }
+        function closeReadme() { document.getElementById('readme-modal').style.display = 'none'; }
 
         let touchStartX = 0;
         document.addEventListener('touchstart', e => {
@@ -390,29 +418,22 @@
 
         document.addEventListener('touchend', e => {
             if (isTouchingSlider) return;
-            let touchEndX = e.changedTouches[0].screenX;
-            let diff = touchStartX - touchEndX;
-
+            let diff = touchStartX - e.changedTouches[0].screenX;
             if (Math.abs(diff) > 60) {
-                if (diff < 0) {
-                    document.body.classList.add('training-mode');
-                } else {
-                    document.body.classList.remove('training-mode');
-                }
+                if (diff < 0) document.body.classList.add('training-mode');
+                else document.body.classList.remove('training-mode');
             }
         }, {passive: true});
 
         function handleStageClick() {
             if (!isRecording) {
-                isRecording = true;
-                startTime = Date.now();
+                isRecording = true; startTime = Date.now();
                 document.getElementById('rec-indicator').style.display = 'flex';
                 timerInterval = setInterval(() => {
                     document.getElementById('timer-display').innerText = ((Date.now() - startTime) / 1000).toFixed(1);
                 }, 100);
             } else {
-                isRecording = false;
-                clearInterval(timerInterval);
+                isRecording = false; clearInterval(timerInterval);
                 const duration = ((Date.now() - startTime) / 1000).toFixed(1);
                 document.getElementById('rec-indicator').style.display = 'none';
                 addLog(duration);
@@ -422,8 +443,7 @@
         function addLog(seconds) {
             const now = new Date();
             const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-            const trialsToday = trainingLogs.filter(log => log.date === dateStr).length + 1;
-            trainingLogs.unshift({ date: dateStr, trial: trialsToday, time: seconds });
+            trainingLogs.unshift({ date: dateStr, trial: trainingLogs.filter(log => log.date === dateStr).length + 1, time: seconds });
             localStorage.setItem('trainingLogs', JSON.stringify(trainingLogs));
             renderLogs();
         }
@@ -436,9 +456,7 @@
 
         function clearLog() {
             if(confirm("Xóa toàn bộ nhật ký?")) {
-                trainingLogs = [];
-                localStorage.removeItem('trainingLogs');
-                renderLogs();
+                trainingLogs = []; localStorage.removeItem('trainingLogs'); renderLogs();
             }
         }
 
@@ -448,53 +466,99 @@
             updateStyles();
         }
 
-        // --- HÀM ĐỔI MÀU ---
         function swapColors() {
-            const rL = document.getElementById('r-l');
-            const gL = document.getElementById('g-l');
-            const bL = document.getElementById('b-l');
-            const rR = document.getElementById('r-r');
-            const gR = document.getElementById('g-r');
-            const bR = document.getElementById('b-r');
-
-            // Lưu tạm giá trị bên trái
+            const rL = document.getElementById('r-l'), gL = document.getElementById('g-l'), bL = document.getElementById('b-l');
+            const rR = document.getElementById('r-r'), gR = document.getElementById('g-r'), bR = document.getElementById('b-r');
             const temp = { r: rL.value, g: gL.value, b: bL.value };
-
-            // Gán phải cho trái
             rL.value = rR.value; gL.value = gR.value; bL.value = bR.value;
-
-            // Gán tạm (trái cũ) cho phải
             rR.value = temp.r; gR.value = temp.g; bR.value = temp.b;
-
             updateStyles();
         }
 
+        // --- LOGIC AUTO MOVE ---
+        function toggleAutoMove() {
+            isAutoMoving = !isAutoMoving;
+            const btn = document.getElementById('btn-auto');
+            if (isAutoMoving) {
+                btn.innerText = "DỪNG AUTO MOVE"; btn.classList.add('active');
+                startAutoMoveLoop();
+            } else {
+                btn.innerText = "BẬT AUTO MOVE"; btn.classList.remove('active');
+                stopAutoMoveLoop();
+            }
+            saveData();
+        }
+
+        function startAutoMoveLoop() {
+            if (autoMoveInterval) clearTimeout(autoMoveInterval);
+            const run = () => {
+                if (!isAutoMoving) return;
+                const speed = parseInt(document.getElementById('auto-speed').value);
+                document.querySelectorAll('.shape-container').forEach(el => {
+                    el.style.transition = `transform ${speed}ms linear`;
+                });
+
+                const xVal = movingToTarget ? document.getElementById('x-to').value : document.getElementById('x-from').value;
+                const yVal = movingToTarget ? document.getElementById('y-to').value : document.getElementById('y-from').value;
+
+                document.getElementById('slider-h-space').value = xVal;
+                document.getElementById('slider-v-space').value = yVal;
+                
+                updateStyles();
+                movingToTarget = !movingToTarget;
+                autoMoveInterval = setTimeout(run, speed);
+            };
+            run();
+        }
+
+        function stopAutoMoveLoop() {
+            isAutoMoving = false;
+            if (autoMoveInterval) clearTimeout(autoMoveInterval);
+            autoMoveInterval = null;
+            document.querySelectorAll('.shape-container').forEach(el => el.style.transition = 'none');
+        }
+
+        // DOM1: Bảo mật và Tạm dừng tự động
+        document.getElementById('game-stage').addEventListener('mouseleave', () => { if (isAutoMoving) clearTimeout(autoMoveInterval); });
+        document.getElementById('game-stage').addEventListener('mouseenter', () => { if (isAutoMoving) startAutoMoveLoop(); });
+
+        // --- LOCAL STORAGE LOGIC ---
         function saveData() {
-            const data = {
+            const settings = {
                 mode: mode,
                 size: document.getElementById('slider-size').value,
                 hSpace: document.getElementById('slider-h-space').value,
                 vSpace: document.getElementById('slider-v-space').value,
+                autoSpeed: document.getElementById('auto-speed').value,
+                xFrom: document.getElementById('x-from').value,
+                yFrom: document.getElementById('y-from').value,
+                xTo: document.getElementById('x-to').value,
+                yTo: document.getElementById('y-to').value,
                 colorL: { r: document.getElementById('r-l').value, g: document.getElementById('g-l').value, b: document.getElementById('b-l').value },
                 colorR: { r: document.getElementById('r-r').value, g: document.getElementById('g-r').value, b: document.getElementById('b-r').value }
             };
-            localStorage.setItem('circleCrossGameData', JSON.stringify(data));
+            localStorage.setItem('circleCrossSettings', JSON.stringify(settings));
         }
 
         function loadData() {
-            const saved = localStorage.getItem('circleCrossGameData');
+            const saved = localStorage.getItem('circleCrossSettings');
             if (saved) {
-                const data = JSON.parse(saved);
-                mode = data.mode;
-                document.getElementById('slider-size').value = data.size;
-                document.getElementById('slider-h-space').value = data.hSpace;
-                document.getElementById('slider-v-space').value = data.vSpace;
-                document.getElementById('r-l').value = data.colorL.r;
-                document.getElementById('g-l').value = data.colorL.g;
-                document.getElementById('b-l').value = data.colorL.b;
-                document.getElementById('r-r').value = data.colorR.r;
-                document.getElementById('g-r').value = data.colorR.g;
-                document.getElementById('b-r').value = data.colorR.b;
+                const s = JSON.parse(saved);
+                mode = s.mode;
+                document.getElementById('slider-size').value = s.size;
+                document.getElementById('slider-h-space').value = s.hSpace;
+                document.getElementById('slider-v-space').value = s.vSpace;
+                document.getElementById('auto-speed').value = s.autoSpeed || 2000;
+                document.getElementById('x-from').value = s.xFrom || 0;
+                document.getElementById('y-from').value = s.yFrom || 0;
+                document.getElementById('x-to').value = s.xTo || 200;
+                document.getElementById('y-to').value = s.yTo || 100;
+                document.getElementById('r-l').value = s.colorL.r;
+                document.getElementById('g-l').value = s.colorL.g;
+                document.getElementById('b-l').value = s.colorL.b;
+                document.getElementById('r-r').value = s.colorR.r;
+                document.getElementById('g-r').value = s.colorR.g;
+                document.getElementById('b-r').value = s.colorR.b;
             }
         }
 
@@ -508,19 +572,19 @@
             document.getElementById('val-size').innerText = size;
             document.getElementById('val-h-space').innerText = hSpace;
             document.getElementById('val-v-space').innerText = vSpace;
+            document.getElementById('val-auto-speed').innerText = document.getElementById('auto-speed').value;
+            
             document.getElementById('demo-l').style.backgroundColor = colorL;
             document.getElementById('demo-r').style.backgroundColor = colorR;
 
             const thickness = Math.max(2, Math.round(size * 0.06));
             const configs = [
-                { cont: 'container-left', outer: 'outer-l', inner: 'inner-l', cross: 'cross-l', color: colorL },
-                { cont: 'container-right', outer: 'outer-r', inner: 'inner-r', cross: 'cross-r', color: colorR }
+                { outer: 'outer-l', inner: 'inner-l', cross: 'cross-l', color: colorL },
+                { outer: 'outer-r', inner: 'inner-r', cross: 'cross-r', color: colorR }
             ];
 
             configs.forEach(item => {
-                const outEl = document.getElementById(item.outer);
-                const inEl = document.getElementById(item.inner);
-                const crossEl = document.getElementById(item.cross);
+                const outEl = document.getElementById(item.outer), inEl = document.getElementById(item.inner), crossEl = document.getElementById(item.cross);
                 outEl.style.width = outEl.style.height = size + 'px';
                 outEl.style.borderWidth = thickness + 'px';
                 outEl.style.borderColor = item.color;
@@ -531,17 +595,15 @@
                 crossEl.style.color = item.color;
             });
 
-            const leftCont = document.getElementById('container-left');
-            const rightCont = document.getElementById('container-right');
-
+            const leftCont = document.getElementById('container-left'), rightCont = document.getElementById('container-right');
             if (mode === 1) {
-                rightCont.style.display = 'none';
-                leftCont.style.transform = 'translate(-50%, -50%)';
+                rightCont.style.display = 'none'; leftCont.style.transform = 'translate(-50%, -50%)';
                 document.getElementById('spacing-controls').style.opacity = '0.3';
                 document.getElementById('spacing-controls').style.pointerEvents = 'none';
                 document.getElementById('color-right-group').style.display = 'none';
                 document.querySelector('.swap-btn').style.display = 'none';
                 document.getElementById('label-l').innerText = "MÀU HÌNH";
+                document.getElementById('auto-move-section').style.display = 'none';
             } else {
                 rightCont.style.display = 'flex';
                 leftCont.style.transform = `translate(calc(-50% - ${hSpace/2}px), calc(-50% - ${vSpace/2}px))`;
@@ -551,12 +613,13 @@
                 document.getElementById('color-right-group').style.display = 'block';
                 document.querySelector('.swap-btn').style.display = 'block';
                 document.getElementById('label-l').innerText = "MÀU HÌNH TRÁI";
+                document.getElementById('auto-move-section').style.display = 'block';
             }
             saveData();
         }
 
         function setMode(m) {
-            mode = m;
+            mode = m; 
             document.getElementById('btn-1').classList.toggle('active', m === 1);
             document.getElementById('btn-2').classList.toggle('active', m === 2);
             updateStyles();
