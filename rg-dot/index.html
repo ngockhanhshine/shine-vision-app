@@ -8,9 +8,9 @@
         body { margin: 0; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; touch-action: none; }
         canvas { background: #f5f5f5; display: block; }
         
-        #ui-layer { position: absolute; background: white; padding: 20px; border-radius: 12px; display: flex; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 95%; z-index: 10; max-height: 90vh; overflow-y: auto; }
+        #ui-layer { position: absolute; background: white; padding: 20px; border-radius: 12px; display: flex; gap: 20px; box-shadow: 0 10px 30|px rgba(0,0,0,0.1); max-width: 95%; z-index: 10; max-height: 90vh; overflow-y: auto; }
         
-        @media (max-width: 600px) {
+        @media (max-width: 900px) {
             #ui-layer { flex-direction: column; gap: 10px; padding: 15px; top: 10px; }
             .column { min-width: unset !important; width: 100%; }
             h2 { font-size: 16px !important; margin-bottom: 5px; }
@@ -33,7 +33,9 @@
         input[type=range] { flex: 1; cursor: pointer; }
         .demo-box { height: 40px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; border-radius: 4px; }
 
-        /* Style cho Hướng dẫn (Giống Piano) */
+        #log-container { font-size: 12px; color: #444; max-height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 5px; border-radius: 5px; background: #fafafa; }
+        .log-item { padding: 4px 0; border-bottom: 1px dashed #ddd; white-space: nowrap; }
+
         #instruction-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); color: white; display: none;
@@ -102,6 +104,12 @@
                 <div id="demo2" class="demo-box">DEMO</div>
             </div>
         </div>
+
+        <div class="column">
+            <h2>3. NHẬT KÝ</h2>
+            <div id="log-container"></div>
+            <button class="btn" style="margin-top:10px; font-size:10px; padding:5px;" onclick="clearLogs()">Xoá lịch sử</button>
+        </div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -122,6 +130,8 @@
         resize();
 
         let score = 0, level = 1, timeLimit = 2;
+        let correctCount = 0, wrongCount = 0;
+        let gameStartTime = 0;
         const baseRadius = isMobile ? 40 : 80;
         const baseLetterSize = isMobile ? 45 : 90;
 
@@ -130,7 +140,6 @@
         let currentRound = null;
         let roundStartTime = 0;
 
-        // --- WEB AUDIO API ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let soundBuffers = {};
 
@@ -188,6 +197,7 @@
                 document.getElementById('b2').value = colorCyan.b;
             }
             updateColors();
+            displayLogs();
         }
 
         function updateColors() {
@@ -213,9 +223,62 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             gameState = 'PLAYING';
             uiLayer.style.display = 'none';
-            score = 0; level = 1;
+            score = 0; level = 1; correctCount = 0; wrongCount = 0;
+            gameStartTime = Date.now();
             nextRound();
             requestAnimationFrame(gameLoop);
+        }
+
+        function stopGameAndReturn() {
+            if (gameState !== 'PLAYING') return;
+            const duration = Math.floor((Date.now() - gameStartTime) / 1000);
+            if (duration > 2) {
+                saveLog(score, correctCount, wrongCount, duration, timeLimit);
+            }
+            gameState = 'MENU';
+            uiLayer.style.display = 'flex';
+            displayLogs();
+        }
+
+        function saveLog(sc, cr, wr, dur, diff) {
+            let logs = JSON.parse(localStorage.getItem('rg_dot_logs') || '[]');
+            const now = new Date();
+            const dateStr = `${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')}`;
+            const min = Math.floor(dur / 60).toString().padStart(2,'0');
+            const sec = (dur % 60).toString().padStart(2,'0');
+            
+            // Viết tắt độ khó: Khó (1s) - Trung Bình (2s) - Dễ (3s)
+            const diffMap = { 1: 'K', 2: 'T', 3: 'D' };
+            const diffShort = diffMap[diff] || 'T';
+
+            const newEntry = {
+                date: dateStr,
+                score: sc,
+                right: cr,
+                wrong: wr,
+                time: `${min}:${sec}`,
+                diff: diffShort
+            };
+            logs.unshift(newEntry);
+            if (logs.length > 50) logs.pop();
+            localStorage.setItem('rg_dot_logs', JSON.stringify(logs));
+        }
+
+        function displayLogs() {
+            const logs = JSON.parse(localStorage.getItem('rg_dot_logs') || '[]');
+            const container = document.getElementById('log-container');
+            container.innerHTML = logs.map((l, index) => `
+                <div class="log-item">
+                    ${l.date} - Lần ${logs.length - index} - ${l.score}đ - ${l.right}/${l.wrong} - ${l.time} - ${l.diff}
+                </div>
+            `).join('');
+        }
+
+        function clearLogs() {
+            if(confirm("Xoá toàn bộ nhật ký?")) {
+                localStorage.removeItem('rg_dot_logs');
+                displayLogs();
+            }
         }
 
         function nextRound() {
@@ -236,7 +299,7 @@
             const elapsed = (Date.now() - roundStartTime) / 1000;
             if (elapsed > timeLimit) {
                 playSound('fail');
-                score--;
+                score--; wrongCount++;
                 nextRound();
             }
             ctx.fillStyle = "#f5f5f5";
@@ -267,19 +330,18 @@
             if (gameState !== 'PLAYING') return;
             e.preventDefault();
             if (e.touches.length >= 2) {
-                gameState = 'MENU';
-                uiLayer.style.display = 'flex';
+                stopGameAndReturn();
                 return;
             }
             const touch = e.touches[0];
             const rect = canvas.getBoundingClientRect();
             const touchX = touch.clientX - rect.left;
-            const touchY = touch.top - rect.top; // Fixed
-            const dist = Math.sqrt((touchX - currentRound.x)**2 + (touch.clientY - currentRound.y)**2);
+            const touchY = touch.clientY - rect.top;
+            const dist = Math.sqrt((touchX - currentRound.x)**2 + (touchY - currentRound.y)**2);
             const hitZone = isMobile ? radius + 20 : radius;
             if (dist < hitZone) { 
                 playSound('ding');
-                score++; level++; nextRound();
+                score++; level++; correctCount++; nextRound();
             }
         }, { passive: false });
 
@@ -296,8 +358,7 @@
 
             if (gameState === 'PLAYING') {
                 if (e.key === 'Escape') {
-                    gameState = 'MENU';
-                    uiLayer.style.display = 'flex';
+                    stopGameAndReturn();
                     return;
                 }
                 if (e.key === '+' || e.key === '=') { radius += 5; letterSize += 5; }
@@ -307,10 +368,10 @@
                 if (pressed.length === 1 && pressed >= 'A' && pressed <= 'Z') {
                     if (pressed === currentRound.letter) {
                         playSound('ding');
-                        score++; level++; nextRound();
+                        score++; level++; correctCount++; nextRound();
                     } else {
                         playSound('fail');
-                        score--; nextRound();
+                        score--; wrongCount++; nextRound();
                     }
                 }
             }
