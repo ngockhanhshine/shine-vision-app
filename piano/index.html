@@ -27,6 +27,12 @@
         #readme-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 600px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 0 100px rgba(0,0,0,0.8); z-index: 9999; max-height: 80vh; overflow-y: auto; }
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998; }
         .pause-screen { position: absolute; inset: 0; background: #000; display: flex; justify-content: center; align-items: center; z-index: 10000; color: white; font-size: 40px; font-weight: bold; border: 5px solid #d32f2f; }
+        
+        /* CSS Nhật ký */
+        .log-section { margin-top: 10px; padding: 10px; background: #f4f4f4; border-radius: 8px; border: 1px solid #ddd; }
+        .log-title { font-size: 13px; font-weight: bold; color: #d32f2f; margin-bottom: 5px; border-bottom: 1px solid #ccc; }
+        #log-container { max-height: 100px; overflow-y: auto; font-size: 12px; color: #333; }
+        .log-item { padding: 3px 0; border-bottom: 1px dashed #ddd; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -50,6 +56,12 @@
                     <input type="number" id="custom-bpm" value="120" min="40" max="300">
                 </div>
                 <p style="font-size: 12px; color: #666; margin: 5px 0;">Phím: <b>F G H J</b> | Chạm | Thoát: <b>ESC</b></p>
+                
+                <div class="log-section">
+                    <div class="log-title">NHẬT KÝ LUYỆN TẬP</div>
+                    <div id="log-container">Chưa có dữ liệu.</div>
+                </div>
+
                 <button class="start-btn" onclick="handleStart()">BẮT ĐẦU CHƠI</button>
             </div>
             <div class="column">
@@ -80,13 +92,12 @@
         let ctx = canvas.getContext('2d');
         let backupNodes = null; 
         let isPaused = false; 
-        let pauseTimeStart = 0; // Biến phụ để tính thời gian lệch
+        let pauseTimeStart = 0; 
 
-        // --- CƠ CHẾ BẢO VỆ: RỜI CHUỘT XÓA SẠCH ---
         container.addEventListener('mouseleave', () => {
             if (gameState === 'PLAYING') {
                 isPaused = true;
-                pauseTimeStart = performance.now(); // Lưu lúc bắt đầu tạm dừng
+                pauseTimeStart = performance.now(); 
                 if (currentAudio) currentAudio.pause();
                 
                 backupNodes = Array.from(container.childNodes);
@@ -98,7 +109,7 @@
             if (backupNodes && isPaused) {
                 isPaused = false;
                 const pauseDuration = performance.now() - pauseTimeStart;
-                startTime += pauseDuration; // Cộng bù thời gian bị dừng vào startTime
+                startTime += pauseDuration; 
 
                 container.innerHTML = ''; 
                 backupNodes.forEach(node => container.appendChild(node)); 
@@ -108,16 +119,17 @@
                 
                 document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
                 document.getElementById('readme-close').onclick = closeReadme;
+                renderSongList();
+                updateLogDisplay();
 
                 if (gameState === 'PLAYING') {
                     if (currentAudio) currentAudio.play();
-                    requestAnimationFrame(gameLoop); // Kích hoạt lại vòng lặp
+                    requestAnimationFrame(gameLoop);
                 }
                 backupNodes = null;
             }
         });
 
-        // --- LOGIC GAME GỐC ---
         const WIDTH = 1080, HEIGHT = 1920, LANE_WIDTH = WIDTH / 4;
         const HIT_ZONE_Y = HEIGHT * 0.75, HIT_WINDOW = HEIGHT * 0.45, NOTE_HEIGHT = HEIGHT * 0.15;
 
@@ -134,6 +146,41 @@
         let startTime = 0, currentAudio = null, feedbackTimer = 0, feedbackText = "";
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let dingBuffer = null, failBuffer = null;
+
+        // Logic Nhật ký
+        function saveLog() {
+            let logs = JSON.parse(localStorage.getItem('piano_logs') || "[]");
+            let now = new Date();
+            let d = String(now.getDate()).padStart(2, '0') + '/' + String(now.getMonth() + 1).padStart(2, '0');
+            let duration = Math.floor((performance.now() - startTime) / 1000);
+            let m = Math.floor(duration / 60);
+            let s = duration % 60;
+            let timeStr = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+            
+            logs.unshift({
+                date: d,
+                count: logs.length + 1,
+                score: score,
+                duration: timeStr
+            });
+            
+            if (logs.length > 10) logs.pop();
+            localStorage.setItem('piano_logs', JSON.stringify(logs));
+            updateLogDisplay();
+        }
+
+        function updateLogDisplay() {
+            const container = document.getElementById('log-container');
+            if(!container) return;
+            let logs = JSON.parse(localStorage.getItem('piano_logs') || "[]");
+            if(logs.length === 0) {
+                container.innerHTML = "Chưa có dữ liệu.";
+                return;
+            }
+            container.innerHTML = logs.map(l => `
+                <div class="log-item">${l.date} - Lần ${l.count} - ${l.score}đ - ${l.duration}</div>
+            `).join('');
+        }
 
         async function loadSound(url) { try { const r = await fetch(url); const ab = await r.arrayBuffer(); return await audioCtx.decodeAudioData(ab); } catch(e) { return null; } }
         async function initSounds() { dingBuffer = await loadSound('sounds/Ding.wav'); failBuffer = await loadSound('sounds/Fail.wav'); }
@@ -217,6 +264,12 @@
                 if (!n.hit) { n.draw(); if (n.y > (HIT_ZONE_Y + HIT_WINDOW / 2)) { playSound(failBuffer); notes.splice(i, 1); } }
                 else notes.splice(i, 1);
             }
+            if (notes.length === 0 && currentAudio && currentAudio.ended) {
+                saveLog();
+                gameState = 'MENU';
+                document.getElementById('ui-layer').style.display = 'flex';
+                return;
+            }
             for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); particles[i].draw(); if (particles[i].life <= 0) particles.splice(i, 1); }
             const chars = ['F','G','H','J']; ctx.font = `bold ${LANE_WIDTH * 0.45}px Arial`;
             chars.forEach((char, i) => {
@@ -244,7 +297,13 @@
         window.addEventListener('keydown', (e) => {
             if (e.key === "F12" || (e.ctrlKey && e.key === "s")) { e.preventDefault(); showReadme(); return; }
             if (gameState === 'PLAYING' && !isPaused) {
-                if (e.key === 'Escape') { currentAudio.pause(); gameState = 'MENU'; document.getElementById('ui-layer').style.display = 'flex'; return; }
+                if (e.key === 'Escape') { 
+                    currentAudio.pause(); 
+                    saveLog();
+                    gameState = 'MENU'; 
+                    document.getElementById('ui-layer').style.display = 'flex'; 
+                    return; 
+                }
                 let idx = ['f', 'g', 'h', 'j'].indexOf(e.key.toLowerCase());
                 if (idx !== -1) checkHit(idx);
             }
@@ -268,7 +327,7 @@
         function closeReadme() { document.getElementById('readme-modal').style.display = 'none'; document.getElementById('modal-overlay').style.display = 'none'; }
         document.getElementById('readme-close').onclick = closeReadme;
 
-        initSounds(); loadSavedColors(); renderSongList();
+        initSounds(); loadSavedColors(); renderSongList(); updateLogDisplay();
         document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
     </script>
 </body>
