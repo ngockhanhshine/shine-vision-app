@@ -8,7 +8,7 @@
         body { margin: 0; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; touch-action: none; }
         canvas { background: #f5f5f5; display: block; }
         
-        #ui-layer { position: absolute; background: white; padding: 20px; border-radius: 12px; display: flex; gap: 20px; box-shadow: 0 10px 30|px rgba(0,0,0,0.1); max-width: 95%; z-index: 10; max-height: 90vh; overflow-y: auto; }
+        #ui-layer { position: absolute; background: white; padding: 20px; border-radius: 12px; display: flex; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 95%; z-index: 10; max-height: 90vh; overflow-y: auto; }
         
         @media (max-width: 900px) {
             #ui-layer { flex-direction: column; gap: 10px; padding: 15px; top: 10px; }
@@ -36,6 +36,14 @@
         #log-container { font-size: 12px; color: #444; max-height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 5px; border-radius: 5px; background: #fafafa; }
         .log-item { padding: 4px 0; border-bottom: 1px dashed #ddd; white-space: nowrap; }
 
+        /* Mũi tên quay lại trong game */
+        #back-arrow {
+            position: absolute; left: 20px; top: 70px;
+            font-size: 30px; color: gray; cursor: pointer;
+            user-select: none; display: none; z-index: 5;
+            padding: 10px;
+        }
+
         #instruction-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); color: white; display: none;
@@ -54,7 +62,7 @@
         <p>
             1. Đeo kính <b>Anaglyph (Đỏ/Xanh)</b>.<br>
             2. Chỉnh thanh trượt RGB sao cho mỗi mắt chỉ nhìn thấy đúng một màu.<br>
-            3. Mục tiêu: Nhìn vào vòng tròn và gõ đúng chữ cái hiển thị (hoặc chạm vào vòng tròn trên điện thoại).<br>
+            3. Mục tiêu: Nhìn vào vòng tròn và gõ đúng chữ cái hiển thị.<br>
             4. <b>Phím tắt PC:</b><br>
                - Phím (+/-): Chỉnh kích thước vòng tròn.<br>
                - Phím ESC: Quay lại Menu.<br>
@@ -63,6 +71,8 @@
         </p>
         <button class="close-btn" onclick="toggleInstructions()">ĐÓNG (ESC)</button>
     </div>
+
+    <div id="back-arrow" onclick="stopGameAndReturn()">←</div>
 
     <div id="ui-layer">
         <div class="column">
@@ -119,6 +129,7 @@
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
         const instructionOverlay = document.getElementById('instruction-overlay');
+        const backArrow = document.getElementById('back-arrow');
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth < 600);
 
@@ -223,6 +234,7 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             gameState = 'PLAYING';
             uiLayer.style.display = 'none';
+            backArrow.style.display = 'block';
             score = 0; level = 1; correctCount = 0; wrongCount = 0;
             gameStartTime = Date.now();
             nextRound();
@@ -231,14 +243,27 @@
 
         function stopGameAndReturn() {
             if (gameState !== 'PLAYING') return;
+            saveCurrentProgress();
+            gameState = 'MENU';
+            uiLayer.style.display = 'flex';
+            backArrow.style.display = 'none';
+            displayLogs();
+        }
+
+        // Tách riêng hàm lưu để dùng cho cả ESC và thoát trang
+        function saveCurrentProgress() {
+            if (gameStartTime === 0) return;
             const duration = Math.floor((Date.now() - gameStartTime) / 1000);
             if (duration > 2) {
                 saveLog(score, correctCount, wrongCount, duration, timeLimit);
+                gameStartTime = 0; // Reset để không lưu trùng
             }
-            gameState = 'MENU';
-            uiLayer.style.display = 'flex';
-            displayLogs();
         }
+
+        // Bắt sự kiện thoát trang, F5
+        window.addEventListener('beforeunload', () => {
+            if (gameState === 'PLAYING') saveCurrentProgress();
+        });
 
         function saveLog(sc, cr, wr, dur, diff) {
             let logs = JSON.parse(localStorage.getItem('rg_dot_logs') || '[]');
@@ -246,8 +271,6 @@
             const dateStr = `${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')}`;
             const min = Math.floor(dur / 60).toString().padStart(2,'0');
             const sec = (dur % 60).toString().padStart(2,'0');
-            
-            // Viết tắt độ khó: Khó (1s) - Trung Bình (2s) - Dễ (3s)
             const diffMap = { 1: 'K', 2: 'T', 3: 'D' };
             const diffShort = diffMap[diff] || 'T';
 
