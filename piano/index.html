@@ -33,6 +33,9 @@
         .log-title { font-size: 13px; font-weight: bold; color: #d32f2f; margin-bottom: 5px; border-bottom: 1px solid #ccc; }
         #log-container { max-height: 100px; overflow-y: auto; font-size: 12px; color: #333; }
         .log-item { padding: 3px 0; border-bottom: 1px dashed #ddd; }
+
+        /* Nút quay lại xám */
+        #back-to-menu { position: absolute; left: 50px; top: 100px; font-size: 60px; color: gray; cursor: pointer; display: none; z-index: 100; user-select: none; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -83,6 +86,7 @@
             </div>
         </div>
 
+        <div id="back-to-menu" onclick="exitToMenu()">←</div>
         <canvas id="gameCanvas" width="1080" height="1920"></canvas>
     </div>
 
@@ -93,6 +97,11 @@
         let backupNodes = null; 
         let isPaused = false; 
         let pauseTimeStart = 0; 
+
+        // --- CƠ CHẾ BẢO VỆ & LƯU TRỮ KHI THOÁT ---
+        window.addEventListener('beforeunload', () => {
+            if (gameState === 'PLAYING') saveLog();
+        });
 
         container.addEventListener('mouseleave', () => {
             if (gameState === 'PLAYING') {
@@ -123,6 +132,7 @@
                 updateLogDisplay();
 
                 if (gameState === 'PLAYING') {
+                    document.getElementById('back-to-menu').style.display = 'block';
                     if (currentAudio) currentAudio.play();
                     requestAnimationFrame(gameLoop);
                 }
@@ -147,8 +157,9 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let dingBuffer = null, failBuffer = null;
 
-        // Logic Nhật ký
+        // Nhật ký Logic
         function saveLog() {
+            if (score === 0) return; // Không lưu nếu chưa chơi
             let logs = JSON.parse(localStorage.getItem('piano_logs') || "[]");
             let now = new Date();
             let d = String(now.getDate()).padStart(2, '0') + '/' + String(now.getMonth() + 1).padStart(2, '0');
@@ -157,29 +168,26 @@
             let s = duration % 60;
             let timeStr = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
             
-            logs.unshift({
-                date: d,
-                count: logs.length + 1,
-                score: score,
-                duration: timeStr
-            });
-            
+            logs.unshift({ date: d, count: logs.length + 1, score: score, duration: timeStr });
             if (logs.length > 10) logs.pop();
             localStorage.setItem('piano_logs', JSON.stringify(logs));
             updateLogDisplay();
         }
 
         function updateLogDisplay() {
-            const container = document.getElementById('log-container');
-            if(!container) return;
+            const logBox = document.getElementById('log-container');
+            if(!logBox) return;
             let logs = JSON.parse(localStorage.getItem('piano_logs') || "[]");
-            if(logs.length === 0) {
-                container.innerHTML = "Chưa có dữ liệu.";
-                return;
-            }
-            container.innerHTML = logs.map(l => `
-                <div class="log-item">${l.date} - Lần ${l.count} - ${l.score}đ - ${l.duration}</div>
-            `).join('');
+            if(logs.length === 0) { logBox.innerHTML = "Chưa có dữ liệu."; return; }
+            logBox.innerHTML = logs.map(l => `<div class="log-item">${l.date} - Lần ${l.count} - ${l.score}đ - ${l.duration}</div>`).join('');
+        }
+
+        function exitToMenu() {
+            if (currentAudio) currentAudio.pause();
+            saveLog();
+            gameState = 'MENU';
+            document.getElementById('ui-layer').style.display = 'flex';
+            document.getElementById('back-to-menu').style.display = 'none';
         }
 
         async function loadSound(url) { try { const r = await fetch(url); const ab = await r.arrayBuffer(); return await audioCtx.decodeAudioData(ab); } catch(e) { return null; } }
@@ -246,6 +254,7 @@
             if (f.files.length > 0) { bpm = parseInt(document.getElementById('custom-bpm').value); src = URL.createObjectURL(f.files[0]); }
             else { const s = SONGS[selectedSongIdx]; bpm = s.bpm; src = s.file; }
             gameState = 'PLAYING'; document.getElementById('ui-layer').style.display = 'none';
+            document.getElementById('back-to-menu').style.display = 'block';
             score = 0; notes = []; particles = [];
             const beat = 60 / bpm; const spd = HIT_ZONE_Y / (beat * 2);
             for (let i = 0; i < 800; i++) notes.push(new Note(Math.floor(Math.random() * 4), 3.0 + i * beat, spd));
@@ -264,12 +273,7 @@
                 if (!n.hit) { n.draw(); if (n.y > (HIT_ZONE_Y + HIT_WINDOW / 2)) { playSound(failBuffer); notes.splice(i, 1); } }
                 else notes.splice(i, 1);
             }
-            if (notes.length === 0 && currentAudio && currentAudio.ended) {
-                saveLog();
-                gameState = 'MENU';
-                document.getElementById('ui-layer').style.display = 'flex';
-                return;
-            }
+            if (notes.length === 0 && currentAudio && currentAudio.ended) { exitToMenu(); return; }
             for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); particles[i].draw(); if (particles[i].life <= 0) particles.splice(i, 1); }
             const chars = ['F','G','H','J']; ctx.font = `bold ${LANE_WIDTH * 0.45}px Arial`;
             chars.forEach((char, i) => {
@@ -297,13 +301,7 @@
         window.addEventListener('keydown', (e) => {
             if (e.key === "F12" || (e.ctrlKey && e.key === "s")) { e.preventDefault(); showReadme(); return; }
             if (gameState === 'PLAYING' && !isPaused) {
-                if (e.key === 'Escape') { 
-                    currentAudio.pause(); 
-                    saveLog();
-                    gameState = 'MENU'; 
-                    document.getElementById('ui-layer').style.display = 'flex'; 
-                    return; 
-                }
+                if (e.key === 'Escape') { exitToMenu(); return; }
                 let idx = ['f', 'g', 'h', 'j'].indexOf(e.key.toLowerCase());
                 if (idx !== -1) checkHit(idx);
             }
