@@ -8,6 +8,7 @@
         :root {
             --bg-color: rgb(245, 245, 245);
             --panel-bg: #ffffff;
+            --mobile-btn-bg: rgba(128, 128, 128, 0.4);
         }
 
         body {
@@ -45,6 +46,35 @@
             width: 100%;
             height: 100%;
         }
+
+        /* Nút điều khiển Mobile */
+        .mobile-nav-group {
+            position: absolute;
+            bottom: 40px;
+            display: none; /* Ẩn mặc định trên PC */
+            flex-direction: column;
+            gap: 15px;
+            z-index: 150;
+        }
+
+        .mobile-nav-group.left { left: 20px; }
+        .mobile-nav-group.right { right: 20px; flex-direction: row; }
+
+        .m-btn {
+            width: 60px;
+            height: 60px;
+            background: var(--mobile-btn-bg);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .m-btn:active { background: rgba(128, 128, 128, 0.8); }
 
         #rec-indicator {
             position: absolute;
@@ -122,6 +152,9 @@
             }
             body.training-mode #controls { transform: translateX(100%); }
             body.training-mode #game-stage { transform: translateX(0); }
+            
+            /* Hiện nút trên Mobile */
+            .mobile-nav-group { display: flex; }
         }
 
         .control-group {
@@ -175,7 +208,6 @@
         }
         .swap-btn:active { background: #0056b3; }
 
-        /* Auto Move Grid */
         .auto-move-grid {
             display: grid;
             grid-template-columns: 40px 1fr 1fr;
@@ -210,14 +242,11 @@
         
         .swipe-hint {
             position: fixed;
-            bottom: 15px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 11px;
-            color: #999;
-            background: rgba(255,255,255,0.7);
-            padding: 2px 10px;
-            border-radius: 10px;
+            font-size: 10px;
+            color: #bbb;
             pointer-events: none;
         }
 
@@ -261,6 +290,15 @@
     </div>
 
     <div id="game-stage" onclick="handleStageClick()">
+        <div class="mobile-nav-group left">
+            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-v-space', 2)">▲</button>
+            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-v-space', -2)">▼</button>
+        </div>
+        <div class="mobile-nav-group right">
+            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-h-space', -2)">◀</button>
+            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-h-space', 2)">▶</button>
+        </div>
+
         <div id="rec-indicator">
             <div class="dot"></div>
             <span>REC <span id="timer-display">0.0</span>s</span>
@@ -357,7 +395,6 @@
             <label>NHẬT KÝ LUYỆN TẬP <span class="clear-log" onclick="clearLog()">Xóa hết</span></label>
             <div id="log-container"></div>
         </div>
-        <div style="text-align: center; color: #aaa; font-size: 11px; padding-bottom: 20px;">Vuốt trái qua phải để tập</div>
     </div>
 
     <script src="readme.js"></script>
@@ -412,12 +449,12 @@
 
         let touchStartX = 0;
         document.addEventListener('touchstart', e => {
-            if (isTouchingSlider) return;
+            if (isTouchingSlider || e.target.closest('.m-btn')) return;
             touchStartX = e.changedTouches[0].screenX;
         }, {passive: true});
 
         document.addEventListener('touchend', e => {
-            if (isTouchingSlider) return;
+            if (isTouchingSlider || e.target.closest('.m-btn')) return;
             let diff = touchStartX - e.changedTouches[0].screenX;
             if (Math.abs(diff) > 60) {
                 if (diff < 0) document.body.classList.add('training-mode');
@@ -475,7 +512,6 @@
             updateStyles();
         }
 
-        // --- LOGIC AUTO MOVE ---
         function toggleAutoMove() {
             isAutoMoving = !isAutoMoving;
             const btn = document.getElementById('btn-auto');
@@ -497,13 +533,10 @@
                 document.querySelectorAll('.shape-container').forEach(el => {
                     el.style.transition = `transform ${speed}ms linear`;
                 });
-
                 const xVal = movingToTarget ? document.getElementById('x-to').value : document.getElementById('x-from').value;
                 const yVal = movingToTarget ? document.getElementById('y-to').value : document.getElementById('y-from').value;
-
                 document.getElementById('slider-h-space').value = xVal;
                 document.getElementById('slider-v-space').value = yVal;
-                
                 updateStyles();
                 movingToTarget = !movingToTarget;
                 autoMoveInterval = setTimeout(run, speed);
@@ -518,11 +551,10 @@
             document.querySelectorAll('.shape-container').forEach(el => el.style.transition = 'none');
         }
 
-        // DOM1: Bảo mật và Tạm dừng tự động
+        // DOM1 Security
         document.getElementById('game-stage').addEventListener('mouseleave', () => { if (isAutoMoving) clearTimeout(autoMoveInterval); });
         document.getElementById('game-stage').addEventListener('mouseenter', () => { if (isAutoMoving) startAutoMoveLoop(); });
 
-        // --- LOCAL STORAGE LOGIC ---
         function saveData() {
             const settings = {
                 mode: mode,
@@ -604,6 +636,7 @@
                 document.querySelector('.swap-btn').style.display = 'none';
                 document.getElementById('label-l').innerText = "MÀU HÌNH";
                 document.getElementById('auto-move-section').style.display = 'none';
+                document.querySelectorAll('.mobile-nav-group').forEach(el => el.style.display = 'none');
             } else {
                 rightCont.style.display = 'flex';
                 leftCont.style.transform = `translate(calc(-50% - ${hSpace/2}px), calc(-50% - ${vSpace/2}px))`;
@@ -614,6 +647,7 @@
                 document.querySelector('.swap-btn').style.display = 'block';
                 document.getElementById('label-l').innerText = "MÀU HÌNH TRÁI";
                 document.getElementById('auto-move-section').style.display = 'block';
+                if(window.innerWidth <= 768) document.querySelectorAll('.mobile-nav-group').forEach(el => el.style.display = 'flex');
             }
             saveData();
         }
