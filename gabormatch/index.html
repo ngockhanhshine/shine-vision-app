@@ -170,14 +170,29 @@
             localStorage.setItem('gabor_records', JSON.stringify(records.slice(0, 50)));
             renderJournal();
 
-            if (finalTimeSec < 12 && opS.value > 5) {
-                setTimeout(() => {
+            // LOGIC TỰ ĐỘNG TĂNG ĐỘ KHÓ
+            setTimeout(() => {
+                let changed = false;
+                // Trường hợp đặc biệt: Đạt giới hạn độ rõ cực thấp (< 5%) và tốc độ cao (< 12s)
+                if (parseInt(opS.value) <= 5 && finalTimeSec < 12) {
+                    if (parseInt(sizeS.value) > 2) {
+                        sizeS.value = parseInt(sizeS.value) - 1; // Giảm cỡ sọc
+                        opS.value = 50; // Reset độ rõ về 50%
+                        changed = true;
+                    }
+                } 
+                // Trường hợp bình thường: Giảm dần độ rõ
+                else if (finalTimeSec < 12 && parseInt(opS.value) > 5) {
                     opS.value = parseInt(opS.value) - 5;
+                    changed = true;
+                }
+
+                if (changed) {
                     updateStyles();
                     saveSettings();
                     autoMsg.style.display = 'block';
-                }, 500);
-            }
+                }
+            }, 500);
 
             // TỰ ĐỘNG CHUYỂN MÀN MỚI SAU 1.5 GIÂY
             setTimeout(() => {
