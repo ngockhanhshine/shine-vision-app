@@ -36,14 +36,6 @@
         #log-container { font-size: 12px; color: #444; max-height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 5px; border-radius: 5px; background: #fafafa; }
         .log-item { padding: 4px 0; border-bottom: 1px dashed #ddd; white-space: nowrap; }
 
-        /* Mũi tên quay lại trong game */
-        #back-arrow {
-            position: absolute; left: 20px; top: 70px;
-            font-size: 30px; color: gray; cursor: pointer;
-            user-select: none; display: none; z-index: 5;
-            padding: 10px;
-        }
-
         #instruction-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); color: white; display: none;
@@ -67,12 +59,11 @@
                - Phím (+/-): Chỉnh kích thước vòng tròn.<br>
                - Phím ESC: Quay lại Menu.<br>
                - <b>Ctrl + S / F12:</b> Đóng/Mở hướng dẫn này.<br>
-            5. Chúc bạn tập luyện hiệu quả!
+            5. <b>Mobile:</b> Chạm vào vòng tròn để chọn. Chạm <b>4 ngón</b> để thoát.<br>
+            6. Chúc bạn tập luyện hiệu quả!
         </p>
         <button class="close-btn" onclick="toggleInstructions()">ĐÓNG (ESC)</button>
     </div>
-
-    <div id="back-arrow" onclick="stopGameAndReturn()">←</div>
 
     <div id="ui-layer">
         <div class="column">
@@ -91,7 +82,7 @@
             <p style="font-size: 11px; color: #666; line-height: 1.4;">
                 <b>PC:</b> Phím +/- chỉnh size. Gõ chữ cái.<br>
                 <b>Mobile:</b> Chạm trực tiếp vào vòng tròn.<br>
-                Nhấn <b>ESC</b> hoặc <b>Chạm 2 ngón</b> để Menu.
+                Nhấn <b>ESC</b> hoặc <b>Chạm 4 ngón</b> để Menu.
             </p>
             <button class="btn btn-start" onclick="startGame()">BẮT ĐẦU</button>
         </div>
@@ -129,7 +120,6 @@
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
         const instructionOverlay = document.getElementById('instruction-overlay');
-        const backArrow = document.getElementById('back-arrow');
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth < 600);
 
@@ -234,7 +224,6 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             gameState = 'PLAYING';
             uiLayer.style.display = 'none';
-            backArrow.style.display = 'block';
             score = 0; level = 1; correctCount = 0; wrongCount = 0;
             gameStartTime = Date.now();
             nextRound();
@@ -243,27 +232,14 @@
 
         function stopGameAndReturn() {
             if (gameState !== 'PLAYING') return;
-            saveCurrentProgress();
-            gameState = 'MENU';
-            uiLayer.style.display = 'flex';
-            backArrow.style.display = 'none';
-            displayLogs();
-        }
-
-        // Tách riêng hàm lưu để dùng cho cả ESC và thoát trang
-        function saveCurrentProgress() {
-            if (gameStartTime === 0) return;
             const duration = Math.floor((Date.now() - gameStartTime) / 1000);
             if (duration > 2) {
                 saveLog(score, correctCount, wrongCount, duration, timeLimit);
-                gameStartTime = 0; // Reset để không lưu trùng
             }
+            gameState = 'MENU';
+            uiLayer.style.display = 'flex';
+            displayLogs();
         }
-
-        // Bắt sự kiện thoát trang, F5
-        window.addEventListener('beforeunload', () => {
-            if (gameState === 'PLAYING') saveCurrentProgress();
-        });
 
         function saveLog(sc, cr, wr, dur, diff) {
             let logs = JSON.parse(localStorage.getItem('rg_dot_logs') || '[]');
@@ -273,15 +249,7 @@
             const sec = (dur % 60).toString().padStart(2,'0');
             const diffMap = { 1: 'K', 2: 'T', 3: 'D' };
             const diffShort = diffMap[diff] || 'T';
-
-            const newEntry = {
-                date: dateStr,
-                score: sc,
-                right: cr,
-                wrong: wr,
-                time: `${min}:${sec}`,
-                diff: diffShort
-            };
+            const newEntry = { date: dateStr, score: sc, right: cr, wrong: wr, time: `${min}:${sec}`, diff: diffShort };
             logs.unshift(newEntry);
             if (logs.length > 50) logs.pop();
             localStorage.setItem('rg_dot_logs', JSON.stringify(logs));
@@ -352,10 +320,13 @@
         canvas.addEventListener('touchstart', (e) => {
             if (gameState !== 'PLAYING') return;
             e.preventDefault();
-            if (e.touches.length >= 2) {
+            
+            // THAY ĐỔI TẠI ĐÂY: Chạm 4 ngón để thoát
+            if (e.touches.length >= 4) {
                 stopGameAndReturn();
                 return;
             }
+            
             const touch = e.touches[0];
             const rect = canvas.getBoundingClientRect();
             const touchX = touch.clientX - rect.left;
