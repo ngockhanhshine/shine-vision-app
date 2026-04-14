@@ -1,12 +1,23 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <script src="../auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Anaglyph Piano V2 - Shine Vision App</title>
     <script src="readme.js"></script>
     <style>
-        body { margin: 0; padding: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
+        body { margin: 0; padding: 0; background: #000; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
+        
+        /* Container bảo mật bọc ngoài cùng - Đảm bảo không làm co giao diện */
+        #main-app-content { 
+            display: none; 
+            width: 100vw; 
+            height: 100vh; 
+            justify-content: center; 
+            align-items: center; 
+        }
+
         #game-container { position: relative; width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; }
         canvas { background: white; box-shadow: 0 0 30px rgba(255,255,255,0.2); height: 100vh; aspect-ratio: 9 / 16; object-fit: contain; }
         #ui-layer { position: absolute; background: white; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 90%; max-height: 90%; overflow-y: auto; z-index: 10; }
@@ -28,69 +39,79 @@
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998; }
         .pause-screen { position: absolute; inset: 0; background: #000; display: flex; justify-content: center; align-items: center; z-index: 10000; color: white; font-size: 40px; font-weight: bold; border: 5px solid #d32f2f; }
         
-        /* CSS Nhật ký */
         .log-section { margin-top: 10px; padding: 10px; background: #f4f4f4; border-radius: 8px; border: 1px solid #ddd; }
         .log-title { font-size: 13px; font-weight: bold; color: #d32f2f; margin-bottom: 5px; border-bottom: 1px solid #ccc; }
         #log-container { max-height: 100px; overflow-y: auto; font-size: 12px; color: #333; }
         .log-item { padding: 3px 0; border-bottom: 1px dashed #ddd; }
-
-        /* Nút quay lại xám */
         #back-to-menu { position: absolute; left: 50px; top: 100px; font-size: 60px; color: gray; cursor: pointer; display: none; z-index: 100; user-select: none; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="game-container">
-        <div id="modal-overlay"></div>
-        <div id="readme-modal">
-            <h1>HƯỚNG DẪN SỬ DỤNG</h1>
-            <div id="readme-content">Nội dung đang tải...</div>
-            <button id="readme-close" style="background: #333; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px; float: right;">ĐÓNG</button>
-        </div>
-
-        <div id="ui-layer">
-            <div class="column">
-                <h2>1. CHỌN BÀI HÁT</h2>
-                <div id="song-list" class="song-list"></div>
-                <h2>2. TỰ THÊM NHẠC CỦA BẠN</h2>
-                <div class="custom-upload">
-                    <input type="file" id="audio-upload" accept="audio/*">
-                    <label style="font-size: 12px; font-weight: bold;">Nhập BPM:</label>
-                    <input type="number" id="custom-bpm" value="120" min="40" max="300">
-                </div>
-                <p style="font-size: 12px; color: #666; margin: 5px 0;">Phím: <b>F G H J</b> | Chạm | Thoát: <b>ESC</b></p>
-                
-                <div class="log-section">
-                    <div class="log-title">NHẬT KÝ LUYỆN TẬP</div>
-                    <div id="log-container">Chưa có dữ liệu.</div>
-                </div>
-
-                <button class="start-btn" onclick="handleStart()">BẮT ĐẦU CHƠI</button>
+    <div id="main-app-content">
+        <div id="game-container">
+            <div id="modal-overlay"></div>
+            <div id="readme-modal">
+                <h1>HƯỚNG DẪN SỬ DỤNG</h1>
+                <div id="readme-content">Nội dung đang tải...</div>
+                <button id="readme-close" style="background: #333; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px; float: right;">ĐÓNG</button>
             </div>
-            <div class="column">
-                <h2>3. CÂN CHỈNH ANAGLYPH</h2>
-                <div class="color-control">
-                    <span style="font-weight: bold; color: #d32f2f; font-size: 13px;">KÍNH TRÁI (MÀU ĐỎ)</span>
-                    <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
-                    <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="200"></div>
-                    <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="0"></div>
-                    <div id="demo1" class="demo-box">DEMO ĐỎ</div>
+
+            <div id="ui-layer">
+                <div class="column">
+                    <h2>1. CHỌN BÀI HÁT</h2>
+                    <div id="song-list" class="song-list"></div>
+                    <h2>2. TỰ THÊM NHẠC CỦA BẠN</h2>
+                    <div class="custom-upload">
+                        <input type="file" id="audio-upload" accept="audio/*">
+                        <label style="font-size: 12px; font-weight: bold;">Nhập BPM:</label>
+                        <input type="number" id="custom-bpm" value="120" min="40" max="300">
+                    </div>
+                    <p style="font-size: 12px; color: #666; margin: 5px 0;">Phím: <b>F G H J</b> | Chạm | Thoát: <b>ESC</b></p>
+                    
+                    <div class="log-section">
+                        <div class="log-title">NHẬT KÝ LUYỆN TẬP</div>
+                        <div id="log-container">Chưa có dữ liệu.</div>
+                    </div>
+
+                    <button class="start-btn" onclick="handleStart()">BẮT ĐẦU CHƠI</button>
                 </div>
-                <div class="color-control">
-                    <span style="font-weight: bold; color: #008b8b; font-size: 13px;">KÍNH PHẢI (MÀU XANH)</span>
-                    <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
-                    <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
-                    <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
-                    <div id="demo2" class="demo-box">DEMO XANH</div>
+                <div class="column">
+                    <h2>3. CÂN CHỈNH ANAGLYPH</h2>
+                    <div class="color-control">
+                        <span style="font-weight: bold; color: #d32f2f; font-size: 13px;">KÍNH TRÁI (MÀU ĐỎ)</span>
+                        <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
+                        <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="200"></div>
+                        <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="0"></div>
+                        <div id="demo1" class="demo-box">DEMO ĐỎ</div>
+                    </div>
+                    <div class="color-control">
+                        <span style="font-weight: bold; color: #008b8b; font-size: 13px;">KÍNH PHẢI (MÀU XANH)</span>
+                        <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
+                        <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
+                        <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
+                        <div id="demo2" class="demo-box">DEMO XANH</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="back-to-menu" onclick="exitToMenu()">←</div>
-        <canvas id="gameCanvas" width="1080" height="1920"></canvas>
+            <div id="back-to-menu" onclick="exitToMenu()">←</div>
+            <canvas id="gameCanvas" width="1080" height="1920"></canvas>
+        </div>
     </div>
 
     <script>
+        // --- KIỂM TRA ĐĂNG NHẬP ---
+        (function() {
+            const loginData = JSON.parse(localStorage.getItem('user_login'));
+            if (!loginData) {
+                alert("Bạn cần đăng nhập để chơi bài này!");
+                window.location.href = '../index.html';
+            } else {
+                document.getElementById('main-app-content').style.display = 'flex';
+            }
+        })();
+
         const container = document.getElementById('game-container');
         let canvas = document.getElementById('gameCanvas');
         let ctx = canvas.getContext('2d');
@@ -98,17 +119,15 @@
         let isPaused = false; 
         let pauseTimeStart = 0; 
 
-        // --- CƠ CHẾ BẢO VỆ & LƯU TRỮ KHI THOÁT ---
         window.addEventListener('beforeunload', () => {
-            if (gameState === 'PLAYING') saveLog();
+            if (typeof gameState !== 'undefined' && gameState === 'PLAYING') saveLog();
         });
 
         container.addEventListener('mouseleave', () => {
-            if (gameState === 'PLAYING') {
+            if (typeof gameState !== 'undefined' && gameState === 'PLAYING') {
                 isPaused = true;
                 pauseTimeStart = performance.now(); 
                 if (currentAudio) currentAudio.pause();
-                
                 backupNodes = Array.from(container.childNodes);
                 container.innerHTML = '<div class="pause-screen">Tạm Dừng</div>';
             }
@@ -119,18 +138,14 @@
                 isPaused = false;
                 const pauseDuration = performance.now() - pauseTimeStart;
                 startTime += pauseDuration; 
-
                 container.innerHTML = ''; 
                 backupNodes.forEach(node => container.appendChild(node)); 
-                
                 canvas = document.getElementById('gameCanvas');
                 ctx = canvas.getContext('2d');
-                
                 document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
                 document.getElementById('readme-close').onclick = closeReadme;
                 renderSongList();
                 updateLogDisplay();
-
                 if (gameState === 'PLAYING') {
                     document.getElementById('back-to-menu').style.display = 'block';
                     if (currentAudio) currentAudio.play();
@@ -157,9 +172,8 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let dingBuffer = null, failBuffer = null;
 
-        // Nhật ký Logic
         function saveLog() {
-            if (score === 0) return; // Không lưu nếu chưa chơi
+            if (score === 0) return;
             let logs = JSON.parse(localStorage.getItem('piano_logs') || "[]");
             let now = new Date();
             let d = String(now.getDate()).padStart(2, '0') + '/' + String(now.getMonth() + 1).padStart(2, '0');
@@ -167,7 +181,6 @@
             let m = Math.floor(duration / 60);
             let s = duration % 60;
             let timeStr = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-            
             logs.unshift({ date: d, count: logs.length + 1, score: score, duration: timeStr });
             if (logs.length > 10) logs.pop();
             localStorage.setItem('piano_logs', JSON.stringify(logs));
