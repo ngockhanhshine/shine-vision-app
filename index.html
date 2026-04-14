@@ -6,6 +6,8 @@
     <title>Vision Training App - Shine Vision</title>
     
     <link rel="icon" type="image/png" href="assets/favicon.png">
+    
+    <script src="auth.js"></script>
 
     <style>
         body {
@@ -16,6 +18,26 @@
             padding: 20px;
             display: flex;
             justify-content: center;
+            position: relative; /* Thêm để định vị nút Logout */
+        }
+
+        /* Nút Logout ở góc phải */
+        #logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #ff3b30;
+            text-decoration: none;
+            font-weight: bold;
+            border: 1px solid #ff3b30;
+            padding: 5px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        #logout-btn:hover {
+            background: #ff3b30;
+            color: white;
         }
 
         .container {
@@ -42,6 +64,38 @@
             color: inherit;
         }
         .hidden-link:hover { color: #fff; }
+
+        /* Style cho Form Đăng Nhập */
+        #login-section {
+            background: #111;
+            padding: 40px 20px;
+            border-radius: 20px;
+            border: 1px solid #333;
+            max-width: 400px;
+            margin: 50px auto;
+        }
+        #login-section input {
+            width: 80%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #222;
+            color: white;
+            font-size: 16px;
+        }
+        #login-section button {
+            width: 86%;
+            padding: 12px;
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #login-section button:hover { background: #0056b3; }
 
         /* Menu Grid 3 cột */
         .menu-grid {
@@ -142,6 +196,7 @@
 
         @media (max-width: 600px) {
             h1 { font-size: 28px; }
+            #logout-btn { top: 10px; right: 10px; font-size: 12px; }
             .menu-grid { grid-template-columns: 1fr; }
             .results-grid { grid-template-columns: 1fr 1fr; }
             .app-card { max-width: 100%; }
@@ -150,90 +205,121 @@
 </head>
 <body>
 
+    <a href="#" id="logout-btn" style="display:none;" onclick="logout()">Logout</a>
+
     <div class="container">
         <h1>Vision Training App</h1>
         <div class="author">
             Bởi <a href="https://shinevisioncenter.com" target="_blank" class="hidden-link">Khôi Phục Thị Lực Shine</a>
         </div>
 
-        <div class="menu-grid">
-            
-            <a href="piano/index.html" class="app-card">
-                <img src="assets/piano.jpg" alt="Piano">
-                <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano</div>
-            </a>
-
-            <a href="rg-dot/index.html" class="app-card">
-                <img src="assets/dot.jpg" alt="RG Dot">
-                <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> RG Dot</div>
-            </a>
-
-            <a href="snellen/index.html" class="app-card">
-                <img src="assets/snellen.jpg" alt="Snellen">
-                <div class="app-title">Snellen Test</div>
-            </a>
-
-            <a href="reading/index.html" class="app-card">
-                <img src="assets/reading.jpg" alt="Reading">
-                <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Reading</div>
-            </a>
-
-            <a href="gabormatch/index.html" class="app-card">
-                <img src="assets/gabor.jpeg" alt="Gabor Match">
-                <div class="app-title">Gabor Match</div>
-            </a>
-
-            <a href="tetris/index.html" class="app-card">
-                <img src="assets/tetris.png" alt="Tetris">
-                <div class="app-title">Tetris</div>
-            </a>
-
-            <a href="crowd/index.html" class="app-card">
-                <img src="assets/crowd.png" alt="Crowd Training">
-                <div class="app-title">Crowd Training</div>
-            </a>
-
-            <a href="cross/index.html" class="app-card">
-                <img src="assets/cross.png" alt="Circle Cross">
-                <div class="app-title">Circle Cross Training</div>
-            </a>
-
-            <a href="brock/index.html" class="app-card">
-                <img src="assets/brock.png" alt="Brockstring">
-                <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Brockstring</div>
-            </a>
-
-            <a href="pianoh/index.html" class="app-card">
-                <img src="assets/pianoh.png" alt="Piano Hardcore">
-                <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano Hardcore</div>
-            </a>
-
-            <a href="rdot/index.html" class="app-card">
-                <img src="assets/rdot.jpg" alt="Random Dot">
-                <div class="app-title">Random Dot</div>
-            </a>
-
+        <div id="login-section" style="display:none;">
+            <p style="margin-bottom: 20px; color: #aaa;">Vui lòng đăng nhập để bắt đầu tập luyện</p>
+            <input type="text" id="username" placeholder="Tên học viên">
+            <input type="password" id="password" placeholder="Mật khẩu">
+            <button onclick="handleLogin(document.getElementById('username').value, document.getElementById('password').value)">ĐĂNG NHẬP</button>
         </div>
 
-        <hr>
+        <div id="main-content" style="display:none;">
+            <div class="menu-grid">
+                
+                <a href="piano/index.html" class="app-card">
+                    <img src="assets/piano.jpg" alt="Piano">
+                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano</div>
+                </a>
 
-        <div class="footer">
-            <div class="brand-name">
-                <a href="https://shinevisioncenter.com" target="_blank" class="footer-link">Khôi phục thị lực Shine</a> – 0973370148
+                <a href="rg-dot/index.html" class="app-card">
+                    <img src="assets/dot.jpg" alt="RG Dot">
+                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> RG Dot</div>
+                </a>
+
+                <a href="snellen/index.html" class="app-card">
+                    <img src="assets/snellen.jpg" alt="Snellen">
+                    <div class="app-title">Snellen Test</div>
+                </a>
+
+                <a href="reading/index.html" class="app-card">
+                    <img src="assets/reading.jpg" alt="Reading">
+                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Reading</div>
+                </a>
+
+                <a href="gabormatch/index.html" class="app-card">
+                    <img src="assets/gabor.jpeg" alt="Gabor Match">
+                    <div class="app-title">Gabor Match</div>
+                </a>
+
+                <a href="tetris/index.html" class="app-card">
+                    <img src="assets/tetris.png" alt="Tetris">
+                    <div class="app-title">Tetris</div>
+                </a>
+
+                <a href="crowd/index.html" class="app-card">
+                    <img src="assets/crowd.png" alt="Crowd Training">
+                    <div class="app-title">Crowd Training</div>
+                </a>
+
+                <a href="cross/index.html" class="app-card">
+                    <img src="assets/cross.png" alt="Circle Cross">
+                    <div class="app-title">Circle Cross Training</div>
+                </a>
+
+                <a href="brock/index.html" class="app-card">
+                    <img src="assets/brock.png" alt="Brockstring">
+                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Brockstring</div>
+                </a>
+
+                <a href="pianoh/index.html" class="app-card">
+                    <img src="assets/pianoh.png" alt="Piano Hardcore">
+                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano Hardcore</div>
+                </a>
+
+                <a href="rdot/index.html" class="app-card">
+                    <img src="assets/rdot.jpg" alt="Random Dot">
+                    <div class="app-title">Random Dot</div>
+                </a>
+
+                <a href="finger/index.html" class="app-card">
+                    <img src="assets/finger.png" alt="Finger Dance">
+                    <div class="app-title">Finger Dance</div>
+                </a>
+
             </div>
-            <p>Đơn vị Tiên phong trong lĩnh vực Đào Tạo Thị Giác 2 mắt</p>
-            <p>Với hơn 11 năm kinh nghiệm Nghiên cứu và Phát triển, chúng tôi tự hào vì đã giúp đỡ được hàng nghìn Học Viên sở hữu một đôi mắt Khoẻ Đẹp</p>
-        </div>
 
-        <div class="results-grid">
-            <img src="assets/1.jpg" alt="1" class="result-image">
-            <img src="assets/2.jpg" alt="2" class="result-image">
-            <img src="assets/3.jpg" alt="3" class="result-image">
-            <img src="assets/4.jpg" alt="4" class="result-image">
-            <img src="assets/5.jpg" alt="5" class="result-image">
-            <img src="assets/6.jpg" alt="6" class="result-image">
+            <hr>
+
+            <div class="footer">
+                <div class="brand-name">
+                    <a href="https://shinevisioncenter.com" target="_blank" class="footer-link">Khôi phục thị lực Shine</a> – 0973370148
+                </div>
+                <p>Đơn vị Tiên phong trong lĩnh vực Đào Tạo Thị Giác 2 mắt</p>
+                <p>Với hơn 11 năm kinh nghiệm Nghiên cứu và Phát triển, chúng tôi tự hào vì đã giúp đỡ được hàng nghìn Học Viên sở hữu một đôi mắt Khoẻ Đẹp</p>
+            </div>
+
+            <div class="results-grid">
+                <img src="assets/1.jpg" alt="1" class="result-image">
+                <img src="assets/2.jpg" alt="2" class="result-image">
+                <img src="assets/3.jpg" alt="3" class="result-image">
+                <img src="assets/4.jpg" alt="4" class="result-image">
+                <img src="assets/5.jpg" alt="5" class="result-image">
+                <img src="assets/6.jpg" alt="6" class="result-image">
+            </div>
         </div>
     </div>
 
+    <script>
+        // Hàm đăng xuất
+        function logout() {
+            localStorage.removeItem('user_login');
+            location.reload();
+        }
+
+        // Hiện nội dung tùy theo trạng thái
+        if (localStorage.getItem('user_login')) {
+            document.getElementById('main-content').style.display = 'block';
+            document.getElementById('logout-btn').style.display = 'block'; // Hiện nút Logout
+        } else {
+            document.getElementById('login-section').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
