@@ -73,7 +73,6 @@
         }
         .dot { width: 12px; height: 12px; background-color: #ff0000; border-radius: 50%; animation: blink 1s infinite; }
 
-        /* Overlay Hướng dẫn */
         #guideOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); color: white; z-index: 2000;
@@ -160,6 +159,33 @@
 
 <script src="readme.js"></script>
 <script>
+    /* ==========================================
+       KIỂM TRA ĐĂNG NHẬP (SHINE VISION AUTH)
+       ========================================== */
+    (function() {
+        function checkAuth() {
+            const loginData = JSON.parse(localStorage.getItem('user_login'));
+            const currentTime = new Date().getTime();
+            const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+            if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
+                localStorage.removeItem('user_login');
+                alert("Vui lòng đăng nhập để tiếp tục!");
+                window.location.href = '../index.html'; 
+                return false;
+            }
+            return true;
+        }
+        checkAuth();
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'user_login' && !e.newValue) window.location.href = '../index.html';
+        });
+        window.onfocus = () => checkAuth();
+    })();
+
+    /* ==========================================
+       LOGIC GỐC CỦA BROCKSTRING
+       ========================================== */
     const canvas = document.getElementById('brockCanvas');
     const ctx = canvas.getContext('2d');
     const appContainer = document.getElementById('appContainer');
@@ -187,7 +213,6 @@
     let sessionStartTime = 0; 
     let totalTrainingTimeToday = 0; 
 
-    // --- LOGIC HƯỚNG DẪN ---
     function showGuide() {
         if (typeof readmeContent !== 'undefined') {
             guideContent.innerHTML = readmeContent;
@@ -200,7 +225,6 @@
     closeGuide.onclick = () => guideOverlay.style.display = 'none';
     window.onclick = (e) => { if (e.target == guideOverlay) guideOverlay.style.display = 'none'; };
 
-    // --- PHÍM TẮT & CHUỘT PHẢI ---
     window.addEventListener('keydown', e => {
         if ((e.ctrlKey && e.key === 's') || e.key === 'F12') {
             e.preventDefault();
@@ -208,7 +232,6 @@
         }
     });
 
-    // --- LOGIC LƯU TRỮ ---
     function saveSettings() {
         const config = {
             y: ySlider.value,
@@ -339,7 +362,6 @@
         }
     }
 
-    // --- EVENTS ---
     document.querySelectorAll('input').forEach(inp => {
         inp.addEventListener('input', saveSettings);
     });
