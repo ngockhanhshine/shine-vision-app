@@ -356,7 +356,7 @@
         </div>
 
         <div id="auto-move-section" class="control-group">
-            <label>AUTO MOVE (DI CHUYỂN TỰ ĐỘNG)</label>
+            <label>AUTO MOVE (DI CHUYỂY TỰ ĐỘNG)</label>
             <div class="auto-move-grid">
                 <div></div><div style="text-align:center; font-size:10px;">DỌC (Y)</div><div style="text-align:center; font-size:10px;">NGANG (X)</div>
                 <div style="font-size:11px;">TỪ:</div>
@@ -400,6 +400,36 @@
     <script src="readme.js"></script>
 
     <script>
+        /* =========================================================
+           MÃ KIỂM TRA ĐĂNG NHẬP (CẬP NHẬT ĐƯỜNG DẪN THƯ MỤC MẸ)
+           ========================================================= */
+        (function() {
+            function checkAccess() {
+                const loginData = JSON.parse(localStorage.getItem('user_login'));
+                const currentTime = new Date().getTime();
+                const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+                if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
+                    localStorage.removeItem('user_login');
+                    if(confirm("Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập!\nNhấn OK để quay về trang chủ.")) {
+                        window.location.href = '../index.html'; // Đi ngược ra thư mục mẹ
+                    } else {
+                        window.location.href = '../index.html'; 
+                    }
+                }
+            }
+            checkAccess();
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'user_login' && e.newValue === null) {
+                    window.location.href = '../index.html';
+                }
+            });
+            window.onfocus = () => checkAccess();
+        })();
+
+        /* =========================================================
+           GIỮ NGUYÊN TOÀN BỘ LOGIC GỐC
+           ========================================================= */
         let mode = 1;
         let isRecording = false;
         let startTime, timerInterval;
@@ -551,7 +581,6 @@
             document.querySelectorAll('.shape-container').forEach(el => el.style.transition = 'none');
         }
 
-        // DOM1 Security
         document.getElementById('game-stage').addEventListener('mouseleave', () => { if (isAutoMoving) clearTimeout(autoMoveInterval); });
         document.getElementById('game-stage').addEventListener('mouseenter', () => { if (isAutoMoving) startAutoMoveLoop(); });
 
