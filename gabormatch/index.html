@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <script src="../auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shine Vision - Gabor Auto-Next</title>
     <script src="readme.js"></script>
     <style>
         body { margin: 0; padding: 0; background-color: #7F7F7F; overflow: hidden; font-family: sans-serif; touch-action: none; display: flex; flex-direction: column; height: 100vh; position: relative; }
+        
+        /* Ẩn nội dung chính khi chưa kiểm tra đăng nhập */
+        #main-app-content {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
         #game-ui { text-align: center; color: white; font-size: 16px; font-weight: bold; padding: 10px; background: rgba(0,0,0,0.2); z-index: 10; }
         
         #grid-container { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; align-content: center; justify-items: center; transition: opacity 0.1s; }
         
-        /* Lớp phủ bảo mật toàn màn hình */
         #pause-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #7F7F7F; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; font-weight: bold; pointer-events: none; }
 
         .card { background-color: #7F7F7F; border: 2px solid #999; border-radius: 12px; width: 80px; height: 80px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; }
@@ -47,45 +56,58 @@
 <body oncontextmenu="return false;">
     <div id="pause-overlay">⏸ TẠM DỪNG<br><small>Di chuyển chuột vào trang web để tiếp tục</small></div>
 
-    <div id="game-ui">Cặp còn lại: <span id="pairs-left">6</span> | <span id="timer">00:00</span></div>
-    
-    <div id="grid-container"></div>
-    
-    <div id="controls-wrapper">
-        <div class="control-section">
-            <div class="slider-group">
-                <label>Độ rõ:</label>
-                <button class="btn-step" onclick="adjust('op', -5)">-</button>
-                <input type="range" id="opSlider" min="5" max="100" value="80">
-                <button class="btn-step" onclick="adjust('op', 5)">+</button>
+    <div id="main-app-content">
+        <div id="game-ui">Cặp còn lại: <span id="pairs-left">6</span> | <span id="timer">00:00</span></div>
+        
+        <div id="grid-container"></div>
+        
+        <div id="controls-wrapper">
+            <div class="control-section">
+                <div class="slider-group">
+                    <label>Độ rõ:</label>
+                    <button class="btn-step" onclick="adjust('op', -5)">-</button>
+                    <input type="range" id="opSlider" min="5" max="100" value="80">
+                    <button class="btn-step" onclick="adjust('op', 5)">+</button>
+                </div>
+                <div class="slider-group">
+                    <label>Cỡ sọc:</label>
+                    <button class="btn-step" onclick="adjust('sz', -1)">-</button>
+                    <input type="range" id="sizeSlider" min="2" max="10" value="4">
+                    <button class="btn-step" onclick="adjust('sz', 1)">+</button>
+                </div>
+                <button id="resetBtn">🔄 VÁN MỚI / ĐỔI VỊ TRÍ</button>
+                <div id="auto-msg" class="msg-alert">🔥 Tuyệt vời! Độ khó đã tự tăng.</div>
             </div>
-            <div class="slider-group">
-                <label>Cỡ sọc:</label>
-                <button class="btn-step" onclick="adjust('sz', -1)">-</button>
-                <input type="range" id="sizeSlider" min="2" max="10" value="4">
-                <button class="btn-step" onclick="adjust('sz', 1)">+</button>
+
+            <div class="journal-section">
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between;">
+                    <span>NHẬT KÝ TẬP</span>
+                    <span style="color:red; cursor:pointer; font-size: 11px;" onclick="clearJournal()">Xóa hết</span>
+                </div>
+                <ul id="journal-list"></ul>
             </div>
-            <button id="resetBtn">🔄 VÁN MỚI / ĐỔI VỊ TRÍ</button>
-            <div id="auto-msg" class="msg-alert">🔥 Tuyệt vời! Độ khó đã tự tăng.</div>
         </div>
 
-        <div class="journal-section">
-            <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between;">
-                <span>NHẬT KÝ TẬP</span>
-                <span style="color:red; cursor:pointer; font-size: 11px;" onclick="clearJournal()">Xóa hết</span>
+        <div id="instruction-modal" onclick="this.style.display='none'">
+            <div id="instruction-content" onclick="event.stopPropagation()">
+                <div id="readme-text"></div>
+                <button onclick="document.getElementById('instruction-modal').style.display='none'" style="margin-top:20px; width:100%; padding:10px; cursor:pointer;">ĐÓNG</button>
             </div>
-            <ul id="journal-list"></ul>
-        </div>
-    </div>
-
-    <div id="instruction-modal" onclick="this.style.display='none'">
-        <div id="instruction-content" onclick="event.stopPropagation()">
-            <div id="readme-text"></div>
-            <button onclick="document.getElementById('instruction-modal').style.display='none'" style="margin-top:20px; width:100%; padding:10px; cursor:pointer;">ĐÓNG</button>
         </div>
     </div>
 
     <script>
+        // --- KHỐI KIỂM TRA ĐĂNG NHẬP ---
+        (function() {
+            const loginData = JSON.parse(localStorage.getItem('user_login'));
+            if (!loginData) {
+                alert("Vui lòng đăng nhập để sử dụng tính năng này!");
+                window.location.href = '../index.html';
+            } else {
+                document.getElementById('main-app-content').style.display = 'flex';
+            }
+        })();
+
         const grid = document.getElementById('grid-container');
         const opS = document.getElementById('opSlider');
         const sizeS = document.getElementById('sizeSlider');
@@ -102,7 +124,6 @@
         let startTime, timerInterval, gameRunning = false, finalTimeSec = 0;
         let elapsedBeforePause = 0;
 
-        // --- LOAD/SAVE SETTINGS ---
         function loadSettings() {
             const savedOp = localStorage.getItem('gabor_op');
             const savedSz = localStorage.getItem('gabor_sz');
@@ -114,7 +135,6 @@
             localStorage.setItem('gabor_sz', sizeS.value);
         }
 
-        // --- BẢO MẬT DOM (TRÊN TOÀN BODY) ---
         document.body.onmouseleave = () => pauseGame();
         document.body.onmouseenter = () => resumeGame();
 
@@ -170,18 +190,15 @@
             localStorage.setItem('gabor_records', JSON.stringify(records.slice(0, 50)));
             renderJournal();
 
-            // LOGIC TỰ ĐỘNG TĂNG ĐỘ KHÓ
             setTimeout(() => {
                 let changed = false;
-                // Trường hợp đặc biệt: Đạt giới hạn độ rõ cực thấp (< 5%) và tốc độ cao (< 12s)
                 if (parseInt(opS.value) <= 5 && finalTimeSec < 12) {
                     if (parseInt(sizeS.value) > 2) {
-                        sizeS.value = parseInt(sizeS.value) - 1; // Giảm cỡ sọc
-                        opS.value = 50; // Reset độ rõ về 50%
+                        sizeS.value = parseInt(sizeS.value) - 1;
+                        opS.value = 50;
                         changed = true;
                     }
                 } 
-                // Trường hợp bình thường: Giảm dần độ rõ
                 else if (finalTimeSec < 12 && parseInt(opS.value) > 5) {
                     opS.value = parseInt(opS.value) - 5;
                     changed = true;
@@ -194,7 +211,6 @@
                 }
             }, 500);
 
-            // TỰ ĐỘNG CHUYỂN MÀN MỚI SAU 1.5 GIÂY
             setTimeout(() => {
                 autoMsg.style.display = 'none';
                 init();
@@ -215,7 +231,6 @@
             gameRunning = false;
             clearInterval(timerInterval);
             
-            // Bảo mật ban đầu
             if (!document.hasFocus() || !document.body.matches(':hover')) {
                 pauseGame();
             } else {
