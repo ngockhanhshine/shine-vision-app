@@ -90,7 +90,37 @@
 
     <canvas id="gameCanvas" width="1920" height="1080"></canvas>
 
-    <script src="readme.js"></script> <script>
+    <script src="readme.js"></script> 
+    <script>
+        /* =========================================================
+           MÃ KIỂM TRA ĐĂNG NHẬP (TRUY CẬP THƯ MỤC MẸ)
+           ========================================================= */
+        (function() {
+            function checkAccess() {
+                const loginData = JSON.parse(localStorage.getItem('user_login'));
+                const currentTime = new Date().getTime();
+                const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+                if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
+                    localStorage.removeItem('user_login');
+                    alert("Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập!");
+                    window.location.href = '../index.html'; 
+                }
+            }
+            checkAccess();
+            // Lắng nghe nếu đăng xuất từ tab khác
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'user_login' && e.newValue === null) {
+                    window.location.href = '../index.html';
+                }
+            });
+            // Kiểm tra lại khi người dùng quay lại tab này
+            window.onfocus = () => checkAccess();
+        })();
+
+        /* =========================================================
+           GIỮ NGUYÊN TOÀN BỘ LOGIC GAME GỐC
+           ========================================================= */
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
@@ -152,7 +182,6 @@
             const modal = document.getElementById('guide-modal');
             const body = document.getElementById('guide-body');
             if (show) {
-                // Giả sử biến contentGuide nằm trong readme.js
                 body.innerHTML = typeof contentGuide !== 'undefined' ? contentGuide : "Chưa có nội dung hướng dẫn.";
                 modal.style.display = 'flex';
             } else {
@@ -161,7 +190,6 @@
         }
 
         window.addEventListener('keydown', (e) => {
-            // F12 hoặc Ctrl + S
             if (e.key === 'F12' || (e.ctrlKey && e.key === 's')) {
                 e.preventDefault();
                 toggleGuide(true);
@@ -180,10 +208,8 @@
             }
         });
 
-        // Chặn chuột phải trên Canvas cụ thể (đã có oncontextmenu ở body nhưng thêm cho chắc)
         canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-        // --- PHẦN LOGIC GIỮ NGUYÊN ---
         class Particle {
             constructor(x, y, color) {
                 this.x = x; this.y = y; this.color = color;
@@ -321,7 +347,7 @@
                 ctx.textAlign = "center"; ctx.fillText(feedbackText, WIDTH/2, 250);
                 feedbackTimer--;
             }
-            if (currentAudio.ended) { 
+            if (currentAudio.ended) { 
                 gameState = 'MENU'; uiLayer.style.display = 'flex'; 
                 if (isMobile && document.fullscreenElement) document.exitFullscreen().catch(()=>{});
             }
