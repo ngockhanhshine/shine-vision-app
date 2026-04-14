@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <script src="../auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
     <title>Advanced Crowding Training - Shine (v2.6 - Guide & Secure)</title>
@@ -28,8 +29,9 @@
             color: var(--text-main);
         }
 
-        #app-container {
-            display: flex;
+        /* Ẩn nội dung chính khi chưa kiểm tra đăng nhập */
+        #main-app-content {
+            display: none;
             gap: 30px;
             background: rgba(255, 255, 255, 0.5);
             padding: 30px;
@@ -38,7 +40,6 @@
             max-height: 95vh;
         }
 
-        /* --- Desktop Layout --- */
         #training-area { display: flex; flex-direction: column; align-items: center; gap: 15px; }
         #display-board {
             width: 320px; height: 320px; background: white; border-radius: 15px;
@@ -108,7 +109,6 @@
             font-size: 9px; color: #bbb; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 5px;
         }
 
-        /* --- Modal Hướng dẫn (Giống Anaglyph Piano) --- */
         #guide-modal {
             display: none; position: fixed; z-index: 9999; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);
@@ -129,10 +129,9 @@
         .close-guide:hover { color: var(--sh-red); }
         .guide-body { line-height: 1.6; color: #444; white-space: pre-wrap; font-size: 15px; }
 
-        /* --- Mobile Layout --- */
         @media (max-width: 600px) {
             body { height: auto; overflow-y: auto; padding: 10px 0; }
-            #app-container {
+            #main-app-content {
                 flex-direction: column; width: 95%; margin: 0 auto; padding: 15px;
                 max-height: none; gap: 15px; background: none; box-shadow: none;
             }
@@ -151,7 +150,7 @@
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="app-container">
+    <div id="main-app-content">
         <div id="training-area">
             <div id="display-board">
                 <div id="target-letter"></div>
@@ -220,6 +219,17 @@
     </div>
 
     <script>
+        // --- KIỂM TRA ĐĂNG NHẬP ---
+        (function() {
+            const loginData = JSON.parse(localStorage.getItem('user_login'));
+            if (!loginData) {
+                alert("Vui lòng đăng nhập để sử dụng tính năng này!");
+                window.location.href = '../index.html';
+            } else {
+                document.getElementById('main-app-content').style.display = 'flex';
+            }
+        })();
+
         const possibleLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const targetEl = document.getElementById('target-letter');
         const flankerEls = { t: document.getElementById('f-t'), tr: document.getElementById('f-tr'), r: document.getElementById('f-r'), br: document.getElementById('f-br'), b: document.getElementById('f-b'), bl: document.getElementById('f-bl'), l: document.getElementById('f-l'), tl: document.getElementById('f-tl') };
@@ -233,7 +243,6 @@
 
         function init() {
             loadData();
-            // Load nội dung từ readme.js
             const content = (typeof readmeContent !== 'undefined') ? readmeContent : "Vui lòng kiểm tra file readme.js";
             document.getElementById('guide-content').innerText = content;
 
@@ -246,10 +255,8 @@
             document.getElementById('btn-randomize').onclick = randomize;
             document.querySelectorAll('.answer-btn').forEach(btn => btn.onclick = () => check(btn.innerText));
             
-            // Chặn chuột phải
             document.addEventListener('contextmenu', e => e.preventDefault());
 
-            // Chặn Ctrl+S và F12
             document.addEventListener('keydown', e => {
                 if (e.key === 'F12' || (e.ctrlKey && e.key === 's')) {
                     e.preventDefault();
