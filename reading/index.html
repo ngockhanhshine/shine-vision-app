@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <script src="../auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anaglyph Reading Pro - Shine Vision</title>
@@ -11,6 +12,11 @@
             padding: 20px; 
             background-color: #e0e0e0;
             color: #333;
+        }
+
+        /* Ẩn nội dung chính khi chưa kiểm tra đăng nhập */
+        #main-app-content {
+            display: none;
         }
 
         .container { 
@@ -69,7 +75,6 @@
             text-align: justify;
         }
 
-        /* Biến màu cho chữ Anaglyph */
         :root {
             --red-final: rgb(255,0,0);
             --blue-final: rgb(0,0,255);
@@ -82,7 +87,6 @@
         button { background: #2c3e50; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         label { font-weight: bold; margin-bottom: 5px; display: block; }
 
-        /* Style cho trang Hướng dẫn */
         #readme-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); color: white; z-index: 9999;
@@ -99,50 +103,65 @@
         }
     </style>
 </head>
-<body oncontextmenu="return false;"> <div class="container">
-    <h2 style="margin-top:0">Anaglyph Reading Pro</h2>
-    
-    <div style="margin-bottom: 20px;">
-        <label>📖 Chọn bài tập:</label>
-        <select id="story-select" onchange="loadFixedStory()"></select>
-    </div>
+<body oncontextmenu="return false;">
 
-    <div class="control-panel">
-        <div class="rgb-controls" style="border-top: 4px solid #ff4444;">
-            <strong>🔴 Kính Trái (Đỏ)</strong>
-            <div class="slider-group">R: <input type="range" id="r1" min="0" max="255" value="255" oninput="updateRGB()"> <span id="v-r1">255</span></div>
-            <div class="slider-group">G: <input type="range" id="g1" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-g1">200</span></div>
-            <div class="slider-group">B: <input type="range" id="b1" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-b1">0</span></div>
-            <div id="preview1" class="color-preview"></div>
+<div id="main-app-content">
+    <div class="container">
+        <h2 style="margin-top:0">Anaglyph Reading Pro</h2>
+        
+        <div style="margin-bottom: 20px;">
+            <label>📖 Chọn bài tập:</label>
+            <select id="story-select" onchange="loadFixedStory()"></select>
         </div>
 
-        <div class="rgb-controls" style="border-top: 4px solid #4444ff;">
-            <strong>🔵 Kính Phải (Xanh)</strong>
-            <div class="slider-group">R: <input type="range" id="r2" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-r2">0</span></div>
-            <div class="slider-group">G: <input type="range" id="g2" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-g2">255</span></div>
-            <div class="slider-group">B: <input type="range" id="b2" min="0" max="255" value="255" oninput="updateRGB()"> <span id="v-b2">255</span></div>
-            <div id="preview2" class="color-preview"></div>
+        <div class="control-panel">
+            <div class="rgb-controls" style="border-top: 4px solid #ff4444;">
+                <strong>🔴 Kính Trái (Đỏ)</strong>
+                <div class="slider-group">R: <input type="range" id="r1" min="0" max="255" value="255" oninput="updateRGB()"> <span id="v-r1">255</span></div>
+                <div class="slider-group">G: <input type="range" id="g1" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-g1">200</span></div>
+                <div class="slider-group">B: <input type="range" id="b1" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-b1">0</span></div>
+                <div id="preview1" class="color-preview"></div>
+            </div>
+
+            <div class="rgb-controls" style="border-top: 4px solid #4444ff;">
+                <strong>🔵 Kính Phải (Xanh)</strong>
+                <div class="slider-group">R: <input type="range" id="r2" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-r2">0</span></div>
+                <div class="slider-group">G: <input type="range" id="g2" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-g2">255</span></div>
+                <div class="slider-group">B: <input type="range" id="b2" min="0" max="255" value="255" oninput="updateRGB()"> <span id="v-b2">255</span></div>
+                <div id="preview2" class="color-preview"></div>
+            </div>
+        </div>
+
+        <div id="reading-content">Hãy chọn bài đọc để bắt đầu tập luyện...</div>
+
+        <div style="border-top: 1px solid #eee; padding-top: 15px;">
+            <label>⚡ Dán văn bản nhanh:</label>
+            <textarea id="quick-input" rows="2" placeholder="Dán nội dung vào đây..."></textarea>
+            <button onclick="loadFromInput()">Chuyển đổi Anaglyph</button>
         </div>
     </div>
 
-    <div id="reading-content">Hãy chọn bài đọc để bắt đầu tập luyện...</div>
-
-    <div style="border-top: 1px solid #eee; padding-top: 15px;">
-        <label>⚡ Dán văn bản nhanh:</label>
-        <textarea id="quick-input" rows="2" placeholder="Dán nội dung vào đây..."></textarea>
-        <button onclick="loadFromInput()">Chuyển đổi Anaglyph</button>
-    </div>
-</div>
-
-<div id="readme-overlay" onclick="closeReadme()">
-    <div id="readme-inner" onclick="event.stopPropagation()">
-        <span id="close-btn" onclick="closeReadme()">&times;</span>
-        <div id="readme-content">Đang tải hướng dẫn...</div>
+    <div id="readme-overlay" onclick="closeReadme()">
+        <div id="readme-inner" onclick="event.stopPropagation()">
+            <span id="close-btn" onclick="closeReadme()">&times;</span>
+            <div id="readme-content">Đang tải hướng dẫn...</div>
+        </div>
     </div>
 </div>
 
 <script src="data.js"></script>
 <script>
+    // --- KHỐI KIỂM TRA ĐĂNG NHẬP ---
+    (function() {
+        const loginData = JSON.parse(localStorage.getItem('user_login'));
+        if (!loginData) {
+            alert("Vui lòng đăng nhập để sử dụng tính năng này!");
+            window.location.href = '../index.html'; // Thoát ra trang chủ/đăng nhập
+        } else {
+            document.getElementById('main-app-content').style.display = 'block';
+        }
+    })();
+
     const contentDiv = document.getElementById('reading-content');
     const storySelect = document.getElementById('story-select');
 
@@ -166,6 +185,7 @@
         const s = {};
         ['r1','g1','b1','r2','g2','b2'].forEach(id => {
             const el = document.getElementById(id);
+            if(!el) return;
             s[id] = el.value;
             document.getElementById('v-' + id).innerText = s[id];
         });
@@ -192,14 +212,13 @@
         if(t.trim()) { storySelect.value = ""; contentDiv.innerHTML = processText(t); }
     }
 
-    // --- TÍNH NĂNG MỚI: HƯỚNG DẪN & CHẶN PHÍM ---
     function showReadme() {
         const overlay = document.getElementById('readme-overlay');
         const content = document.getElementById('readme-content');
         if (typeof README_CONTENT !== 'undefined') {
             content.innerHTML = README_CONTENT;
         } else {
-            content.innerText = "Không tìm thấy nội dung hướng dẫn (Biến README_CONTENT chưa được định nghĩa trong readme.js)";
+            content.innerText = "Không tìm thấy nội dung hướng dẫn.";
         }
         overlay.style.display = 'block';
     }
@@ -209,14 +228,12 @@
     }
 
     window.addEventListener('keydown', (e) => {
-        // Ctrl + S hoặc F12
         if (e.key === 'F12' || (e.ctrlKey && e.key.toLowerCase() === 's')) {
             e.preventDefault();
             showReadme();
         }
     });
 
-    // Chặn chuột phải trên mọi phần tử (bao gồm canvas nếu có sau này)
     document.addEventListener('contextmenu', event => event.preventDefault());
 
     init();
