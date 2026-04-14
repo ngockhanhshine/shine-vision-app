@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <script src="../auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dichoptic Tetris Mobile - Shine Vision</title>
@@ -11,6 +12,15 @@
             background: rgb(245, 245, 245);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* Ẩn nội dung chính khi chưa kiểm tra đăng nhập */
+        #main-app-content {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
         }
 
         #setup-scene {
@@ -57,7 +67,6 @@
         .btn-ctrl svg { width: 35px; height: 35px; fill: #333; pointer-events: none; }
         #back-btn { background: #555; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
 
-        /* Style cho overlay hướng dẫn */
         #readme-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 9999; color: white;
@@ -67,71 +76,82 @@
         #close-readme { position: fixed; top: 10px; right: 20px; font-size: 30px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
-<body oncontextmenu="return false;"> <div id="readme-overlay">
+<body oncontextmenu="return false;">
+    <div id="readme-overlay">
         <div id="close-readme">&times;</div>
         <div id="readme-content">Đang tải hướng dẫn...</div>
     </div>
 
-    <div id="setup-scene">
-        <h3 style="margin:0 0 10px 0;">Cấu hình Dichoptic</h3>
-        <div class="config-groups">
-            <div class="control-group">
-                <strong style="color: #008b8b; font-size: 14px;">Mắt Yếu (Khối rơi)</strong>
-                <div class="slider-row">R <input type="range" id="r1" min="0" max="255" value="0"> <span id="v-r1">0</span></div>
-                <div class="slider-row">G <input type="range" id="g1" min="0" max="255" value="255"> <span id="v-g1">255</span></div>
-                <div class="slider-row">B <input type="range" id="b1" min="0" max="255" value="255"> <span id="v-b1">255</span></div>
-                <div id="preview1" class="color-preview"></div>
+    <div id="main-app-content">
+        <div id="setup-scene">
+            <h3 style="margin:0 0 10px 0;">Cấu hình Dichoptic</h3>
+            <div class="config-groups">
+                <div class="control-group">
+                    <strong style="color: #008b8b; font-size: 14px;">Mắt Yếu (Khối rơi)</strong>
+                    <div class="slider-row">R <input type="range" id="r1" min="0" max="255" value="0"> <span id="v-r1">0</span></div>
+                    <div class="slider-row">G <input type="range" id="g1" min="0" max="255" value="255"> <span id="v-g1">255</span></div>
+                    <div class="slider-row">B <input type="range" id="b1" min="0" max="255" value="255"> <span id="v-b1">255</span></div>
+                    <div id="preview1" class="color-preview"></div>
+                </div>
+                <div class="control-group">
+                    <strong style="color: #b22222; font-size: 14px;">Mắt Khỏe (Cố định)</strong>
+                    <div class="slider-row">R <input type="range" id="r2" min="0" max="255" value="255"> <span id="v-r2">255</span></div>
+                    <div class="slider-row">G <input type="range" id="g2" min="0" max="255" value="0"> <span id="v-g2">200</span></div>
+                    <div class="slider-row">B <input type="range" id="b2" min="0" max="255" value="85"> <span id="v-b2">85</span></div>
+                    <div id="preview2" class="color-preview"></div>
+                </div>
             </div>
-            <div class="control-group">
-                <strong style="color: #b22222; font-size: 14px;">Mắt Khỏe (Cố định)</strong>
-                <div class="slider-row">R <input type="range" id="r2" min="0" max="255" value="255"> <span id="v-r2">255</span></div>
-                <div class="slider-row">G <input type="range" id="g2" min="0" max="255" value="0"> <span id="v-g2">200</span></div>
-                <div class="slider-row">B <input type="range" id="b2" min="0" max="255" value="85"> <span id="v-b2">85</span></div>
-                <div id="preview2" class="color-preview"></div>
-            </div>
+            <button id="start-btn">BẮT ĐẦU TẬP LUYỆN</button>
         </div>
-        <button id="start-btn">BẮT ĐẦU TẬP LUYỆN</button>
-    </div>
 
-    <div id="game-scene">
-        <div class="game-header">
-            <div class="next-box">
-                <div style="font-size: 9px; font-weight: bold; color: #666;">TIẾP THEO</div>
-                <canvas id="next" width="60" height="60" style="width:40px; height:40px;"></canvas>
+        <div id="game-scene">
+            <div class="game-header">
+                <div class="next-box">
+                    <div style="font-size: 9px; font-weight: bold; color: #666;">TIẾP THEO</div>
+                    <canvas id="next" width="60" height="60" style="width:40px; height:40px;"></canvas>
+                </div>
+                <div class="stats">SCORE: <span id="score">0</span></div>
+                <button id="back-btn">Cài đặt</button>
             </div>
-            <div class="stats">SCORE: <span id="score">0</span></div>
-            <button id="back-btn">Cài đặt</button>
-        </div>
-        <div id="fusion-frame">
-            <div id="game-container"><canvas id="tetris"></canvas></div>
-        </div>
-        <div id="controls">
-            <button class="btn-ctrl" id="left-btn"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>
-            <button class="btn-ctrl" id="right-btn"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg></button>
-            <button class="btn-ctrl" id="down-btn"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
-            <button class="btn-ctrl" id="rotate-btn"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+            <div id="fusion-frame">
+                <div id="game-container"><canvas id="tetris"></canvas></div>
+            </div>
+            <div id="controls">
+                <button class="btn-ctrl" id="left-btn"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>
+                <button class="btn-ctrl" id="right-btn"><svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg></button>
+                <button class="btn-ctrl" id="down-btn"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
+                <button class="btn-ctrl" id="rotate-btn"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+            </div>
         </div>
     </div>
 
 <script src="readme.js"></script>
 
 <script>
-// --- CHẶN CHUỘT PHẢI (CONTEXT MENU) ---
+// --- KHỐI KIỂM TRA ĐĂNG NHẬP ---
+(function() {
+    const loginData = JSON.parse(localStorage.getItem('user_login'));
+    if (!loginData) {
+        alert("Vui lòng đăng nhập để sử dụng tính năng này!");
+        window.location.href = '../index.html';
+    } else {
+        document.getElementById('main-app-content').style.display = 'flex';
+    }
+})();
+
 document.addEventListener('contextmenu', event => event.preventDefault());
 
-// --- XỬ LÝ HIỂN THỊ HƯỚNG DẪN (Ctrl+S, F12) ---
 const overlay = document.getElementById('readme-overlay');
 const readmeContent = document.getElementById('readme-content');
 
 function showHelp() {
-    // readmeData là biến chứa nội dung text trong file readme.js của anh
     if (typeof readmeData !== 'undefined') {
         readmeContent.innerText = readmeData;
     } else {
         readmeContent.innerText = "Không tìm thấy nội dung hướng dẫn (readme.js).";
     }
     overlay.style.display = 'block';
-    gameActive = false; // Tạm dừng game khi xem hướng dẫn
+    gameActive = false;
 }
 
 document.getElementById('close-readme').onclick = () => {
@@ -142,19 +162,16 @@ document.getElementById('close-readme').onclick = () => {
 };
 
 window.addEventListener('keydown', e => {
-    // Chặn F12
     if (e.key === "F12") {
         e.preventDefault();
         showHelp();
     }
-    // Chặn Ctrl + S
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         showHelp();
     }
 });
 
-// --- PHẦN ÂM THANH (ĐÃ SỬA ĐƯỜNG DẪN THEO CẤU TRÚC: tetris/index.html & tetris/sounds/) ---
 const sounds = {};
 const soundPaths = {
     1: 'sounds/1.mp3',
@@ -179,7 +196,6 @@ function playSfx(key) {
     }
 }
 
-// --- LOGIC GAME ---
 const COLOR_KEY = 'dichoptic_v4_shine';
 let colors = { weak: {r:0,g:255,b:255}, strong: {r:255,g:0,b:85} };
 const canvas = document.getElementById('tetris');
@@ -384,7 +400,6 @@ function update(time = 0) {
     requestAnimationFrame(update);
 }
 
-// --- HỆ THỐNG ĐIỀU KHIỂN NHẤN GIỮ (LONG PRESS) ---
 let controlInterval = null;
 let controlDelay = null;
 
@@ -420,11 +435,8 @@ btnConfigs.forEach(config => {
     }
 });
 
-// Điều khiển bàn phím gốc (có lồng ghép showHelp để đồng bộ)
 document.onkeydown = e => {
     if(!gameActive && overlay.style.display !== 'block') return;
-    
-    // Nếu đang mở hướng dẫn, nhấn phím bất kỳ (trừ F12/Ctrl+S) có thể cho đóng hoặc giữ nguyên tùy ý
     if(overlay.style.display === 'block') return;
 
     if(e.keyCode===37) move(-1); 
