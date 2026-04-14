@@ -1,11 +1,23 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <script src="../auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Anaglyph RG Dot Training - Shine Vision</title>
     <style>
-        body { margin: 0; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; touch-action: none; }
+        /* Sửa lại body để không ảnh hưởng đến cấu trúc bên trong */
+        body { margin: 0; background: #f5f5f5; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; touch-action: none; }
+        
+        /* Container bảo vệ - Đảm bảo căn giữa và không làm co giao diện */
+        #main-app-content { 
+            display: none; 
+            width: 100vw; 
+            height: 100vh; 
+            justify-content: center; 
+            align-items: center; 
+        }
+
         canvas { background: #f5f5f5; display: block; }
         
         #ui-layer { position: absolute; background: white; padding: 20px; border-radius: 12px; display: flex; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 95%; z-index: 10; max-height: 90vh; overflow-y: auto; }
@@ -49,73 +61,86 @@
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="instruction-overlay">
-        <h1>HƯỚNG DẪN SỬ DỤNG</h1>
-        <p>
-            1. Đeo kính <b>Anaglyph (Đỏ/Xanh)</b>.<br>
-            2. Chỉnh thanh trượt RGB sao cho mỗi mắt chỉ nhìn thấy đúng một màu.<br>
-            3. Mục tiêu: Nhìn vào vòng tròn và gõ đúng chữ cái hiển thị.<br>
-            4. <b>Phím tắt PC:</b><br>
-               - Phím (+/-): Chỉnh kích thước vòng tròn.<br>
-               - Phím ESC: Quay lại Menu.<br>
-               - <b>Ctrl + S / F12:</b> Đóng/Mở hướng dẫn này.<br>
-            5. <b>Mobile:</b> Chạm vào vòng tròn để chọn. Chạm <b>4 ngón</b> để thoát.<br>
-            6. Chúc bạn tập luyện hiệu quả!
-        </p>
-        <button class="close-btn" onclick="toggleInstructions()">ĐÓNG (ESC)</button>
-    </div>
-
-    <div id="ui-layer">
-        <div class="column">
-            <div style="text-align: center; margin-bottom: 15px;">
-                <a href="https://shinevisioncenter.com" target="_blank" 
-                   style="text-decoration: none; color: #d32f2f; font-weight: bold; font-size: 22px;">
-                   KHÔI PHỤC THỊ LỰC SHINE
-                </a>
-            </div>
-            <h2>1. ĐỘ KHÓ</h2>
-            <div class="difficulty-btns">
-                <button class="btn" id="diff-3" onclick="setDiff(3)">DỄ (3 Giây)</button>
-                <button class="btn" id="diff-2" onclick="setDiff(2)" style="background: #ffebeb; color: #d32f2f;">TRUNG BÌNH (2 Giây)</button>
-                <button class="btn" id="diff-1" onclick="setDiff(1)">KHÓ (1 Giây)</button>
-            </div>
-            <p style="font-size: 11px; color: #666; line-height: 1.4;">
-                <b>PC:</b> Phím +/- chỉnh size. Gõ chữ cái.<br>
-                <b>Mobile:</b> Chạm trực tiếp vào vòng tròn.<br>
-                Nhấn <b>ESC</b> hoặc <b>Chạm 4 ngón</b> để Menu.
+    <div id="main-app-content">
+        <div id="instruction-overlay">
+            <h1>HƯỚNG DẪN SỬ DỤNG</h1>
+            <p>
+                1. Đeo kính <b>Anaglyph (Đỏ/Xanh)</b>.<br>
+                2. Chỉnh thanh trượt RGB sao cho mỗi mắt chỉ nhìn thấy đúng một màu.<br>
+                3. Mục tiêu: Nhìn vào vòng tròn và gõ đúng chữ cái hiển thị.<br>
+                4. <b>Phím tắt PC:</b><br>
+                    - Phím (+/-): Chỉnh kích thước vòng tròn.<br>
+                    - Phím ESC: Quay lại Menu.<br>
+                    - <b>Ctrl + S / F12:</b> Đóng/Mở hướng dẫn này.<br>
+                5. <b>Mobile:</b> Chạm vào vòng tròn để chọn. Chạm <b>4 ngón</b> để thoát.<br>
+                6. Chúc bạn tập luyện hiệu quả!
             </p>
-            <button class="btn btn-start" onclick="startGame()">BẮT ĐẦU</button>
+            <button class="close-btn" onclick="toggleInstructions()">ĐÓNG (ESC)</button>
         </div>
 
-        <div class="column">
-            <h2>2. CÂN MÀU (RGB)</h2>
-            <div class="color-control">
-                <span style="font-weight: bold; color: #d32f2f; font-size: 12px;">MÀU ĐỎ</span>
-                <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
-                <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="200"></div>
-                <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="0"></div>
-                <div id="demo1" class="demo-box">DEMO</div>
+        <div id="ui-layer">
+            <div class="column">
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <a href="https://shinevisioncenter.com" target="_blank" 
+                       style="text-decoration: none; color: #d32f2f; font-weight: bold; font-size: 22px;">
+                       KHÔI PHỤC THỊ LỰC SHINE
+                    </a>
+                </div>
+                <h2>1. ĐỘ KHÓ</h2>
+                <div class="difficulty-btns">
+                    <button class="btn" id="diff-3" onclick="setDiff(3)">DỄ (3 Giây)</button>
+                    <button class="btn" id="diff-2" onclick="setDiff(2)" style="background: #ffebeb; color: #d32f2f;">TRUNG BÌNH (2 Giây)</button>
+                    <button class="btn" id="diff-1" onclick="setDiff(1)">KHÓ (1 Giây)</button>
+                </div>
+                <p style="font-size: 11px; color: #666; line-height: 1.4;">
+                    <b>PC:</b> Phím +/- chỉnh size. Gõ chữ cái.<br>
+                    <b>Mobile:</b> Chạm trực tiếp vào vòng tròn.<br>
+                    Nhấn <b>ESC</b> hoặc <b>Chạm 4 ngón</b> để Menu.
+                </p>
+                <button class="btn btn-start" onclick="startGame()">BẮT ĐẦU</button>
             </div>
 
-            <div class="color-control">
-                <span style="font-weight: bold; color: #008b8b; font-size: 12px;">MÀU XANH</span>
-                <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
-                <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
-                <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
-                <div id="demo2" class="demo-box">DEMO</div>
+            <div class="column">
+                <h2>2. CÂN MÀU (RGB)</h2>
+                <div class="color-control">
+                    <span style="font-weight: bold; color: #d32f2f; font-size: 12px;">MÀU ĐỎ</span>
+                    <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
+                    <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="200"></div>
+                    <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="0"></div>
+                    <div id="demo1" class="demo-box">DEMO</div>
+                </div>
+
+                <div class="color-control">
+                    <span style="font-weight: bold; color: #008b8b; font-size: 12px;">MÀU XANH</span>
+                    <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
+                    <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
+                    <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
+                    <div id="demo2" class="demo-box">DEMO</div>
+                </div>
+            </div>
+
+            <div class="column">
+                <h2>3. NHẬT KÝ</h2>
+                <div id="log-container"></div>
+                <button class="btn" style="margin-top:10px; font-size:10px; padding:5px;" onclick="clearLogs()">Xoá lịch sử</button>
             </div>
         </div>
 
-        <div class="column">
-            <h2>3. NHẬT KÝ</h2>
-            <div id="log-container"></div>
-            <button class="btn" style="margin-top:10px; font-size:10px; padding:5px;" onclick="clearLogs()">Xoá lịch sử</button>
-        </div>
+        <canvas id="gameCanvas"></canvas>
     </div>
-
-    <canvas id="gameCanvas"></canvas>
 
     <script>
+        // --- LOGIC KIỂM TRA ĐĂNG NHẬP ---
+        (function() {
+            const loginData = JSON.parse(localStorage.getItem('user_login'));
+            if (!loginData) {
+                alert("Bạn cần đăng nhập để chơi bài này!");
+                window.location.href = '../index.html';
+            } else {
+                document.getElementById('main-app-content').style.display = 'flex';
+            }
+        })();
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const uiLayer = document.getElementById('ui-layer');
@@ -258,6 +283,7 @@
         function displayLogs() {
             const logs = JSON.parse(localStorage.getItem('rg_dot_logs') || '[]');
             const container = document.getElementById('log-container');
+            if(!container) return;
             container.innerHTML = logs.map((l, index) => `
                 <div class="log-item">
                     ${l.date} - Lần ${logs.length - index} - ${l.score}đ - ${l.right}/${l.wrong} - ${l.time} - ${l.diff}
@@ -321,7 +347,7 @@
             if (gameState !== 'PLAYING') return;
             e.preventDefault();
             
-            // THAY ĐỔI TẠI ĐÂY: Chạm 4 ngón để thoát
+            // Chạm 4 ngón để thoát
             if (e.touches.length >= 4) {
                 stopGameAndReturn();
                 return;
