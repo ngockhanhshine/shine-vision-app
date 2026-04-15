@@ -8,6 +8,7 @@
     <link rel="icon" type="image/png" href="assets/favicon.png">
     
     <script src="auth.js"></script>
+    <script src="readme.js"></script>
 
     <style>
         body {
@@ -320,6 +321,23 @@
         } else {
             document.getElementById('login-section').style.display = 'block';
         }
+
+        // Khóa Ctrl + S và F12 để hiện hướng dẫn sử dụng
+        document.addEventListener('keydown', function(e) {
+            // Khóa F12 (KeyCode 123)
+            // Khóa Ctrl + S (KeyCode 83 kèm ctrlKey)
+            if (e.keyCode === 123 || (e.ctrlKey && e.keyCode === 83)) {
+                e.preventDefault();
+                if (typeof showInstructions === "function") {
+                    showInstructions(); // Gọi hàm từ readme.js
+                } else {
+                    alert("Vui lòng kiểm tra file readme.js");
+                }
+            }
+        });
+
+        // Chặn chuột phải để tăng tính bảo mật (tùy chọn, giống các app khác của anh)
+        document.addEventListener('contextmenu', e => e.preventDefault());
     </script>
 </body>
 </html>
