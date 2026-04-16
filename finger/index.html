@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Finger Dance - Shine Vision App</title>
+    <title>Finger Dance - Audition Therapy Pro</title>
     <style>
         :root { --red-main: #d32f2f; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #222; font-family: 'Segoe UI', Arial, sans-serif; display: flex; justify-content: center; align-items: center; }
@@ -25,6 +25,11 @@
         .demo-box { width: 100%; height: 30px; border-radius: 4px; margin-top: 5px; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.75rem; color: white; }
         .btn-start { background: var(--red-main); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
 
+        /* Màn hình Loading */
+        #loading-overlay { display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.9); z-index: 200; flex-direction: column; justify-content: center; align-items: center; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid var(--red-main); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         #leaderboard { margin-top: 15px; padding: 10px; border: 1px solid #eee; border-radius: 8px; background: #f9f9f9; }
         .lb-title { font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; color: #666; text-align: center; }
         .lb-row { display: flex; justify-content: space-between; font-size: 0.8rem; padding: 2px 5px; border-bottom: 1px solid #f0f0f0; }
@@ -36,7 +41,6 @@
         #result-board { display: none; position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); padding: 20px 40px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.3); text-align: center; z-index: 20; border: 3px solid var(--red-main); }
         .res-score { font-size: 2.5rem; font-weight: 900; color: var(--red-main); margin: 10px 0; }
         .btn-back { background: #333; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-back:hover { background: #000; }
 
         #charVideo { display: none; }
     </style>
@@ -44,6 +48,11 @@
 <body>
 
 <div id="app-container">
+    <div id="loading-overlay">
+        <div class="loader"></div>
+        <div id="loading-text" style="font-weight: bold; color: #333;">ĐANG TẢI DỮ LIỆU...</div>
+    </div>
+
     <div id="menu-layer">
         <div class="menu-grid">
             <div class="left-col">
@@ -85,7 +94,7 @@
                 </div>
             </div>
         </div>
-        <button class="btn-start" onclick="startGame()">BẮT ĐẦU</button>
+        <button class="btn-start" onclick="handlePreloadThenStart()">BẮT ĐẦU</button>
     </div>
 
     <div id="game-layer">
@@ -107,33 +116,6 @@
 <audio id="audioClap" src="sounds/clap.mp3"></audio>
 
 <script>
-/* ==========================================
-   KIỂM TRA ĐĂNG NHẬP (SHINE VISION AUTH)
-   ========================================== */
-(function() {
-    function checkAuth() {
-        const loginData = JSON.parse(localStorage.getItem('user_login'));
-        const currentTime = new Date().getTime();
-        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-        if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
-            localStorage.removeItem('user_login');
-            alert("Vui lòng đăng nhập để tiếp tục!");
-            window.location.href = '../index.html'; 
-            return false;
-        }
-        return true;
-    }
-    checkAuth();
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'user_login' && !e.newValue) window.location.href = '../index.html';
-    });
-    window.onfocus = () => checkAuth();
-})();
-
-/* ==========================================
-   LOGIC GAME GỐC
-   ========================================== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const charVid = document.getElementById('charVideo');
@@ -152,6 +134,43 @@ let isPostFinishWait = false, postFinishCounter = 0;
 
 const ARROWS = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
 
+// --- LOGIC PRELOAD VIDEO ---
+function preloadVideos(prefix) {
+    const videoFiles = [
+        `movie/${prefix}wait.mp4`,
+        `movie/${prefix}fail.mp4`,
+        `movie/${prefix}finish.mp4`,
+        `movie/${prefix}win.mp4`,
+        `movie/${prefix}dance1.mp4`,
+        `movie/${prefix}dance2.mp4`,
+        `movie/${prefix}dance3.mp4`,
+        `movie/${prefix}dance4.mp4`,
+        `movie/${prefix}dance5.mp4`
+    ];
+    
+    document.getElementById('loading-overlay').style.display = 'flex';
+    
+    const promises = videoFiles.map(url => {
+        return new Promise((resolve) => {
+            const v = document.createElement('video');
+            v.src = url;
+            v.preload = 'auto';
+            v.oncanplaythrough = resolve;
+            v.onerror = resolve; // Bỏ qua nếu lỗi file
+            setTimeout(resolve, 3000); // Timeout 3s để tránh kẹt
+        });
+    });
+    
+    return Promise.all(promises);
+}
+
+async function handlePreloadThenStart() {
+    await preloadVideos(charPrefix);
+    document.getElementById('loading-overlay').style.display = 'none';
+    startGame();
+}
+
+// --- LOGIC GAME GỐC ---
 function loadColors() {
     ['r1','g1','b1','r2','g2','b2'].forEach(id => {
         const val = localStorage.getItem('anaglyph_' + id);
@@ -205,16 +224,12 @@ function playVideo(type) {
 }
 
 audioMusic.onended = () => { 
-    isEnding = true; 
-    sequence = []; 
-    saveFinalScore(score);
-    updateLeaderboardUI();
+    isEnding = true; sequence = [];
+    saveFinalScore(score); updateLeaderboardUI();
     document.getElementById('finalScoreDisplay').innerText = score;
     document.getElementById('result-board').style.display = 'block';
-    playVideo('win'); 
-    audioClap.play();
-    msg = "MISSION COMPLETE!"; 
-    msgTime = 150; 
+    playVideo('win'); audioClap.play();
+    msg = "MISSION COMPLETE!"; msgTime = 150; 
 };
 
 charVid.onended = () => {
@@ -256,20 +271,16 @@ function startGame() {
 
 window.addEventListener('keydown', (e) => {
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
-    if (e.key === 'Escape') { location.reload(); }
+    if (e.key === 'Escape') location.reload();
     if (isEnding || isPreFinish || isPostFinishWait) return;
 
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         if (e.key === sequence[userInput.length]?.key) userInput.push(e.key);
         else { userInput = []; audioFail.play(); playVideo('fail'); msg = "WRONG KEY"; msgTime = 30; }
     }
-
     if (e.key === ' ' && userInput.length === sequence.length) {
-        if (fanAngle >= 90 && fanAngle <= 135) {
-            handleSuccess();
-        } else {
-            audioFail.play(); playVideo('fail'); msg = "MISS TIME"; userInput = [];
-        }
+        if (fanAngle >= 90 && fanAngle <= 135) handleSuccess();
+        else { audioFail.play(); playVideo('fail'); msg = "MISS TIME"; userInput = []; }
         msgTime = 40;
     }
 });
@@ -278,37 +289,21 @@ function handleSuccess() {
     audioDing.currentTime = 0; audioDing.play();
     score += level * 10;
     if (sequence.length === 10) {
-        playVideo('finish');
-        audioClap.play();
-        createExplosion();
-        msg = "FINISH COMPLETE!";
-        isPostFinishWait = true;
-        postFinishCounter = 0;
-        sequence = [];
-        return;
+        playVideo('finish'); audioClap.play(); createExplosion();
+        msg = "FINISH COMPLETE!"; isPostFinishWait = true; postFinishCounter = 0; sequence = []; return;
     }
     successCount++;
     if (successCount >= level) {
         if (level === 9) {
-            isPreFinish = true;
-            preFinishCounter = 0;
-            sequence = [];
-            msg = "GET READY FOR FINISH!";
-            msgTime = 100;
+            isPreFinish = true; preFinishCounter = 0; sequence = [];
+            msg = "GET READY FOR FINISH!"; msgTime = 100;
         } else {
-            level++;
-            successCount = 0;
-            audioLevelUp.src = `sounds/up${level}.mp3`;
-            audioLevelUp.play();
-            createExplosion();
-            playVideo('dance');
-            msg = "LEVEL UP!";
-            generateSeq();
+            level++; successCount = 0;
+            audioLevelUp.src = `sounds/up${level}.mp3`; audioLevelUp.play();
+            createExplosion(); playVideo('dance'); msg = "LEVEL UP!"; generateSeq();
         }
     } else {
-        playVideo('dance');
-        msg = "PERFECT!";
-        generateSeq();
+        playVideo('dance'); msg = "PERFECT!"; generateSeq();
     }
 }
 
@@ -324,7 +319,6 @@ function gameLoop(time) {
     const dt = time - lastTime; lastTime = time;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const scale = canvas.height / 600;
-
     const c1 = `rgb(${r1.value}, ${g1.value}, ${b1.value})`;
     const c2 = `rgb(${r2.value}, ${g2.value}, ${b2.value})`;
 
@@ -343,30 +337,17 @@ function gameLoop(time) {
 
     fanAngle = (fanAngle + ((bpm/120)*360 * dt/1000)) % 360;
     let currentBeat = Math.floor(fanAngle / 90);
-    
     if (currentBeat !== lastBeat && currentBeat === 0) {
         if (isPreFinish) {
             preFinishCounter++;
-            if (preFinishCounter >= 2) {
-                isPreFinish = false;
-                generateSeq(10);
-                msg = "FINISH!!!";
-                msgTime = 40;
-            }
+            if (preFinishCounter >= 2) { isPreFinish = false; generateSeq(10); msg = "FINISH!!!"; msgTime = 40; }
         }
         if (isPostFinishWait) {
             postFinishCounter++;
-            if (postFinishCounter >= 7 && postFinishCounter < 10) {
-                msg = (10 - postFinishCounter).toString();
-                msgTime = 55;
-            }
+            if (postFinishCounter >= 7 && postFinishCounter < 10) { msg = (10 - postFinishCounter).toString(); msgTime = 55; }
             if (postFinishCounter >= 10) {
-                isPostFinishWait = false;
-                level = 3; successCount = 0;
-                generateSeq();
-                playVideo('wait');
-                msg = "RESTART LEVEL 3";
-                msgTime = 60;
+                isPostFinishWait = false; level = 3; successCount = 0; generateSeq();
+                playVideo('wait'); msg = "RESTART LEVEL 3"; msgTime = 60;
             }
         }
     }
