@@ -1,4 +1,4 @@
-admin|123456a
+admin|12356a
 buiminhanhkhoa|anhkhoagau
 vanhuong|vanhuong123
 daohaquynhanh|quynhanh123
@@ -38,3 +38,4 @@ phamthihang|phamhang92
 tuyetlinh|trantuyetlinh
 nguyenanchi|0364468279
 doducan|ducan123
+phamthilocthien|locthien123
