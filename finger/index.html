@@ -116,6 +116,35 @@
 <audio id="audioClap" src="sounds/clap.mp3"></audio>
 
 <script>
+/* ==========================================
+   KIỂM TRA ĐĂNG NHẬP (SHINE VISION AUTH)
+   ========================================== */
+(function() {
+    function checkAuth() {
+        const loginData = JSON.parse(localStorage.getItem('user_login'));
+        const currentTime = new Date().getTime();
+        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+        if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
+            localStorage.removeItem('user_login');
+            alert("Vui lòng đăng nhập để tiếp tục!");
+            window.location.href = '../index.html'; 
+            return false;
+        }
+        return true;
+    }
+    checkAuth();
+    // Đồng bộ trạng thái đăng nhập giữa các tab
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'user_login' && !e.newValue) window.location.href = '../index.html';
+    });
+    // Kiểm tra lại mỗi khi quay lại tab game
+    window.onfocus = () => checkAuth();
+})();
+
+/* ==========================================
+   LOGIC GAME GỐC (GIỮ NGUYÊN)
+   ========================================== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const charVid = document.getElementById('charVideo');
@@ -156,8 +185,8 @@ function preloadVideos(prefix) {
             v.src = url;
             v.preload = 'auto';
             v.oncanplaythrough = resolve;
-            v.onerror = resolve; // Bỏ qua nếu lỗi file
-            setTimeout(resolve, 3000); // Timeout 3s để tránh kẹt
+            v.onerror = resolve; 
+            setTimeout(resolve, 3000); 
         });
     });
     
