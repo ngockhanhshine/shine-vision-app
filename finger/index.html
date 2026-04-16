@@ -3,11 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Finger Dance - Audition Therapy Pro</title>
+    <script src="readme.js"></script> 
     <style>
         :root { --red-main: #d32f2f; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #222; font-family: 'Segoe UI', Arial, sans-serif; display: flex; justify-content: center; align-items: center; }
         #app-container { width: 85vw; height: 85vh; max-width: 950px; max-height: 600px; background: white; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
 
+        /* --- CSS MÀN HÌNH HƯỚNG DẪN (KHÓA CONSOLE) --- */
+        #instruction-overlay { 
+            display: none; position: absolute; inset: 0; 
+            background: rgba(0,0,0,0.95); z-index: 9999; 
+            color: white; padding: 40px; overflow-y: auto;
+            flex-direction: column; align-items: center;
+        }
+        .instruction-content { max-width: 600px; line-height: 1.6; font-size: 1rem; }
+        .btn-close-ins { margin-top: 20px; background: var(--red-main); color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+        /* Menu & UI cũ giữ nguyên */
         #menu-layer { position: absolute; inset: 0; background: white; z-index: 100; display: flex; flex-direction: column; padding: 15px 25px; box-sizing: border-box; overflow-y: auto; }
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         h3 { margin: 0 0 8px 0; font-size: 0.9rem; text-transform: uppercase; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
@@ -25,7 +37,6 @@
         .demo-box { width: 100%; height: 30px; border-radius: 4px; margin-top: 5px; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.75rem; color: white; }
         .btn-start { background: var(--red-main); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
 
-        /* Màn hình Loading */
         #loading-overlay { display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.9); z-index: 200; flex-direction: column; justify-content: center; align-items: center; }
         .loader { border: 5px solid #f3f3f3; border-top: 5px solid var(--red-main); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -40,7 +51,7 @@
         
         #result-board { display: none; position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); padding: 20px 40px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.3); text-align: center; z-index: 20; border: 3px solid var(--red-main); }
         .res-score { font-size: 2.5rem; font-weight: 900; color: var(--red-main); margin: 10px 0; }
-        .btn-back { background: #333; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-back { background: #333; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
         #charVideo { display: none; }
     </style>
@@ -48,6 +59,12 @@
 <body>
 
 <div id="app-container">
+    <div id="instruction-overlay">
+        <h2 style="color: var(--red-main);">HƯỚNG DẪN SỬ DỤNG</h2>
+        <div id="readme-content" class="instruction-content"></div>
+        <button class="btn-close-ins" onclick="closeInstruction()">ĐÓNG</button>
+    </div>
+
     <div id="loading-overlay">
         <div class="loader"></div>
         <div id="loading-text" style="font-weight: bold; color: #333;">ĐANG TẢI DỮ LIỆU...</div>
@@ -116,35 +133,38 @@
 <audio id="audioClap" src="sounds/clap.mp3"></audio>
 
 <script>
-/* ==========================================
-   KIỂM TRA ĐĂNG NHẬP (SHINE VISION AUTH)
-   ========================================== */
-(function() {
-    function checkAuth() {
-        const loginData = JSON.parse(localStorage.getItem('user_login'));
-        const currentTime = new Date().getTime();
-        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+// --- GIẢ LẬP NỘI DUNG NẾU FILE README.JS CHƯA CÓ BIẾN ---
+if (typeof readmeText === 'undefined') {
+    var readmeText = "Chào mừng bạn đến với Finger Dance! <br><br> 1. Dùng các phím mũi tên để nhập chuỗi.<br> 2. Nhấn Space khi kim quay vào vùng màu xanh.<br>";
+}
 
-        if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
-            localStorage.removeItem('user_login');
-            alert("Vui lòng đăng nhập để tiếp tục!");
-            window.location.href = '../index.html'; 
-            return false;
-        }
-        return true;
+// --- LOGIC KHÓA CONSOLE & HIỆN README ---
+window.addEventListener('keydown', function(e) {
+    // Chặn F12
+    const isF12 = (e.key === 'F12');
+    // Chặn Ctrl+S
+    const isCtrlS = (e.ctrlKey && e.key === 's');
+    // Chặn Ctrl+Shift+I (Mở Inspect)
+    const isInspect = (e.ctrlKey && e.shiftKey && e.key === 'I');
+
+    if (isF12 || isCtrlS || isInspect) {
+        e.preventDefault();
+        showInstruction();
     }
-    checkAuth();
-    // Đồng bộ trạng thái đăng nhập giữa các tab
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'user_login' && !e.newValue) window.location.href = '../index.html';
-    });
-    // Kiểm tra lại mỗi khi quay lại tab game
-    window.onfocus = () => checkAuth();
-})();
+});
 
-/* ==========================================
-   LOGIC GAME GỐC (GIỮ NGUYÊN)
-   ========================================== */
+function showInstruction() {
+    const overlay = document.getElementById('instruction-overlay');
+    const content = document.getElementById('readme-content');
+    content.innerHTML = readmeText; // Lấy dữ liệu từ readme.js
+    overlay.style.display = 'flex';
+}
+
+function closeInstruction() {
+    document.getElementById('instruction-overlay').style.display = 'none';
+}
+
+// --- GIỮ NGUYÊN TOÀN BỘ LOGIC GAME PHÍA DƯỚI ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const charVid = document.getElementById('charVideo');
@@ -163,33 +183,17 @@ let isPostFinishWait = false, postFinishCounter = 0;
 
 const ARROWS = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
 
-// --- LOGIC PRELOAD VIDEO ---
 function preloadVideos(prefix) {
-    const videoFiles = [
-        `movie/${prefix}wait.mp4`,
-        `movie/${prefix}fail.mp4`,
-        `movie/${prefix}finish.mp4`,
-        `movie/${prefix}win.mp4`,
-        `movie/${prefix}dance1.mp4`,
-        `movie/${prefix}dance2.mp4`,
-        `movie/${prefix}dance3.mp4`,
-        `movie/${prefix}dance4.mp4`,
-        `movie/${prefix}dance5.mp4`
-    ];
-    
+    const videoFiles = [`movie/${prefix}wait.mp4`,`movie/${prefix}fail.mp4`,`movie/${prefix}finish.mp4`,`movie/${prefix}win.mp4`,`movie/${prefix}dance1.mp4`,`movie/${prefix}dance2.mp4`,`movie/${prefix}dance3.mp4`,`movie/${prefix}dance4.mp4`,`movie/${prefix}dance5.mp4` ];
     document.getElementById('loading-overlay').style.display = 'flex';
-    
     const promises = videoFiles.map(url => {
         return new Promise((resolve) => {
             const v = document.createElement('video');
-            v.src = url;
-            v.preload = 'auto';
-            v.oncanplaythrough = resolve;
-            v.onerror = resolve; 
-            setTimeout(resolve, 3000); 
+            v.src = url; v.preload = 'auto';
+            v.oncanplaythrough = resolve; v.onerror = resolve;
+            setTimeout(resolve, 3000);
         });
     });
-    
     return Promise.all(promises);
 }
 
@@ -199,7 +203,6 @@ async function handlePreloadThenStart() {
     startGame();
 }
 
-// --- LOGIC GAME GỐC ---
 function loadColors() {
     ['r1','g1','b1','r2','g2','b2'].forEach(id => {
         const val = localStorage.getItem('anaglyph_' + id);
@@ -387,14 +390,12 @@ function gameLoop(time) {
         const totalWidth = (110 * scale) + groupGap + (sequence.length - 1) * keySpacing + (56 * scale);
         const cx = (canvas.width - totalWidth) / 2 + (55 * scale), baseCenterY = canvas.height - (85 * scale);
         const keysStartX = cx + (r + groupGap/2);
-
         ctx.beginPath(); ctx.arc(cx, baseCenterY, r, 0, Math.PI*2); ctx.strokeStyle = '#eee'; ctx.lineWidth=2; ctx.stroke();
         ctx.beginPath(); ctx.lineWidth = 12 * scale; ctx.strokeStyle = c2;
         ctx.arc(cx, baseCenterY, r + (5*scale), (Math.PI/180)*90, (Math.PI/180)*135); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(cx, baseCenterY);
         ctx.arc(cx, baseCenterY, r, (Math.PI/180)*fanAngle, (Math.PI/180)*(fanAngle + 12));
         ctx.fillStyle = c1; ctx.fill();
-
         sequence.forEach((s, i) => {
             const x = keysStartX + (i * keySpacing), y = baseCenterY;
             ctx.beginPath(); ctx.arc(x, y, 28 * scale, 0, Math.PI*2);
