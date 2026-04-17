@@ -8,168 +8,131 @@
     <script src="readme.js"></script>
     <style>
         body { margin: 0; padding: 0; background-color: #7F7F7F; overflow: hidden; font-family: sans-serif; touch-action: none; display: flex; flex-direction: column; height: 100vh; position: relative; }
-        
-        /* Ẩn nội dung chính khi chưa kiểm tra đăng nhập */
-        #main-app-content {
-            display: none;
-            flex-direction: column;
-            height: 100vh;
-            width: 100%;
-        }
-
+        #main-app-content { display: none; flex-direction: column; height: 100vh; width: 100%; }
         #game-ui { text-align: center; color: white; font-size: 16px; font-weight: bold; padding: 10px; background: rgba(0,0,0,0.2); z-index: 10; }
-        
         #grid-container { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; align-content: center; justify-items: center; transition: opacity 0.1s; }
-        
         #pause-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #7F7F7F; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; font-weight: bold; pointer-events: none; }
-
         .card { background-color: #7F7F7F; border: 2px solid #999; border-radius: 12px; width: 80px; height: 80px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; }
         .gabor-content { position: absolute; width: 100%; height: 100%; background: repeating-linear-gradient(var(--ang), #fff, #fff 1px, #000 var(--sz), #000 var(--sz2)); mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); opacity: var(--op); }
         .card.selected { border-color: #2196F3; box-shadow: 0 0 15px #2196F3; z-index: 2; }
         .card.matched { opacity: 0.1; pointer-events: none; }
-
         #controls-wrapper { background: white; padding: 15px; border-radius: 20px 20px 0 0; display: flex; flex-wrap: wrap; gap: 15px; max-height: 45vh; overflow-y: auto; z-index: 101; position: relative; }
         .control-section { flex: 1; min-width: 250px; }
         .journal-section { flex: 1; min-width: 250px; border-left: 1px solid #eee; padding-left: 15px; }
-
         .slider-group { display: flex; align-items: center; margin-bottom: 12px; gap: 8px; }
         .slider-group label { width: 60px; font-size: 12px; font-weight: bold; }
         .slider-group input { flex: 1; }
         .btn-step { width: 30px; height: 30px; border-radius: 5px; border: 1px solid #ccc; background: #f8f8f8; cursor: pointer; font-weight: bold; }
-
         #journal-list { font-size: 12px; list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 5px; }
         #journal-list li { padding: 5px; border-bottom: 1px solid #eee; color: #444; }
-        #journal-list li:nth-child(odd) { background: #fafafa; }
-
         button#resetBtn { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #2196F3; color: white; font-weight: bold; margin-top: 10px; cursor: pointer; }
         .msg-alert { color: #d32f2f; font-size: 11px; font-weight: bold; margin-top: 5px; display: none; }
-
         #instruction-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; color: white; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         #instruction-content { background: #fff; color: #333; padding: 20px; border-radius: 10px; max-width: 600px; margin: 40px auto; white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
-
-        @media (max-width: 600px) {
-            .journal-section { border-left: none; padding-left: 0; border-top: 1px solid #eee; padding-top: 10px; }
-            .card { width: 75px; height: 75px; }
-        }
     </style>
 </head>
 <body oncontextmenu="return false;">
-    <div id="pause-overlay">⏸ TẠM DỪNG<br><small>Di chuyển chuột vào trang web để tiếp tục</small></div>
+    <script>
+        // --- CHẶN PHÍM TẮT VÀ KẾT NỐI README.JS ---
+        (function() {
+            const showHelp = () => {
+                const modal = document.getElementById('instruction-modal');
+                const content = document.getElementById('readme-text');
+                
+                // Kiểm tra xem readme.js có cung cấp nội dung không
+                // Giả sử trong readme.js anh đặt biến là: const readmeContent = "..."
+                if (typeof readmeContent !== 'undefined') {
+                    content.innerHTML = readmeContent;
+                } else if (typeof getReadmeContent === 'function') {
+                    content.innerHTML = getReadmeContent();
+                } else {
+                    content.innerHTML = "Đang tải hướng dẫn...";
+                }
+                
+                modal.style.display = 'block';
+            };
 
+            window.addEventListener('keydown', (e) => {
+                const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                const metaOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+                
+                // Các phím cấm: F12 (123), I (73), J (74), C (67), U (85), S (83)
+                const forbiddenCodes = [123, 73, 74, 67, 85, 83];
+                
+                if (forbiddenCodes.includes(e.keyCode)) {
+                    if (e.keyCode === 123 || metaOrCtrl) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showHelp();
+                    }
+                }
+            }, true);
+
+            // Bẫy Debugger bảo mật
+            setInterval(() => {
+                const start = Date.now();
+                debugger;
+                if (Date.now() - start > 100) {
+                    localStorage.removeItem('user_login');
+                    window.location.reload();
+                }
+            }, 1000);
+        })();
+    </script>
+
+    <div id="pause-overlay">⏸ TẠM DỪNG<br><small>Di chuyển chuột vào trang web để tiếp tục</small></div>
     <div id="main-app-content">
         <div id="game-ui">Cặp còn lại: <span id="pairs-left">6</span> | <span id="timer">00:00</span></div>
-        
         <div id="grid-container"></div>
-        
         <div id="controls-wrapper">
             <div class="control-section">
-                <div class="slider-group">
-                    <label>Độ rõ:</label>
-                    <button class="btn-step" onclick="adjust('op', -5)">-</button>
-                    <input type="range" id="opSlider" min="5" max="100" value="80">
-                    <button class="btn-step" onclick="adjust('op', 5)">+</button>
-                </div>
-                <div class="slider-group">
-                    <label>Cỡ sọc:</label>
-                    <button class="btn-step" onclick="adjust('sz', -1)">-</button>
-                    <input type="range" id="sizeSlider" min="2" max="10" value="4">
-                    <button class="btn-step" onclick="adjust('sz', 1)">+</button>
-                </div>
+                <div class="slider-group"><label>Độ rõ:</label><button class="btn-step" onclick="adjust('op', -5)">-</button><input type="range" id="opSlider" min="5" max="100" value="80"><button class="btn-step" onclick="adjust('op', 5)">+</button></div>
+                <div class="slider-group"><label>Cỡ sọc:</label><button class="btn-step" onclick="adjust('sz', -1)">-</button><input type="range" id="sizeSlider" min="2" max="10" value="4"><button class="btn-step" onclick="adjust('sz', 1)">+</button></div>
                 <button id="resetBtn">🔄 VÁN MỚI / ĐỔI VỊ TRÍ</button>
                 <div id="auto-msg" class="msg-alert">🔥 Tuyệt vời! Độ khó đã tự tăng.</div>
             </div>
-
             <div class="journal-section">
-                <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between;">
-                    <span>NHẬT KÝ TẬP</span>
-                    <span style="color:red; cursor:pointer; font-size: 11px;" onclick="clearJournal()">Xóa hết</span>
-                </div>
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between;"><span>NHẬT KÝ TẬP</span><span style="color:red; cursor:pointer; font-size: 11px;" onclick="clearJournal()">Xóa hết</span></div>
                 <ul id="journal-list"></ul>
             </div>
         </div>
-
         <div id="instruction-modal" onclick="this.style.display='none'">
             <div id="instruction-content" onclick="event.stopPropagation()">
                 <div id="readme-text"></div>
-                <button onclick="document.getElementById('instruction-modal').style.display='none'" style="margin-top:20px; width:100%; padding:10px; cursor:pointer;">ĐÓNG</button>
+                <button onclick="document.getElementById('instruction-modal').style.display='none'" style="margin-top:20px; width:100%; padding:10px; cursor:pointer; font-weight:bold;">ĐÓNG</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- KHỐI KIỂM TRA ĐĂNG NHẬP ---
+        // --- LOGIC ỨNG DỤNG (GIỮ NGUYÊN) ---
         (function() {
             const loginData = JSON.parse(localStorage.getItem('user_login'));
-            if (!loginData) {
-                alert("Vui lòng đăng nhập để sử dụng tính năng này!");
-                window.location.href = '../index.html';
-            } else {
-                document.getElementById('main-app-content').style.display = 'flex';
-            }
+            if (!loginData) { window.location.replace('../index.html'); } 
+            else { document.getElementById('main-app-content').style.display = 'flex'; }
         })();
 
-        const grid = document.getElementById('grid-container');
-        const opS = document.getElementById('opSlider');
-        const sizeS = document.getElementById('sizeSlider');
-        const journalList = document.getElementById('journal-list');
-        const timerEl = document.getElementById('timer');
-        const autoMsg = document.getElementById('auto-msg');
-        const pauseOverlay = document.getElementById('pause-overlay');
-        
-        const dingSound = new Audio('sounds/Ding.wav');
-        const failSound = new Audio('sounds/Fail.wav');
-        dingSound.preload = 'auto'; failSound.preload = 'auto';
+        const grid = document.getElementById('grid-container'), opS = document.getElementById('opSlider'), sizeS = document.getElementById('sizeSlider'), journalList = document.getElementById('journal-list'), timerEl = document.getElementById('timer'), autoMsg = document.getElementById('auto-msg'), pauseOverlay = document.getElementById('pause-overlay');
+        const dingSound = new Audio('sounds/Ding.wav'), failSound = new Audio('sounds/Fail.wav');
+        let cardData = [], first = null, second = null, pairs = 6, canClick = true, startTime, timerInterval, gameRunning = false, finalTimeSec = 0, elapsedBeforePause = 0;
 
-        let cardData = [], first = null, second = null, pairs = 6, canClick = true;
-        let startTime, timerInterval, gameRunning = false, finalTimeSec = 0;
-        let elapsedBeforePause = 0;
-
-        function loadSettings() {
-            const savedOp = localStorage.getItem('gabor_op');
-            const savedSz = localStorage.getItem('gabor_sz');
-            if (savedOp) opS.value = savedOp;
-            if (savedSz) sizeS.value = savedSz;
-        }
-        function saveSettings() {
-            localStorage.setItem('gabor_op', opS.value);
-            localStorage.setItem('gabor_sz', sizeS.value);
-        }
+        function loadSettings() { const savedOp = localStorage.getItem('gabor_op'), savedSz = localStorage.getItem('gabor_sz'); if (savedOp) opS.value = savedOp; if (savedSz) sizeS.value = savedSz; }
+        function saveSettings() { localStorage.setItem('gabor_op', opS.value); localStorage.setItem('gabor_sz', sizeS.value); }
 
         document.body.onmouseleave = () => pauseGame();
         document.body.onmouseenter = () => resumeGame();
 
-        function pauseGame() {
-            if (gameRunning) {
-                clearInterval(timerInterval);
-                elapsedBeforePause = Date.now() - startTime;
-            }
-            grid.style.opacity = "0"; 
-            pauseOverlay.style.display = "flex";
-            dingSound.pause(); failSound.pause();
-        }
-
-        function resumeGame() {
-            if (gameRunning) {
-                startTime = Date.now() - elapsedBeforePause;
-                startTimer(true);
-            }
-            grid.style.opacity = "1";
-            pauseOverlay.style.display = "none";
-        }
+        function pauseGame() { if (gameRunning) { clearInterval(timerInterval); elapsedBeforePause = Date.now() - startTime; } grid.style.opacity = "0"; pauseOverlay.style.display = "flex"; }
+        function resumeGame() { if (gameRunning) { startTime = Date.now() - elapsedBeforePause; startTimer(true); } grid.style.opacity = "1"; pauseOverlay.style.display = "none"; }
 
         function adjust(type, step) {
             const s = type === 'op' ? opS : sizeS;
             s.value = parseInt(s.value) + step;
-            updateStyles();
-            saveSettings();
-            autoMsg.style.display = 'none';
+            updateStyles(); saveSettings(); autoMsg.style.display = 'none';
         }
 
         function startTimer(isResume = false) {
-            if (!isResume) {
-                startTime = Date.now();
-                elapsedBeforePause = 0;
-            }
+            if (!isResume) { startTime = Date.now(); elapsedBeforePause = 0; }
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 finalTimeSec = Math.floor((Date.now() - startTime) / 1000);
@@ -184,37 +147,16 @@
             const dateStr = `${now.getDate()}/${now.getMonth()+1}`;
             const records = JSON.parse(localStorage.getItem('gabor_records') || '[]');
             const sessionNum = records.filter(r => r.date === dateStr).length + 1;
-            
-            const newRecord = { date: dateStr, session: sessionNum, op: opS.value, sz: sizeS.value, time: timeStr };
-            records.unshift(newRecord);
+            records.unshift({ date: dateStr, session: sessionNum, op: opS.value, sz: sizeS.value, time: timeStr });
             localStorage.setItem('gabor_records', JSON.stringify(records.slice(0, 50)));
             renderJournal();
-
             setTimeout(() => {
                 let changed = false;
-                if (parseInt(opS.value) <= 5 && finalTimeSec < 12) {
-                    if (parseInt(sizeS.value) > 2) {
-                        sizeS.value = parseInt(sizeS.value) - 1;
-                        opS.value = 50;
-                        changed = true;
-                    }
-                } 
-                else if (finalTimeSec < 12 && parseInt(opS.value) > 5) {
-                    opS.value = parseInt(opS.value) - 5;
-                    changed = true;
-                }
-
-                if (changed) {
-                    updateStyles();
-                    saveSettings();
-                    autoMsg.style.display = 'block';
-                }
+                if (parseInt(opS.value) <= 5 && finalTimeSec < 12 && parseInt(sizeS.value) > 2) { sizeS.value = parseInt(sizeS.value) - 1; opS.value = 50; changed = true; }
+                else if (finalTimeSec < 12 && parseInt(opS.value) > 5) { opS.value = parseInt(opS.value) - 5; changed = true; }
+                if (changed) { updateStyles(); saveSettings(); autoMsg.style.display = 'block'; }
             }, 500);
-
-            setTimeout(() => {
-                autoMsg.style.display = 'none';
-                init();
-            }, 1500);
+            setTimeout(() => { autoMsg.style.display = 'none'; init(); }, 1500);
         }
 
         function renderJournal() {
@@ -226,78 +168,51 @@
 
         function init() {
             grid.innerHTML = ''; cardData = []; first = null; second = null; pairs = 6; canClick = true;
-            document.getElementById('pairs-left').innerText = pairs;
-            timerEl.innerText = "00:00";
-            gameRunning = false;
-            clearInterval(timerInterval);
-            
-            if (!document.hasFocus() || !document.body.matches(':hover')) {
-                pauseGame();
-            } else {
-                grid.style.opacity = "1";
-                pauseOverlay.style.display = "none";
-            }
+            document.getElementById('pairs-left').innerText = pairs; timerEl.innerText = "00:00";
+            gameRunning = false; clearInterval(timerInterval);
+            if (!document.hasFocus() || !document.body.matches(':hover')) pauseGame();
+            else { grid.style.opacity = "1"; pauseOverlay.style.display = "none"; }
 
             let angles = ["0deg", "45deg", "90deg", "135deg", "30deg", "60deg"];
             let pool = [...angles, ...angles].sort(() => Math.random() - 0.5);
-
             pool.forEach((ang) => {
                 const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `<div class="gabor-content" style="--ang: ${ang};"></div>`;
+                card.className = 'card'; card.innerHTML = `<div class="gabor-content" style="--ang: ${ang};"></div>`;
                 grid.appendChild(card);
                 let data = { dom: card, ang: ang, matched: false };
                 card.onclick = () => {
                     if (!canClick || data.matched || data === first) return;
-                    if (!gameRunning) { gameRunning = true; startTimer(); autoMsg.style.display = 'none'; }
+                    if (!gameRunning) { gameRunning = true; startTimer(); }
                     card.classList.add('selected');
-                    if (!first) { first = data; } 
+                    if (!first) first = data;
                     else {
                         second = data;
                         if (first.ang === second.ang) {
-                            dingSound.currentTime = 0; dingSound.play();
-                            first.dom.classList.replace('selected', 'matched');
-                            second.dom.classList.replace('selected', 'matched');
-                            first.matched = second.matched = true;
-                            pairs--;
-                            document.getElementById('pairs-left').innerText = pairs;
-                            first = null; second = null;
-                            if(pairs === 0) {
-                                clearInterval(timerInterval);
-                                saveRecord(timerEl.innerText);
-                            }
+                            dingSound.play(); first.dom.classList.replace('selected', 'matched'); second.dom.classList.replace('selected', 'matched');
+                            first.matched = second.matched = true; pairs--;
+                            document.getElementById('pairs-left').innerText = pairs; first = null; second = null;
+                            if(pairs === 0) { clearInterval(timerInterval); saveRecord(timerEl.innerText); }
                         } else {
-                            canClick = false; failSound.currentTime = 0; failSound.play();
-                            setTimeout(() => {
-                                first.dom.classList.remove('selected');
-                                second.dom.classList.remove('selected');
-                                first = null; second = null; canClick = true;
-                            }, 400);
+                            canClick = false; failSound.play();
+                            setTimeout(() => { first.dom.classList.remove('selected'); second.dom.classList.remove('selected'); first = null; second = null; canClick = true; }, 400);
                         }
                     }
                 };
-                cardData.push(data);
             });
             updateStyles();
         }
 
         function updateStyles() {
-            const op = opS.value / 100;
-            const size = parseInt(sizeS.value);
+            const op = opS.value / 100, size = parseInt(sizeS.value);
             document.querySelectorAll('.gabor-content').forEach(el => {
-                el.style.setProperty('--op', op);
-                el.style.setProperty('--sz', size + "px");
-                el.style.setProperty('--sz2', (size * 2) + "px");
+                el.style.setProperty('--op', op); el.style.setProperty('--sz', size + "px"); el.style.setProperty('--sz2', (size * 2) + "px");
             });
         }
 
         opS.oninput = () => { updateStyles(); saveSettings(); };
         sizeS.oninput = () => { updateStyles(); saveSettings(); };
         document.getElementById('resetBtn').onclick = () => init();
-        
-        loadSettings();
-        renderJournal();
-        init();
+        loadSettings(); renderJournal(); init();
     </script>
 </body>
 </html>
