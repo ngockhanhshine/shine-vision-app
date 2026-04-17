@@ -7,14 +7,16 @@
     <style>
         :root { --red-main: #d32f2f; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #222; font-family: 'Segoe UI', Arial, sans-serif; display: flex; justify-content: center; align-items: center; }
-        #app-container { width: 85vw; height: 85vh; max-width: 950px; max-height: 600px; background: white; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-
-        /* Màn hình tạm dừng bảo mật */
+        
+        /* Lớp bảo vệ chống soi nội dung */
         #secure-pause-overlay { 
             display: none; position: fixed; inset: 0; background: black; z-index: 9999; 
             color: white; flex-direction: column; justify-content: center; align-items: center; 
-            font-size: 3rem; font-weight: bold; letter-spacing: 5px; 
+            font-size: 3rem; font-weight: bold; letter-spacing: 5px; pointer-events: none;
         }
+
+        #app-content-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        #app-container { width: 85vw; height: 85vh; max-width: 950px; max-height: 600px; background: white; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
 
         #menu-layer { position: absolute; inset: 0; background: white; z-index: 100; display: flex; flex-direction: column; padding: 15px 25px; box-sizing: border-box; overflow-y: auto; }
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -130,14 +132,19 @@
 
 <script>
 /* ==========================================
-   HỆ THỐNG BẢO MẬT MỚI (CHẶN DOWNLOAD & CONSOLE)
+   HỆ THỐNG BẢO MẬT: CHẶN DOWNLOAD & THOÁT NGAY KHI MỞ CONSOLE
    ========================================== */
 const secureOverlay = document.getElementById('secure-pause-overlay');
 const appContent = document.getElementById('app-content-wrapper');
 
-// 1. Chặn phím tắt và chuyển hướng sang readme.js
+// Hàm thực hiện Logout và đẩy ra trang đăng nhập ngay lập tức
+function forceExit() {
+    localStorage.removeItem('user_login');
+    window.location.replace('../index.html'); // Dùng replace để không back lại được
+}
+
+// 1. Chặn phím tắt mở Console/Save và gọi hướng dẫn từ readme.js
 window.addEventListener('keydown', function(e) {
-    // Các tổ hợp phím cần chặn
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const isControl = isMac ? e.metaKey : e.ctrlKey;
     
@@ -145,50 +152,52 @@ window.addEventListener('keydown', function(e) {
         e.key === 'F12',
         isControl && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C'),
         isControl && (e.key === 's' || e.key === 'S'),
-        isControl && (e.key === 'u' || e.key === 'U'),
-        isControl && (e.key === 'p' || e.key === 'P')
+        isControl && (e.key === 'u' || e.key === 'U')
     ];
 
     if (forbiddenKeys.some(condition => condition)) {
         e.preventDefault();
         e.stopPropagation();
-        if (typeof showInstructions === 'function') {
-            showInstructions(); // Gọi hàm từ readme.js nếu có
-        } else {
-            alert("Vui lòng xem hướng dẫn sử dụng trong file đính kèm.");
-        }
+        if (typeof showInstructions === 'function') showInstructions();
         return false;
     }
 }, true);
 
-// 2. Logic Xoá sạch nội dung khi di chuột ra ngoài (Anti-Download)
+// 2. Chống tải nội dung khi chuột rời màn hình
 document.addEventListener('mouseleave', () => {
     secureOverlay.style.display = 'flex';
-    appContent.style.visibility = 'hidden';
+    appContent.style.display = 'none'; // Xóa sạch khỏi DOM hiển thị
     if (!audioMusic.paused) audioMusic.pause();
     if (!charVid.paused) charVid.pause();
 });
 
 document.addEventListener('mouseenter', () => {
     secureOverlay.style.display = 'none';
-    appContent.style.visibility = 'visible';
-    // Chỉ resume nếu game đang chạy
+    appContent.style.display = 'flex';
     if (document.getElementById('game-layer').style.display === 'block') {
         audioMusic.play().catch(()=>{});
         charVid.play().catch(()=>{});
     }
 });
 
-// 3. Chặn Console bằng Debugger (Tự động Logout)
+// 3. PHÁT HIỆN CONSOLE TỨC THỜI (AUTO EXIT)
 setInterval(function() {
     const startTime = performance.now();
-    debugger; 
+    debugger; // Nếu mở console, luồng xử lý bị chặn ở đây
     const endTime = performance.now();
-    if (endTime - startTime > 100) {
-        localStorage.removeItem('user_login');
-        window.location.href = '../index.html';
+    
+    // Nếu Console mở, thời gian thực thi debugger > 50ms -> Thoát ngay
+    if (endTime - startTime > 50) {
+        forceExit();
     }
-}, 1000);
+    
+    // Kiểm tra thêm sự thay đổi kích thước cửa sổ bất thường (mở Console panel)
+    const diff = 160;
+    if (window.outerWidth - window.innerWidth > diff || window.outerHeight - window.innerHeight > diff) {
+        forceExit();
+    }
+}, 500);
+
 
 /* ==========================================
    KIỂM TRA ĐĂNG NHẬP (SHINE VISION AUTH)
@@ -200,22 +209,20 @@ setInterval(function() {
         const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
         if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
-            localStorage.removeItem('user_login');
-            alert("Vui lòng đăng nhập để tiếp tục!");
-            window.location.href = '../index.html'; 
+            forceExit();
             return false;
         }
         return true;
     }
     checkAuth();
     window.addEventListener('storage', (e) => {
-        if (e.key === 'user_login' && !e.newValue) window.location.href = '../index.html';
+        if (e.key === 'user_login' && !e.newValue) forceExit();
     });
     window.onfocus = () => checkAuth();
 })();
 
 /* ==========================================
-   LOGIC GAME GỐC (GIỮ NGUYÊN HOÀN TOÀN)
+   LOGIC GAME GỐC (GIỮ NGUYÊN)
    ========================================== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
