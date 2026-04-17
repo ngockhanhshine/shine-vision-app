@@ -19,10 +19,9 @@
             padding: 20px;
             display: flex;
             justify-content: center;
-            position: relative; /* Thêm để định vị nút Logout */
+            position: relative;
         }
 
-        /* Nút Logout ở góc phải */
         #logout-btn {
             position: absolute;
             top: 20px;
@@ -66,7 +65,6 @@
         }
         .hidden-link:hover { color: #fff; }
 
-        /* Style cho Form Đăng Nhập */
         #login-section {
             background: #111;
             padding: 40px 20px;
@@ -97,8 +95,14 @@
             font-size: 16px;
         }
         #login-section button:hover { background: #0056b3; }
+        
+        #loading-text {
+            display: none;
+            margin-top: 15px;
+            color: #007aff;
+            font-weight: bold;
+        }
 
-        /* Menu Grid 3 cột */
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -190,7 +194,6 @@
         }
         .footer-link:hover { text-decoration: underline; }
 
-        /* Responsive */
         @media (max-width: 900px) {
             .menu-grid { grid-template-columns: repeat(2, 1fr); }
         }
@@ -218,72 +221,60 @@
             <p style="margin-bottom: 20px; color: #aaa;">Vui lòng đăng nhập để bắt đầu tập luyện</p>
             <input type="text" id="username" placeholder="Tên học viên">
             <input type="password" id="password" placeholder="Mật khẩu">
-            <button onclick="handleLogin(document.getElementById('username').value, document.getElementById('password').value)">ĐĂNG NHẬP</button>
+            <button id="login-btn" onclick="startLogin()">ĐĂNG NHẬP</button>
+            <div id="loading-text">Đang tải...</div>
         </div>
 
         <div id="main-content" style="display:none;">
             <div class="menu-grid">
-                
                 <a href="piano/index.html" class="app-card">
                     <img src="assets/piano.jpg" alt="Piano">
                     <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano</div>
                 </a>
-
                 <a href="rg-dot/index.html" class="app-card">
                     <img src="assets/dot.jpg" alt="RG Dot">
                     <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> RG Dot</div>
                 </a>
-
                 <a href="snellen/index.html" class="app-card">
                     <img src="assets/snellen.jpg" alt="Snellen">
                     <div class="app-title">Snellen Test</div>
                 </a>
-
                 <a href="reading/index.html" class="app-card">
                     <img src="assets/reading.jpg" alt="Reading">
                     <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Reading</div>
                 </a>
-
                 <a href="gabormatch/index.html" class="app-card">
                     <img src="assets/gabor.jpeg" alt="Gabor Match">
                     <div class="app-title">Gabor Match</div>
                 </a>
-
                 <a href="tetris/index.html" class="app-card">
                     <img src="assets/tetris.png" alt="Tetris">
                     <div class="app-title">Tetris</div>
                 </a>
-
                 <a href="crowd/index.html" class="app-card">
                     <img src="assets/crowd.png" alt="Crowd Training">
                     <div class="app-title">Crowd Training</div>
                 </a>
-
                 <a href="cross/index.html" class="app-card">
                     <img src="assets/cross.png" alt="Circle Cross">
                     <div class="app-title">Circle Cross Training</div>
                 </a>
-
                 <a href="brock/index.html" class="app-card">
                     <img src="assets/brock.png" alt="Brockstring">
                     <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Brockstring</div>
                 </a>
-
                 <a href="pianoh/index.html" class="app-card">
                     <img src="assets/pianoh.png" alt="Piano Hardcore">
                     <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano Hardcore</div>
                 </a>
-
                 <a href="rdot/index.html" class="app-card">
                     <img src="assets/rdot.jpg" alt="Random Dot">
                     <div class="app-title">Random Dot</div>
                 </a>
-
                 <a href="finger/index.html" class="app-card">
                     <img src="assets/finger.png" alt="Finger Dance">
                     <div class="app-title">Finger Dance</div>
                 </a>
-
             </div>
 
             <hr>
@@ -308,35 +299,77 @@
     </div>
 
     <script>
-        // Hàm đăng xuất
+        // Bảo mật: Phát hiện Console
+        (function() {
+            function detect() {
+                const start = performance.now();
+                debugger;
+                if (performance.now() - start > 100) {
+                    if (localStorage.getItem('user_login')) {
+                        localStorage.removeItem('user_login');
+                        location.reload();
+                    }
+                }
+            }
+            detect();
+            setInterval(detect, 500);
+        })();
+
         function logout() {
             localStorage.removeItem('user_login');
             location.reload();
         }
 
-        // Hiện nội dung tùy theo trạng thái
+        // Kiểm tra trạng thái đăng nhập khi load trang
         if (localStorage.getItem('user_login')) {
             document.getElementById('main-content').style.display = 'block';
-            document.getElementById('logout-btn').style.display = 'block'; // Hiện nút Logout
+            document.getElementById('logout-btn').style.display = 'block'; 
         } else {
             document.getElementById('login-section').style.display = 'block';
         }
 
-        // Khóa Ctrl + S và F12 để hiện hướng dẫn sử dụng
+        // Xử lý đăng nhập (Bỏ alert thành công)
+        async function startLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            
+            if (!user || !pass) return;
+
+            document.getElementById('login-btn').style.display = 'none';
+            document.getElementById('loading-text').style.display = 'block';
+
+            try {
+                // Ghi đè tạm thời window.alert để chặn thông báo từ auth.js nếu có
+                const originalAlert = window.alert;
+                window.alert = function() {}; 
+
+                await handleLogin(user, pass);
+
+                // Trả lại alert sau khi xong (nếu cần dùng cho lỗi)
+                window.alert = originalAlert;
+            } catch (e) {
+                document.getElementById('login-btn').style.display = 'block';
+                document.getElementById('loading-text').style.display = 'none';
+            }
+        }
+
+        // Nhấn Enter để đăng nhập
+        const inputs = [document.getElementById('username'), document.getElementById('password')];
+        inputs.forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') startLogin();
+            });
+        });
+
+        // Bảo mật phím tắt
         document.addEventListener('keydown', function(e) {
-            // Khóa F12 (KeyCode 123)
-            // Khóa Ctrl + S (KeyCode 83 kèm ctrlKey)
             if (e.keyCode === 123 || (e.ctrlKey && e.keyCode === 83)) {
                 e.preventDefault();
-                if (typeof showInstructions === "function") {
-                    showInstructions(); // Gọi hàm từ readme.js
-                } else {
-                    alert("Vui lòng kiểm tra file readme.js");
-                }
+                if (typeof showInstructions === "function") showInstructions(); 
             }
         });
 
-        // Chặn chuột phải để tăng tính bảo mật (tùy chọn, giống các app khác của anh)
+        // Chặn chuột phải
         document.addEventListener('contextmenu', e => e.preventDefault());
     </script>
 </body>
