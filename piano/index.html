@@ -9,7 +9,6 @@
     <style>
         body { margin: 0; padding: 0; background: #000; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
         
-        /* Container bảo mật bọc ngoài cùng - Đảm bảo không làm co giao diện */
         #main-app-content { 
             display: none; 
             width: 100vw; 
@@ -101,6 +100,21 @@
     </div>
 
     <script>
+        // --- CHỐNG MỞ CONSOLE (DEBUGGER LOGOUT) ---
+        (function() {
+            function detectDevTools() {
+                const start = performance.now();
+                debugger; 
+                const end = performance.now();
+                if (end - start > 100) { 
+                    localStorage.removeItem('user_login');
+                    window.location.href = '../index.html';
+                }
+            }
+            setInterval(detectDevTools, 1000);
+            detectDevTools();
+        })();
+
         // --- KIỂM TRA ĐĂNG NHẬP ---
         (function() {
             const loginData = JSON.parse(localStorage.getItem('user_login'));
@@ -123,14 +137,16 @@
             if (typeof gameState !== 'undefined' && gameState === 'PLAYING') saveLog();
         });
 
+        // Áp dụng Tạm dừng cho cả trang Menu và trong game
         container.addEventListener('mouseleave', () => {
-            if (typeof gameState !== 'undefined' && gameState === 'PLAYING') {
-                isPaused = true;
-                pauseTimeStart = performance.now(); 
-                if (currentAudio) currentAudio.pause();
-                backupNodes = Array.from(container.childNodes);
-                container.innerHTML = '<div class="pause-screen">Tạm Dừng</div>';
-            }
+            if (isPaused) return; // Tránh lặp lại nếu đã tạm dừng
+            
+            isPaused = true;
+            pauseTimeStart = performance.now(); 
+            if (currentAudio) currentAudio.pause();
+            
+            backupNodes = Array.from(container.childNodes);
+            container.innerHTML = '<div class="pause-screen">Tạm Dừng</div>';
         });
 
         container.addEventListener('mouseenter', () => {
@@ -138,18 +154,25 @@
                 isPaused = false;
                 const pauseDuration = performance.now() - pauseTimeStart;
                 startTime += pauseDuration; 
+                
                 container.innerHTML = ''; 
                 backupNodes.forEach(node => container.appendChild(node)); 
+                
                 canvas = document.getElementById('gameCanvas');
                 ctx = canvas.getContext('2d');
+                
+                // Re-bind sự kiện sau khi khôi phục DOM
                 document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
                 document.getElementById('readme-close').onclick = closeReadme;
                 renderSongList();
                 updateLogDisplay();
+
                 if (gameState === 'PLAYING') {
                     document.getElementById('back-to-menu').style.display = 'block';
                     if (currentAudio) currentAudio.play();
                     requestAnimationFrame(gameLoop);
+                } else {
+                    document.getElementById('ui-layer').style.display = 'flex';
                 }
                 backupNodes = null;
             }
@@ -311,8 +334,23 @@
             if (!hit) playSound(failBuffer);
         }
 
+        // Chặn tất cả phím tắt mở Console (F12, Ctrl+Shift+I, Cmd+Opt+I, etc.) và mở Readme
         window.addEventListener('keydown', (e) => {
-            if (e.key === "F12" || (e.ctrlKey && e.key === "s")) { e.preventDefault(); showReadme(); return; }
+            const isConsoleKey = (
+                e.key === "F12" || 
+                (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "i" || e.key === "J" || e.key === "j" || e.key === "C" || e.key === "c")) ||
+                (e.metaKey && e.altKey && (e.key === "I" || e.key === "i" || e.key === "J" || e.key === "j" || e.key === "C" || e.key === "c")) ||
+                (e.ctrlKey && (e.key === "U" || e.key === "u")) ||
+                (e.metaKey && (e.key === "U" || e.key === "u")) ||
+                (e.ctrlKey && (e.key === "s" || e.key === "S"))
+            );
+
+            if (isConsoleKey) {
+                e.preventDefault();
+                showReadme();
+                return;
+            }
+
             if (gameState === 'PLAYING' && !isPaused) {
                 if (e.key === 'Escape') { exitToMenu(); return; }
                 let idx = ['f', 'g', 'h', 'j'].indexOf(e.key.toLowerCase());
