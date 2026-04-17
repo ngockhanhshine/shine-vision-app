@@ -20,9 +20,6 @@ const README_DATA = {
            - Sử dụng kính 2 màu (Đỏ - Xanh).
            - Điều chỉnh thanh gạt R-G-B để triệt tiêu hình ảnh ở mỗi mắt cho đến khi đạt trạng thái tập luyện tốt nhất.
 
-        4. LƯU Ý BẢO MẬT:
-           - Ứng dụng sẽ tự động TẠM DỪNG nếu bạn di chuyển chuột ra khỏi cửa sổ trình duyệt.
-           - Mọi hành vi cố gắng mở mã nguồn (F12, Inspect) sẽ dẫn đến việc TỰ ĐỘNG ĐĂNG XUẤT để bảo vệ dữ liệu bài tập.
     `
 };
 
