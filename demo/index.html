@@ -3,10 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>Finger Dance - Audition Therapy Pro</title>
+    <script src="readme.js"></script>
     <style>
         :root { --red-main: #d32f2f; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #222; font-family: 'Segoe UI', Arial, sans-serif; display: flex; justify-content: center; align-items: center; }
         #app-container { width: 85vw; height: 85vh; max-width: 950px; max-height: 600px; background: white; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+
+        /* Màn hình tạm dừng bảo mật */
+        #secure-pause-overlay { 
+            display: none; position: fixed; inset: 0; background: black; z-index: 9999; 
+            color: white; flex-direction: column; justify-content: center; align-items: center; 
+            font-size: 3rem; font-weight: bold; letter-spacing: 5px; 
+        }
 
         #menu-layer { position: absolute; inset: 0; background: white; z-index: 100; display: flex; flex-direction: column; padding: 15px 25px; box-sizing: border-box; overflow-y: auto; }
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -25,7 +33,6 @@
         .demo-box { width: 100%; height: 30px; border-radius: 4px; margin-top: 5px; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.75rem; color: white; }
         .btn-start { background: var(--red-main); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
 
-        /* Màn hình Loading */
         #loading-overlay { display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.9); z-index: 200; flex-direction: column; justify-content: center; align-items: center; }
         .loader { border: 5px solid #f3f3f3; border-top: 5px solid var(--red-main); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -45,65 +52,69 @@
         #charVideo { display: none; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-<div id="app-container">
-    <div id="loading-overlay">
-        <div class="loader"></div>
-        <div id="loading-text" style="font-weight: bold; color: #333;">ĐANG TẢI DỮ LIỆU...</div>
-    </div>
+<div id="secure-pause-overlay">PAUSED</div>
 
-    <div id="menu-layer">
-        <div class="menu-grid">
-            <div class="left-col">
-                <h3>1. Chọn bài hát</h3>
-                <div class="song-list" id="songList">
-                    <div class="item song active" data-bpm="96" data-file="Shape-Of-You.mp3">Shape Of You (96 BPM)</div>
-                    <div class="item song" data-bpm="115" data-file="BabyShark.mp3">BabyShark (115 BPM)</div>
-                    <div class="item song" data-bpm="124" data-file="Counting-Star.mp3">Counting Star (124 BPM)</div>
-                </div>
-                <h3>2. Tự tải nhạc</h3>
-                <div class="custom-upload">
-                    <input type="file" id="userAudioFile" accept="audio/*">
-                    <label style="margin-top:8px;">BPM:</label>
-                    <input type="number" id="userBPM" value="120">
-                </div>
-                <h3>3. Chọn nhân vật</h3>
-                <div class="char-select" id="charSelect">
-                    <div class="item char active" data-prefix="ami">Nhân vật Ami</div>
-                    <div class="item char" data-prefix="alex">Nhân vật Alex</div>
-                </div>
-            </div>
-            <div class="right-col">
-                <h3>4. Anaglyph</h3>
-                <div class="rgb-panel">
-                    <div class="slider-row"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
-                    <div class="slider-row"><label>G</label><input type="range" id="g1" min="0" max="255" value="0"></div>
-                    <div class="slider-row"><label>B</label><input type="range" id="b1" min="0" max="255" value="0"></div>
-                    <div class="demo-box" id="demo1">KÍNH TRÁI</div>
-                </div>
-                <div class="rgb-panel">
-                    <div class="slider-row"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
-                    <div class="slider-row"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
-                    <div class="slider-row"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
-                    <div class="demo-box" id="demo2">KÍNH PHẢI</div>
-                </div>
-                <div id="leaderboard">
-                    <div class="lb-title">TOP 5 ĐIỂM CAO</div>
-                    <div id="lb-content"></div>
-                </div>
-            </div>
+<div id="app-content-wrapper">
+    <div id="app-container">
+        <div id="loading-overlay">
+            <div class="loader"></div>
+            <div id="loading-text" style="font-weight: bold; color: #333;">ĐANG TẢI DỮ LIỆU...</div>
         </div>
-        <button class="btn-start" onclick="handlePreloadThenStart()">BẮT ĐẦU</button>
-    </div>
 
-    <div id="game-layer">
-        <div class="hud" id="hudStatus">Level: 1 | Count: 0/1 | Score: 0</div>
-        <canvas id="gameCanvas"></canvas>
-        <div id="result-board">
-            <div style="font-weight:bold; color:#666;">KẾT QUẢ</div>
-            <div class="res-score" id="finalScoreDisplay">0</div>
-            <button class="btn-back" onclick="location.reload()">QUAY LẠI MENU</button>
+        <div id="menu-layer">
+            <div class="menu-grid">
+                <div class="left-col">
+                    <h3>1. Chọn bài hát</h3>
+                    <div class="song-list" id="songList">
+                        <div class="item song active" data-bpm="96" data-file="Shape-Of-You.mp3">Shape Of You (96 BPM)</div>
+                        <div class="item song" data-bpm="115" data-file="BabyShark.mp3">BabyShark (115 BPM)</div>
+                        <div class="item song" data-bpm="124" data-file="Counting-Star.mp3">Counting Star (124 BPM)</div>
+                    </div>
+                    <h3>2. Tự tải nhạc</h3>
+                    <div class="custom-upload">
+                        <input type="file" id="userAudioFile" accept="audio/*">
+                        <label style="margin-top:8px;">BPM:</label>
+                        <input type="number" id="userBPM" value="120">
+                    </div>
+                    <h3>3. Chọn nhân vật</h3>
+                    <div class="char-select" id="charSelect">
+                        <div class="item char active" data-prefix="ami">Nhân vật Ami</div>
+                        <div class="item char" data-prefix="alex">Nhân vật Alex</div>
+                    </div>
+                </div>
+                <div class="right-col">
+                    <h3>4. Anaglyph</h3>
+                    <div class="rgb-panel">
+                        <div class="slider-row"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
+                        <div class="slider-row"><label>G</label><input type="range" id="g1" min="0" max="255" value="0"></div>
+                        <div class="slider-row"><label>B</label><input type="range" id="b1" min="0" max="255" value="0"></div>
+                        <div class="demo-box" id="demo1">KÍNH TRÁI</div>
+                    </div>
+                    <div class="rgb-panel">
+                        <div class="slider-row"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
+                        <div class="slider-row"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
+                        <div class="slider-row"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
+                        <div class="demo-box" id="demo2">KÍNH PHẢI</div>
+                    </div>
+                    <div id="leaderboard">
+                        <div class="lb-title">TOP 5 ĐIỂM CAO</div>
+                        <div id="lb-content"></div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-start" onclick="handlePreloadThenStart()">BẮT ĐẦU</button>
+        </div>
+
+        <div id="game-layer">
+            <div class="hud" id="hudStatus">Level: 1 | Count: 0/1 | Score: 0</div>
+            <canvas id="gameCanvas"></canvas>
+            <div id="result-board">
+                <div style="font-weight:bold; color:#666;">KẾT QUẢ</div>
+                <div class="res-score" id="finalScoreDisplay">0</div>
+                <button class="btn-back" onclick="location.reload()">QUAY LẠI MENU</button>
+            </div>
         </div>
     </div>
 </div>
@@ -115,7 +126,70 @@
 <audio id="audioLevelUp"></audio>
 <audio id="audioClap" src="sounds/clap.mp3"></audio>
 
+<script src="auth.js"></script>
+
 <script>
+/* ==========================================
+   HỆ THỐNG BẢO MẬT MỚI (CHẶN DOWNLOAD & CONSOLE)
+   ========================================== */
+const secureOverlay = document.getElementById('secure-pause-overlay');
+const appContent = document.getElementById('app-content-wrapper');
+
+// 1. Chặn phím tắt và chuyển hướng sang readme.js
+window.addEventListener('keydown', function(e) {
+    // Các tổ hợp phím cần chặn
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isControl = isMac ? e.metaKey : e.ctrlKey;
+    
+    const forbiddenKeys = [
+        e.key === 'F12',
+        isControl && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C'),
+        isControl && (e.key === 's' || e.key === 'S'),
+        isControl && (e.key === 'u' || e.key === 'U'),
+        isControl && (e.key === 'p' || e.key === 'P')
+    ];
+
+    if (forbiddenKeys.some(condition => condition)) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof showInstructions === 'function') {
+            showInstructions(); // Gọi hàm từ readme.js nếu có
+        } else {
+            alert("Vui lòng xem hướng dẫn sử dụng trong file đính kèm.");
+        }
+        return false;
+    }
+}, true);
+
+// 2. Logic Xoá sạch nội dung khi di chuột ra ngoài (Anti-Download)
+document.addEventListener('mouseleave', () => {
+    secureOverlay.style.display = 'flex';
+    appContent.style.visibility = 'hidden';
+    if (!audioMusic.paused) audioMusic.pause();
+    if (!charVid.paused) charVid.pause();
+});
+
+document.addEventListener('mouseenter', () => {
+    secureOverlay.style.display = 'none';
+    appContent.style.visibility = 'visible';
+    // Chỉ resume nếu game đang chạy
+    if (document.getElementById('game-layer').style.display === 'block') {
+        audioMusic.play().catch(()=>{});
+        charVid.play().catch(()=>{});
+    }
+});
+
+// 3. Chặn Console bằng Debugger (Tự động Logout)
+setInterval(function() {
+    const startTime = performance.now();
+    debugger; 
+    const endTime = performance.now();
+    if (endTime - startTime > 100) {
+        localStorage.removeItem('user_login');
+        window.location.href = '../index.html';
+    }
+}, 1000);
+
 /* ==========================================
    KIỂM TRA ĐĂNG NHẬP (SHINE VISION AUTH)
    ========================================== */
@@ -134,16 +208,14 @@
         return true;
     }
     checkAuth();
-    // Đồng bộ trạng thái đăng nhập giữa các tab
     window.addEventListener('storage', (e) => {
         if (e.key === 'user_login' && !e.newValue) window.location.href = '../index.html';
     });
-    // Kiểm tra lại mỗi khi quay lại tab game
     window.onfocus = () => checkAuth();
 })();
 
 /* ==========================================
-   LOGIC GAME GỐC (GIỮ NGUYÊN)
+   LOGIC GAME GỐC (GIỮ NGUYÊN HOÀN TOÀN)
    ========================================== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -163,33 +235,21 @@ let isPostFinishWait = false, postFinishCounter = 0;
 
 const ARROWS = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
 
-// --- LOGIC PRELOAD VIDEO ---
 function preloadVideos(prefix) {
     const videoFiles = [
-        `movie/${prefix}wait.mp4`,
-        `movie/${prefix}fail.mp4`,
-        `movie/${prefix}finish.mp4`,
-        `movie/${prefix}win.mp4`,
-        `movie/${prefix}dance1.mp4`,
-        `movie/${prefix}dance2.mp4`,
-        `movie/${prefix}dance3.mp4`,
-        `movie/${prefix}dance4.mp4`,
-        `movie/${prefix}dance5.mp4`
+        `movie/${prefix}wait.mp4`, `movie/${prefix}fail.mp4`, `movie/${prefix}finish.mp4`,
+        `movie/${prefix}win.mp4`, `movie/${prefix}dance1.mp4`, `movie/${prefix}dance2.mp4`,
+        `movie/${prefix}dance3.mp4`, `movie/${prefix}dance4.mp4`, `movie/${prefix}dance5.mp4`
     ];
-    
     document.getElementById('loading-overlay').style.display = 'flex';
-    
     const promises = videoFiles.map(url => {
         return new Promise((resolve) => {
             const v = document.createElement('video');
-            v.src = url;
-            v.preload = 'auto';
-            v.oncanplaythrough = resolve;
-            v.onerror = resolve; 
+            v.src = url; v.preload = 'auto';
+            v.oncanplaythrough = resolve; v.onerror = resolve; 
             setTimeout(resolve, 3000); 
         });
     });
-    
     return Promise.all(promises);
 }
 
@@ -199,7 +259,6 @@ async function handlePreloadThenStart() {
     startGame();
 }
 
-// --- LOGIC GAME GỐC ---
 function loadColors() {
     ['r1','g1','b1','r2','g2','b2'].forEach(id => {
         const val = localStorage.getItem('anaglyph_' + id);
