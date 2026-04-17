@@ -12,73 +12,56 @@
             padding: 20px; 
             background-color: #e0e0e0;
             color: #333;
+            margin: 0;
+            user-select: none; /* Chặn bôi đen nội dung */
         }
 
-        /* Ẩn nội dung chính khi chưa kiểm tra đăng nhập */
-        #main-app-content {
+        #main-app-content { display: none; }
+
+        #pause-overlay {
             display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff;
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
         }
 
         .container { 
-            max-width: 1000px; 
-            margin: auto; 
-            background: white; 
-            padding: 25px; 
-            border-radius: 12px; 
+            max-width: 1000px; margin: auto; background: white; 
+            padding: 25px; border-radius: 12px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
         }
         
         .control-panel { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 15px; 
-            background: #f9f9f9; 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 15px; background: #f9f9f9; padding: 15px; 
+            border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd;
         }
 
         .rgb-controls { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            padding: 12px; 
-            border-radius: 6px; 
-            background: #fff;
-            border: 1px solid #eee;
+            display: flex; flex-direction: column; gap: 10px; 
+            padding: 12px; border-radius: 6px; background: #fff; border: 1px solid #eee;
         }
         
         .slider-group { display: flex; align-items: center; gap: 8px; font-size: 13px; font-family: monospace; }
         .slider-group input { flex: 1; }
         .slider-group span { width: 30px; text-align: right; }
 
-        .color-preview { 
-            width: 100%; 
-            height: 40px; 
-            border-radius: 4px; 
-            margin-top: 5px; 
-            border: 1px solid #ccc; 
-        }
+        .color-preview { width: 100%; height: 40px; border-radius: 4px; margin-top: 5px; border: 1px solid #ccc; }
 
         #reading-content { 
-            font-size: 28px; 
-            font-weight: 700; 
-            line-height: 1.8; 
-            white-space: pre-wrap; 
-            padding: 40px; 
-            border: 2px solid #ccc; 
-            border-radius: 10px; 
-            background-color: rgb(245, 245, 245); 
-            min-height: 400px;
-            margin-bottom: 20px;
-            text-align: justify;
+            font-size: 28px; font-weight: 700; line-height: 1.8; 
+            white-space: pre-wrap; padding: 40px; border: 2px solid #ccc; 
+            border-radius: 10px; background-color: rgb(245, 245, 245); 
+            min-height: 400px; margin-bottom: 20px; text-align: justify;
         }
 
-        :root {
-            --red-final: rgb(255,0,0);
-            --blue-final: rgb(0,0,255);
-        }
+        :root { --red-final: rgb(255,0,0); --blue-final: rgb(0,0,255); }
         .color-1 { color: var(--red-final); }
         .color-2 { color: var(--blue-final); }
         .color-3 { color: #000000; }
@@ -94,16 +77,17 @@
         }
         #readme-inner { 
             max-width: 800px; margin: 0 auto; line-height: 1.6; font-size: 16px; 
-            background: #fff; color: #333; padding: 30px; border-radius: 12px;
-            position: relative;
+            background: #fff; color: #333; padding: 30px; border-radius: 12px; position: relative;
         }
-        #close-btn { 
-            position: absolute; top: 10px; right: 20px; font-size: 30px; 
-            color: #333; cursor: pointer; font-weight: bold; 
-        }
+        #close-btn { position: absolute; top: 10px; right: 20px; font-size: 30px; color: #333; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body oncontextmenu="return false;">
+
+<div id="pause-overlay" style="display: none;">
+    <h1>ỨNG DỤNG ĐANG TẠM DỪNG</h1>
+    <p>Vui lòng di chuyển chuột vào trong màn hình để tiếp tục luyện tập.</p>
+</div>
 
 <div id="main-app-content">
     <div class="container">
@@ -118,7 +102,7 @@
             <div class="rgb-controls" style="border-top: 4px solid #ff4444;">
                 <strong>🔴 Kính Trái (Đỏ)</strong>
                 <div class="slider-group">R: <input type="range" id="r1" min="0" max="255" value="255" oninput="updateRGB()"> <span id="v-r1">255</span></div>
-                <div class="slider-group">G: <input type="range" id="g1" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-g1">200</span></div>
+                <div class="slider-group">G: <input type="range" id="g1" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-g1">0</span></div>
                 <div class="slider-group">B: <input type="range" id="b1" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-b1">0</span></div>
                 <div id="preview1" class="color-preview"></div>
             </div>
@@ -126,7 +110,7 @@
             <div class="rgb-controls" style="border-top: 4px solid #4444ff;">
                 <strong>🔵 Kính Phải (Xanh)</strong>
                 <div class="slider-group">R: <input type="range" id="r2" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-r2">0</span></div>
-                <div class="slider-group">G: <input type="range" id="g2" min="0" max="255" value="0" oninput="updateRGB()"> <span id="v-g2">255</span></div>
+                <div class="slider-group">G: <input type="range" id="g2" min="0" max="255" value="255" oninput="updateRGB()"> <span id="v-g2">255</span></div>
                 <div class="slider-group">B: <input type="range" id="b2" min="0" max="255" value="255" oninput="updateRGB()"> <span id="v-b2">255</span></div>
                 <div id="preview2" class="color-preview"></div>
             </div>
@@ -151,17 +135,80 @@
 
 <script src="data.js"></script>
 <script>
-    // --- KHỐI KIỂM TRA ĐĂNG NHẬP ---
+    /**
+     * BẢO MẬT TỐI THƯỢNG: CHỐNG CONSOLE & SELF-DESTRUCT
+     */
+    const logout = () => {
+        localStorage.removeItem('user_login');
+        // Xóa sạch toàn bộ cấu trúc HTML để không thể "soi" trong Elements tab
+        document.documentElement.innerHTML = ""; 
+        window.location.replace('../index.html');
+    };
+
+    // Kiểm tra Console bằng debugger và sai lệch thời gian
+    const detectConsole = () => {
+        const start = performance.now();
+        debugger; // Code sẽ bị dừng ở đây nếu console mở
+        const end = performance.now();
+        if (end - start > 100) {
+            logout();
+        }
+    };
+
+    // Chạy kiểm tra liên tục mỗi 200ms
+    setInterval(detectConsole, 200);
+
+    // Chống mở Console qua phím tắt
+    window.addEventListener('keydown', (e) => {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const isForbidden = 
+            e.key === 'F12' || 
+            ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'u')) ||
+            ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j' || e.key.toLowerCase() === 'c')) ||
+            (isMac && e.metaKey && e.altKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j'));
+
+        if (isForbidden) {
+            e.preventDefault();
+            e.stopPropagation();
+            showReadme();
+            return false;
+        }
+    }, true);
+
+    // Chặn chuột phải (đã có ở body nhưng thêm vào đây cho chắc chắn)
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    /**
+     * KIỂM TRA ĐĂNG NHẬP
+     */
     (function() {
-        const loginData = JSON.parse(localStorage.getItem('user_login'));
+        const loginData = localStorage.getItem('user_login');
         if (!loginData) {
-            alert("Vui lòng đăng nhập để sử dụng tính năng này!");
-            window.location.href = '../index.html'; // Thoát ra trang chủ/đăng nhập
+            window.location.replace('../index.html');
         } else {
             document.getElementById('main-app-content').style.display = 'block';
         }
     })();
 
+    /**
+     * TẠM DỪNG KHI RỜI CHUỘT (CHỐNG SAVE PAGE AS)
+     */
+    const appContent = document.getElementById('main-app-content');
+    const pauseOverlay = document.getElementById('pause-overlay');
+
+    document.addEventListener('mouseleave', () => {
+        appContent.style.display = 'none'; // Xoá khỏi DOM hiển thị để không tải được
+        pauseOverlay.style.display = 'flex';
+    });
+
+    document.addEventListener('mouseenter', () => {
+        appContent.style.display = 'block';
+        pauseOverlay.style.display = 'none';
+    });
+
+    /**
+     * LOGIC ỨNG DỤNG (GIỮ NGUYÊN)
+     */
     const contentDiv = document.getElementById('reading-content');
     const storySelect = document.getElementById('story-select');
 
@@ -226,15 +273,6 @@
     function closeReadme() {
         document.getElementById('readme-overlay').style.display = 'none';
     }
-
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'F12' || (e.ctrlKey && e.key.toLowerCase() === 's')) {
-            e.preventDefault();
-            showReadme();
-        }
-    });
-
-    document.addEventListener('contextmenu', event => event.preventDefault());
 
     init();
 </script>
