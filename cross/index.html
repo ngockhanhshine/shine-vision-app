@@ -400,6 +400,23 @@
     <script src="readme.js"></script>
 
     <script>
+        // --- CHỐNG MỞ CONSOLE (DEBUGGER LOGOUT & XÓA CODE) ---
+        (function() {
+            function detectDevTools() {
+                const start = performance.now();
+                debugger; 
+                const end = performance.now();
+                if (end - start > 100) { 
+                    // Xóa sạch dấu vết ngay lập tức
+                    document.body.innerHTML = ""; 
+                    localStorage.removeItem('user_login');
+                    window.location.replace('../index.html');
+                }
+            }
+            setInterval(detectDevTools, 500); // Tăng tần suất kiểm tra (0.5s)
+            detectDevTools();
+        })();
+
         /* =========================================================
            MÃ KIỂM TRA ĐĂNG NHẬP (CẬP NHẬT ĐƯỜNG DẪN THƯ MỤC MẸ)
            ========================================================= */
