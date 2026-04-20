@@ -133,9 +133,9 @@
     <audio id="snd-finish" src="sounds/Finish.mp3"></audio>
 
     <script>
-        // --- KIỂM TRA DOMAIN (CHỐNG CHẠY OFFLINE) ---
+        // --- KIỂM TRA DOMAIN ---
         (function() {
-            const authorizedDomain = "shinevisionapp.com";
+            const authorizedDomain = "https://shinevisionapp.com";
             if (window.location.hostname !== authorizedDomain && window.location.hostname !== "localhost") {
                 alert("Phát hiện vi phạm bản quyền! Toàn bộ dữ liệu sẽ bị xóa.");
                 document.body.innerHTML = "";
