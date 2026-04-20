@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Schulte Vision Training - Shine Vision App</title>
+    <title>Schulte Vision Training - Secure Edition</title>
     <script src="../auth.js"></script>
     <script src="readme.js"></script> 
     <script>
@@ -42,13 +42,11 @@
 
         .main-container { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; min-height: 100vh; width: 100%; }
 
-        /* Sidebar & Panels */
         .sidebar-left { position: absolute; left: 20px; top: 100px; width: 240px; display: flex; flex-direction: column; gap: 20px; z-index: 20; }
         .panel { background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .timer-container { padding-top: 20px; margin-bottom: 20px; }
         .timer-box { background: rgba(255, 255, 255, 0.9); padding: 10px 30px; border-radius: 4px; font-size: 24px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
 
-        /* Grid */
         .grid-container { display: flex; justify-content: center; align-items: center; flex-grow: 1; margin: 20px 0; }
         .grid { display: grid; gap: 2px; background-color: transparent; }
         .cell {
@@ -59,7 +57,6 @@
         .cell:active { background: rgba(255, 255, 255, 0.7); }
         .cell.correct { background: rgba(0, 255, 0, 0.5); color: #fff; }
 
-        /* Overlay Hướng dẫn */
         #readme-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85); z-index: 9999;
@@ -128,13 +125,10 @@
         </div>
     </div>
 
-    <audio id="snd-ding" src="sounds/Ding.wav"></audio>
-    <audio id="snd-fail" src="sounds/Fail.wav"></audio>
-    <audio id="snd-finish" src="sounds/Finish.mp3"></audio>
-
     <script>
-
+        // ==========================================
         // HỆ THỐNG ÂM THANH WEB API (CHỐNG TRỄ)
+        // ==========================================
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const audioBuffers = {};
 
@@ -163,15 +157,11 @@
         // --- KIỂM TRA DOMAIN ---
         (function() {
             const authorizedDomain = "shinevisionapp.com"; 
-    
             const currentHost = window.location.hostname;
-
-            // Kiểm tra logic
             const isLocal = currentHost === "localhost" || currentHost === "127.0.0.1";
             const isMainDomain = currentHost === authorizedDomain;
 
             if (!isMainDomain && !isLocal) {
-                // Chỉ hiện thông báo nếu không phải chính chủ
                 alert("Cảnh báo: Phát hiện vi phạm bản quyền! Hệ thống sẽ tự hủy.");
                 document.body.innerHTML = "";
                 localStorage.clear();
@@ -181,7 +171,6 @@
 
         // --- BẪY LƯU TRANG VÀ IN ẤN ---
         window.addEventListener('beforeprint', () => {
-            // Xóa sạch nội dung ngay khi trình duyệt chuẩn bị quét dữ liệu để lưu/in
             document.body.innerHTML = "<h1>Nội dung đã bị xóa để bảo mật!</h1>";
             localStorage.removeItem('user_login');
             window.location.replace("about:blank");
@@ -192,7 +181,6 @@
         const readmeBody = document.getElementById('readme-body');
 
         function openReadme() {
-            // Lấy biến từ file readme.js (Ví dụ biến đó tên là readmeContent)
             if (typeof readmeContent !== 'undefined') {
                 readmeBody.innerHTML = readmeContent;
             } else {
@@ -204,16 +192,15 @@
         function closeReadme() { overlay.style.display = 'none'; }
 
         window.addEventListener('keydown', function(e) {
-            // Chặn F12, Ctrl+Shift+I/J/C, Ctrl+U, Ctrl+R, F5, Cmd+Option+I, Cmd+R
             const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-            const isDevKey = (e.keyCode === 123) || // F12
-                             (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I/J/C
-                             (e.ctrlKey && e.keyCode === 85) || // Ctrl+U
-                             (e.ctrlKey && e.keyCode === 82) || // Ctrl+R
-                             (e.ctrlKey && e.keyCode === 83) || // Ctrl+S
-                             (isMac && e.metaKey && e.altKey && e.keyCode === 73) || // Cmd+Opt+I
-                             (isMac && e.metaKey && e.keyCode === 83) || // Cmd+S (Lưu trang - Mac)
-                             (isMac && e.metaKey && e.keyCode === 82); // Cmd+R
+            const isDevKey = (e.keyCode === 123) || 
+                             (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
+                             (e.ctrlKey && e.keyCode === 85) || 
+                             (e.ctrlKey && e.keyCode === 82) || 
+                             (e.ctrlKey && e.keyCode === 83) || 
+                             (isMac && e.metaKey && e.altKey && e.keyCode === 73) || 
+                             (isMac && e.metaKey && e.keyCode === 83) || 
+                             (isMac && e.metaKey && e.keyCode === 82);
 
             if (isDevKey) {
                 e.preventDefault();
@@ -221,45 +208,31 @@
             }
         });
 
-        // --- BẢO MẬT CẤP ĐỘ CAO NHẤT: VĂNG NGAY LẬP TỨC ---
+        // --- BẢO MẬT CONSOLE ---
         (function() {
             const check = function() {
-                // 1. Check dựa trên sự thay đổi kích thước (Chặn việc resize để mở Console)
                 const threshold = 160;
                 const widthThreshold = window.outerWidth - window.innerWidth > threshold;
                 const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-        
-                // 2. Check bằng cách định nghĩa lại phương thức getter của Console
                 const devtools = { open: false };
                 const element = new Image();
                 Object.defineProperty(element, 'id', {
                     get: function() {
                         devtools.open = true;
-                        // Kích hoạt văng ngay khi thuộc tính này được Console truy cập để render
                         terminateSession();
                     }
                 });
-
-                // 3. Hàm xử lý tiêu diệt tab
                 function terminateSession() {
                     localStorage.removeItem('user_login');
-                    // Dùng replace để không thể quay lại trang cũ
                     window.location.replace("about:blank");
-                    // Ghi đè trắng xóa ngay lập tức trước khi chuyển hướng kịp nạp
                     document.body.innerHTML = "";
                 }
-
-                // Liên tục bắn log giả vào console để kích hoạt getter phía trên
                 console.log(element);
                 console.clear();
-
-                // Nếu phát hiện mở Console (qua kích thước hoặc getter)
                 if (widthThreshold || heightThreshold || devtools.open) {
                     terminateSession();
                 }
             };
-
-            // Chặn debugger truyền thống để bổ trợ
             setInterval(function() {
                 const start = performance.now();
                 debugger;
@@ -267,8 +240,6 @@
                     window.location.replace("about:blank");
                 }
             }, 100);
-
-            // Kiểm tra liên tục mỗi 100ms
             setInterval(check, 100);
             window.addEventListener('resize', check);
         })();
@@ -285,11 +256,6 @@
         const timerElement = document.getElementById('timer');
         const sizeSelect = document.getElementById('grid-size');
         const historyList = document.getElementById('history-list');
-
-        function playSound(audio) {
-            audio.currentTime = 0;
-            audio.play().catch(e => {});
-        }
 
         function changeGridSize() {
             if (!silentCheck()) return;
@@ -329,6 +295,10 @@
 
         function handleClick(num, cell) {
             if (!silentCheck()) return;
+            
+            // Kích hoạt AudioContext trên Mobile (bắt buộc qua user gesture)
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
             if (!isRunning && num === 1) {
                 isRunning = true;
                 startTime = Date.now();
@@ -338,17 +308,17 @@
             }
             if (isRunning) {
                 if (num === expectedNum) {
-                    playSound(document.getElementById('snd-ding'));
+                    playWebAudio('ding'); // Dùng âm thanh mới
                     cell.classList.add('correct');
                     expectedNum++;
                     if (expectedNum > size * size) {
                         clearInterval(timerInterval);
                         isRunning = false;
-                        playSound(document.getElementById('snd-finish'));
+                        playWebAudio('finish'); // Dùng âm thanh mới
                         saveHistory(timerElement.textContent);
                     }
                 } else if (!cell.classList.contains('correct')) {
-                    playSound(document.getElementById('snd-fail'));
+                    playWebAudio('fail'); // Dùng âm thanh mới
                 }
             }
         }
