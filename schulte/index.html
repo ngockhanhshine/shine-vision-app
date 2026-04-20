@@ -133,6 +133,25 @@
     <audio id="snd-finish" src="sounds/Finish.mp3"></audio>
 
     <script>
+        // --- KIỂM TRA DOMAIN (CHỐNG CHẠY OFFLINE) ---
+        (function() {
+            const authorizedDomain = "domain-cua-anh.com"; // Thay domain của anh vào đây
+            if (window.location.hostname !== authorizedDomain && window.location.hostname !== "localhost") {
+                alert("Phát hiện vi phạm bản quyền! Toàn bộ dữ liệu sẽ bị xóa.");
+                document.body.innerHTML = "";
+                localStorage.clear();
+                window.location.replace("about:blank");
+            }
+        })();
+
+        // --- BẪY LƯU TRANG VÀ IN ẤN ---
+        window.addEventListener('beforeprint', () => {
+            // Xóa sạch nội dung ngay khi trình duyệt chuẩn bị quét dữ liệu để lưu/in
+            document.body.innerHTML = "<h1>Nội dung đã bị xóa để bảo mật!</h1>";
+            localStorage.removeItem('user_login');
+            window.location.replace("about:blank");
+        });
+
         // --- LOGIC KHÓA PHÍM & HIỆN README ---
         const overlay = document.getElementById('readme-overlay');
         const readmeBody = document.getElementById('readme-body');
