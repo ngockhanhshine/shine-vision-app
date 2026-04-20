@@ -133,6 +133,33 @@
     <audio id="snd-finish" src="sounds/Finish.mp3"></audio>
 
     <script>
+
+        // HỆ THỐNG ÂM THANH WEB API (CHỐNG TRỄ)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const audioBuffers = {};
+
+        async function loadSound(name, url) {
+            try {
+                const response = await fetch(url);
+                const arrayBuffer = await response.arrayBuffer();
+                audioBuffers[name] = await audioCtx.decodeAudioData(arrayBuffer);
+            } catch (e) { console.log("Lỗi tải âm thanh: " + name); }
+        }
+
+        // Tải trước các file âm thanh
+        loadSound('ding', 'sounds/Ding.wav');
+        loadSound('fail', 'sounds/Fail.wav');
+        loadSound('finish', 'sounds/Finish.mp3');
+
+        function playWebAudio(name) {
+            if (!audioBuffers[name]) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffers[name];
+            source.connect(audioCtx.destination);
+            source.start(0);
+        }
+
         // --- KIỂM TRA DOMAIN ---
         (function() {
             const authorizedDomain = "shinevisionapp.com"; 
