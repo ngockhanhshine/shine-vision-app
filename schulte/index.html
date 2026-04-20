@@ -167,19 +167,56 @@
             }
         });
 
-        // --- CHỐNG MỞ CONSOLE ---
+        // --- BẢO MẬT CẤP ĐỘ CAO NHẤT: VĂNG NGAY LẬP TỨC ---
         (function() {
-            function detectDevTools() {
-                const start = performance.now();
-                debugger; 
-                const end = performance.now();
-                if (end - start > 100) { 
-                    document.body.innerHTML = ""; 
+            const check = function() {
+                // 1. Check dựa trên sự thay đổi kích thước (Chặn việc resize để mở Console)
+                const threshold = 160;
+                const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+                const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+        
+                // 2. Check bằng cách định nghĩa lại phương thức getter của Console
+                const devtools = { open: false };
+                const element = new Image();
+                Object.defineProperty(element, 'id', {
+                    get: function() {
+                        devtools.open = true;
+                        // Kích hoạt văng ngay khi thuộc tính này được Console truy cập để render
+                        terminateSession();
+                    }
+                });
+
+                // 3. Hàm xử lý tiêu diệt tab
+                function terminateSession() {
                     localStorage.removeItem('user_login');
-                    window.location.replace('../index.html');
+                    // Dùng replace để không thể quay lại trang cũ
+                    window.location.replace("about:blank");
+                    // Ghi đè trắng xóa ngay lập tức trước khi chuyển hướng kịp nạp
+                    document.body.innerHTML = "";
                 }
-            }
-            setInterval(detectDevTools, 500);
+
+                // Liên tục bắn log giả vào console để kích hoạt getter phía trên
+                console.log(element);
+                console.clear();
+
+                // Nếu phát hiện mở Console (qua kích thước hoặc getter)
+                if (widthThreshold || heightThreshold || devtools.open) {
+                    terminateSession();
+                }
+            };
+
+            // Chặn debugger truyền thống để bổ trợ
+            setInterval(function() {
+                const start = performance.now();
+                debugger;
+                if (performance.now() - start > 50) {
+                    window.location.replace("about:blank");
+                }
+            }, 100);
+
+            // Kiểm tra liên tục mỗi 100ms
+            setInterval(check, 100);
+            window.addEventListener('resize', check);
         })();
 
         // --- GAME LOGIC ---
