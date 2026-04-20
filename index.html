@@ -275,6 +275,10 @@
                     <img src="assets/finger.png" alt="Finger Dance">
                     <div class="app-title">Finger Dance</div>
                 </a>
+                <a href="schulte/index.html" class="app-card">
+                    <img src="assets/schulte.png" alt="Schulte Table">
+                    <div class="app-title">Schulte Table</div>
+                </a>
             </div>
 
             <hr>
@@ -299,6 +303,23 @@
     </div>
 
     <script>
+        // --- CHỐNG MỞ CONSOLE (DEBUGGER LOGOUT & XÓA CODE) ---
+        (function() {
+            function detectDevTools() {
+                const start = performance.now();
+                debugger; 
+                const end = performance.now();
+                if (end - start > 100) { 
+                    // Xóa sạch dấu vết ngay lập tức
+                    document.body.innerHTML = ""; 
+                    localStorage.removeItem('user_login');
+                    window.location.replace('../index.html');
+                }
+            }
+            setInterval(detectDevTools, 500); // Tăng tần suất kiểm tra (0.5s)
+            detectDevTools();
+        })();
+
         // Bảo mật: Phát hiện Console
         (function() {
             function detect() {
@@ -320,7 +341,6 @@
             location.reload();
         }
 
-        // Kiểm tra trạng thái đăng nhập khi load trang
         if (localStorage.getItem('user_login')) {
             document.getElementById('main-content').style.display = 'block';
             document.getElementById('logout-btn').style.display = 'block'; 
@@ -328,7 +348,6 @@
             document.getElementById('login-section').style.display = 'block';
         }
 
-        // Xử lý đăng nhập (Bỏ alert thành công)
         async function startLogin() {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
@@ -339,13 +358,11 @@
             document.getElementById('loading-text').style.display = 'block';
 
             try {
-                // Ghi đè tạm thời window.alert để chặn thông báo từ auth.js nếu có
                 const originalAlert = window.alert;
                 window.alert = function() {}; 
 
                 await handleLogin(user, pass);
 
-                // Trả lại alert sau khi xong (nếu cần dùng cho lỗi)
                 window.alert = originalAlert;
             } catch (e) {
                 document.getElementById('login-btn').style.display = 'block';
@@ -353,7 +370,6 @@
             }
         }
 
-        // Nhấn Enter để đăng nhập
         const inputs = [document.getElementById('username'), document.getElementById('password')];
         inputs.forEach(input => {
             input.addEventListener('keypress', (e) => {
@@ -361,7 +377,6 @@
             });
         });
 
-        // Bảo mật phím tắt
         document.addEventListener('keydown', function(e) {
             if (e.keyCode === 123 || (e.ctrlKey && e.keyCode === 83)) {
                 e.preventDefault();
@@ -369,7 +384,6 @@
             }
         });
 
-        // Chặn chuột phải
         document.addEventListener('contextmenu', e => e.preventDefault());
     </script>
 </body>
