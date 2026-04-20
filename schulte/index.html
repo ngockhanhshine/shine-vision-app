@@ -135,9 +135,17 @@
     <script>
         // --- KIỂM TRA DOMAIN ---
         (function() {
-            const authorizedDomain = "https://shinevisionapp.com";
-            if (window.location.hostname !== authorizedDomain && window.location.hostname !== "localhost") {
-                alert("Phát hiện vi phạm bản quyền! Toàn bộ dữ liệu sẽ bị xóa.");
+            const authorizedDomain = "shinevisionapp.com"; 
+    
+            const currentHost = window.location.hostname;
+
+            // Kiểm tra logic
+            const isLocal = currentHost === "localhost" || currentHost === "127.0.0.1";
+            const isMainDomain = currentHost === authorizedDomain;
+
+            if (!isMainDomain && !isLocal) {
+                // Chỉ hiện thông báo nếu không phải chính chủ
+                alert("Cảnh báo: Phát hiện vi phạm bản quyền! Hệ thống sẽ tự hủy.");
                 document.body.innerHTML = "";
                 localStorage.clear();
                 window.location.replace("about:blank");
