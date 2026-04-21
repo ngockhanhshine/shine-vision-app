@@ -135,41 +135,25 @@
 
 <script src="data.js"></script>
 <script>
-    // --- BẢO MẬT CONSOLE ---
-    (function() {
-        const check = function() {
-            const threshold = 160;
-            const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-            const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-            const devtools = { open: false };
-            const element = new Image();
-            Object.defineProperty(element, 'id', {
-                get: function() {
-                    devtools.open = true;
-                    terminateSession();
-                }
-            });
-            function terminateSession() {
-                localStorage.removeItem('user_login');
-                window.location.replace("about:blank");
-                document.body.innerHTML = "";
-            }
-            console.log(element);
-            console.clear();
-            if (widthThreshold || heightThreshold || devtools.open) {
-                terminateSession();
-            }
-        };
-        setInterval(function() {
-            const start = performance.now();
-            debugger;
-            if (performance.now() - start > 50) {
-                window.location.replace("about:blank");
-            }
-        }, 100);
-        setInterval(check, 100);
-        window.addEventListener('resize', check);
-    })();
+    /**
+     * BẢO MẬT TỐI THƯỢNG: CHỐNG CONSOLE & SELF-DESTRUCT
+     */
+    const logout = () => {
+        localStorage.removeItem('user_login');
+        // Xóa sạch toàn bộ cấu trúc HTML để không thể "soi" trong Elements tab
+        document.documentElement.innerHTML = ""; 
+        window.location.replace('../index.html');
+    };
+
+    // Kiểm tra Console bằng debugger và sai lệch thời gian
+    const detectConsole = () => {
+        const start = performance.now();
+        debugger; // Code sẽ bị dừng ở đây nếu console mở
+        const end = performance.now();
+        if (end - start > 100) {
+            logout();
+        }
+    };
 
     // Chạy kiểm tra liên tục mỗi 200ms
     setInterval(detectConsole, 200);
