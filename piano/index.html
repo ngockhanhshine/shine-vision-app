@@ -100,19 +100,40 @@
     </div>
 
     <script>
-        // --- CHỐNG MỞ CONSOLE (DEBUGGER LOGOUT) ---
+        // --- BẢO MẬT CONSOLE ---
         (function() {
-            function detectDevTools() {
-                const start = performance.now();
-                debugger; 
-                const end = performance.now();
-                if (end - start > 100) { 
+            const check = function() {
+                const threshold = 160;
+                const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+                const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+                const devtools = { open: false };
+                const element = new Image();
+                Object.defineProperty(element, 'id', {
+                    get: function() {
+                        devtools.open = true;
+                        terminateSession();
+                    }
+                });
+                function terminateSession() {
                     localStorage.removeItem('user_login');
-                    window.location.href = '../index.html';
+                    window.location.replace("about:blank");
+                    document.body.innerHTML = "";
                 }
-            }
-            setInterval(detectDevTools, 1000);
-            detectDevTools();
+                console.log(element);
+                console.clear();
+                if (widthThreshold || heightThreshold || devtools.open) {
+                    terminateSession();
+                }
+            };
+            setInterval(function() {
+                const start = performance.now();
+                debugger;
+                if (performance.now() - start > 50) {
+                    window.location.replace("about:blank");
+                }
+            }, 100);
+            setInterval(check, 100);
+            window.addEventListener('resize', check);
         })();
 
         // --- KIỂM TRA ĐĂNG NHẬP ---
@@ -137,14 +158,11 @@
             if (typeof gameState !== 'undefined' && gameState === 'PLAYING') saveLog();
         });
 
-        // Áp dụng Tạm dừng cho cả trang Menu và trong game
         container.addEventListener('mouseleave', () => {
-            if (isPaused) return; // Tránh lặp lại nếu đã tạm dừng
-            
+            if (isPaused) return;
             isPaused = true;
             pauseTimeStart = performance.now(); 
             if (currentAudio) currentAudio.pause();
-            
             backupNodes = Array.from(container.childNodes);
             container.innerHTML = '<div class="pause-screen">Tạm Dừng</div>';
         });
@@ -154,19 +172,14 @@
                 isPaused = false;
                 const pauseDuration = performance.now() - pauseTimeStart;
                 startTime += pauseDuration; 
-                
                 container.innerHTML = ''; 
                 backupNodes.forEach(node => container.appendChild(node)); 
-                
                 canvas = document.getElementById('gameCanvas');
                 ctx = canvas.getContext('2d');
-                
-                // Re-bind sự kiện sau khi khôi phục DOM
                 document.querySelectorAll('input[type=range]').forEach(i => i.addEventListener('input', updateUIColors));
                 document.getElementById('readme-close').onclick = closeReadme;
                 renderSongList();
                 updateLogDisplay();
-
                 if (gameState === 'PLAYING') {
                     document.getElementById('back-to-menu').style.display = 'block';
                     if (currentAudio) currentAudio.play();
@@ -334,7 +347,6 @@
             if (!hit) playSound(failBuffer);
         }
 
-        // Chặn tất cả phím tắt mở Console (F12, Ctrl+Shift+I, Cmd+Opt+I, etc.) và mở Readme
         window.addEventListener('keydown', (e) => {
             const isConsoleKey = (
                 e.key === "F12" || 
