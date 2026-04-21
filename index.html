@@ -354,17 +354,21 @@
             
             if (!user || !pass) return;
 
+            // Hiện trạng thái đang tải
             document.getElementById('login-btn').style.display = 'none';
             document.getElementById('loading-text').style.display = 'block';
 
             try {
-                const originalAlert = window.alert;
-                window.alert = function() {}; 
-
-                await handleLogin(user, pass);
-
-                window.alert = originalAlert;
+                // Gọi hàm login từ auth.js
+                const success = await handleLogin(user, pass);
+                
+                // Nếu không thành công (sai pass hoặc lỗi), phải hiện lại nút bấm
+                if (!success) {
+                    document.getElementById('login-btn').style.display = 'block';
+                    document.getElementById('loading-text').style.display = 'none';
+                }
             } catch (e) {
+                // Xử lý lỗi hệ thống
                 document.getElementById('login-btn').style.display = 'block';
                 document.getElementById('loading-text').style.display = 'none';
             }

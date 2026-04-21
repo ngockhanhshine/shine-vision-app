@@ -17,16 +17,14 @@ function checkAuth() {
 
 // 2. Hàm xử lý đăng nhập - KẾT NỐI GOOGLE SHEET
 async function handleLogin(userInp, passInp) {
-    // ANH THAY LINK WEB APP URL CỦA ANH VÀO ĐÂY
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwMuqLBgaHeYQnViFVz9p2K_fQ6DW8VGIRjB021-uDZpBpOKvB0gQhKF7WRoYxT5Rdf/exec';
 
     if (!userInp || !passInp) {
         alert("Vui lòng điền đầy đủ thông tin!");
-        return;
+        return false;
     }
 
     try {
-        // Gửi yêu cầu kiểm tra tới Google Apps Script
         const response = await fetch(scriptURL, {
             method: 'POST',
             body: JSON.stringify({ username: userInp, password: passInp })
@@ -37,14 +35,16 @@ async function handleLogin(userInp, passInp) {
         if (data.result === "success") {
             const loginData = { loginTime: new Date().getTime() };
             localStorage.setItem('user_login', JSON.stringify(loginData));
-            alert("Đăng nhập thành công!");
-            location.reload(); 
+            location.reload();
+            return true;
         } else {
             alert("Sai tài khoản hoặc mật khẩu!");
+            return false; // Trả về false để index.html hiện lại nút bấm
         }
     } catch (e) {
         console.error(e);
         alert("Lỗi kết nối dữ liệu hệ thống!");
+        return false;
     }
 }
 
