@@ -3,35 +3,221 @@
 <head>
     <script src="../auth.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shine Vision - Gabor Auto-Next</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
+    <title>Advanced Crowding Training - Shine Vision App (v2.6 - Guide & Secure)</title>
     <script src="readme.js"></script>
     <style>
-        body { margin: 0; padding: 0; background-color: #7F7F7F; overflow: hidden; font-family: sans-serif; touch-action: none; display: flex; flex-direction: column; height: 100vh; position: relative; }
-        #main-app-content { display: none; flex-direction: column; height: 100vh; width: 100%; }
-        #game-ui { text-align: center; color: white; font-size: 16px; font-weight: bold; padding: 10px; background: rgba(0,0,0,0.2); z-index: 10; }
-        #grid-container { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; align-content: center; justify-items: center; transition: opacity 0.1s; }
-        #pause-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #7F7F7F; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; font-weight: bold; pointer-events: none; }
-        .card { background-color: #7F7F7F; border: 2px solid #999; border-radius: 12px; width: 80px; height: 80px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        .gabor-content { position: absolute; width: 100%; height: 100%; background: repeating-linear-gradient(var(--ang), #fff, #fff 1px, #000 var(--sz), #000 var(--sz2)); mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); opacity: var(--op); }
-        .card.selected { border-color: #2196F3; box-shadow: 0 0 15px #2196F3; z-index: 2; }
-        .card.matched { opacity: 0.1; pointer-events: none; }
-        #controls-wrapper { background: white; padding: 15px; border-radius: 20px 20px 0 0; display: flex; flex-wrap: wrap; gap: 15px; max-height: 45vh; overflow-y: auto; z-index: 101; position: relative; }
-        .control-section { flex: 1; min-width: 250px; }
-        .journal-section { flex: 1; min-width: 250px; border-left: 1px solid #eee; padding-left: 15px; }
-        .slider-group { display: flex; align-items: center; margin-bottom: 12px; gap: 8px; }
-        .slider-group label { width: 60px; font-size: 12px; font-weight: bold; }
-        .slider-group input { flex: 1; }
-        .btn-step { width: 30px; height: 30px; border-radius: 5px; border: 1px solid #ccc; background: #f8f8f8; cursor: pointer; font-weight: bold; }
-        #journal-list { font-size: 12px; list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 5px; }
-        #journal-list li { padding: 5px; border-bottom: 1px solid #eee; color: #444; }
-        button#resetBtn { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #2196F3; color: white; font-weight: bold; margin-top: 10px; cursor: pointer; }
-        .msg-alert { color: #d32f2f; font-size: 11px; font-weight: bold; margin-top: 5px; display: none; }
-        #instruction-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; color: white; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        #instruction-content { background: #fff; color: #333; padding: 20px; border-radius: 10px; max-width: 600px; margin: 40px auto; white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
+        :root {
+            --primary-bg: #E8F5F1;
+            --sh-blue: #4A90E2;
+            --sh-green: #4CAF50;
+            --sh-red: #F44336;
+            --text-main: #333;
+            --control-bg: #FFFFFF;
+            --btn-border: #E0E0E0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--primary-bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            color: var(--text-main);
+        }
+
+        /* Ẩn nội dung chính khi chưa kiểm tra đăng nhập */
+        #main-app-content {
+            display: none;
+            gap: 30px;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            max-height: 95vh;
+        }
+
+        #training-area { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        #display-board {
+            width: 320px; height: 320px; background: white; border-radius: 15px;
+            position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex; justify-content: center; align-items: center; overflow: hidden;
+        }
+
+        #target-letter { font-weight: bold; line-height: 1; user-select: none; z-index: 10; }
+        .flanker { position: absolute; font-weight: bold; line-height: 1; user-select: none; opacity: 0.8; }
+
+        #quiz-area { text-align: center; width: 100%; }
+        #quiz-question { font-size: 13px; margin-bottom: 10px; font-weight: 600; }
+        #answer-options { display: flex; gap: 8px; justify-content: center; }
+        .answer-btn {
+            width: 45px; height: 45px; background: white; border: 2px solid var(--btn-border);
+            border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.2s;
+        }
+        .answer-btn:hover { border-color: var(--sh-blue); background-color: #F0F7FF; }
+
+        #controls-panel { width: 300px; display: flex; flex-direction: column; gap: 12px; }
+        .control-group, #stats-panel, #log-panel {
+            background: var(--control-bg); padding: 15px; border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        .control-label { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        .slider-wrapper { display: flex; flex-direction: column; gap: 5px; }
+        
+        .slider-control-hub { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; }
+        .step-btn { width: 28px; height: 28px; background: #F5F7F9; border: 1px solid var(--btn-border); border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .current-val { font-weight: bold; font-size: 12px; color: var(--sh-blue); min-width: 90px; text-align: center; }
+
+        input[type="range"] { width: 100%; cursor: pointer; }
+
+        #btn-randomize {
+            width: 100%; padding: 10px; background-color: var(--sh-blue); color: white;
+            border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;
+        }
+
+        #stats-panel { font-size: 11px; display: flex; flex-direction: column; gap: 5px; }
+        .stat-row { display: flex; align-items: center; gap: 8px; }
+        .stat-correct { color: var(--sh-green); }
+        .stat-wrong { color: var(--sh-red); }
+        .stat-speed { color: var(--sh-blue); font-weight: bold; border-top: 1px dashed #eee; padding-top: 5px; margin-top: 2px; }
+
+        #log-panel {
+            height: 180px; overflow-y: auto; font-family: 'Courier New', Courier, monospace;
+            font-size: 11px; padding: 10px; display: flex; flex-direction: column; gap: 3px; border: 1px solid #F0F0F0;
+        }
+        #log-panel::-webkit-scrollbar { width: 5px; }
+        #log-panel::-webkit-scrollbar-thumb { background: #ddd; border-radius: 5px; }
+
+        .log-label {
+            font-size: 10px; font-weight: bold; color: #999; text-align: center;
+            position: sticky; top: 0; background: white; padding-bottom: 5px; margin-bottom: 5px;
+        }
+        
+        .log-entry { display: flex; justify-content: space-between; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; }
+        .log-entry.correct { color: var(--sh-green); background-color: #E8F5E9; }
+        .log-entry.wrong { color: var(--sh-red); background-color: #FFEBEE; }
+        .log-num { width: 20px; }
+        .log-status { flex-grow: 1; text-align: center; }
+        .log-params { width: 60px; text-align: center; }
+        .log-time { width: 55px; text-align: right; }
+
+        .clear-data {
+            font-size: 9px; color: #bbb; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 5px;
+        }
+
+        #guide-modal {
+            display: none; position: fixed; z-index: 9999; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #fff; margin: 5% auto; padding: 30px;
+            border-radius: 20px; width: 80%; max-width: 600px;
+            max-height: 80vh; overflow-y: auto; position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown { from {transform: translateY(-50px); opacity: 0;} to {transform: translateY(0); opacity: 1;} }
+        .close-guide {
+            position: absolute; right: 20px; top: 15px; font-size: 28px;
+            font-weight: bold; color: #aaa; cursor: pointer;
+        }
+        .close-guide:hover { color: var(--sh-red); }
+        .guide-body { line-height: 1.6; color: #444; white-space: pre-wrap; font-size: 15px; }
+
+        @media (max-width: 600px) {
+            body { height: auto; overflow-y: auto; padding: 10px 0; }
+            #main-app-content {
+                flex-direction: column; width: 95%; margin: 0 auto; padding: 15px;
+                max-height: none; gap: 15px; background: none; box-shadow: none;
+            }
+            .control-group { order: 1; width: 100%; box-sizing: border-box; }
+            #btn-randomize { order: 2; width: 100%; padding: 15px; font-size: 14px; }
+            #training-area { order: 3; width: 100%; gap: 10px; }
+            #display-board { width: 100%; max-width: 300px; height: auto; aspect-ratio: 1/1; margin: 0 auto; }
+            #quiz-area { order: 4; width: 100%; margin-top: 10px; }
+            .answer-btn { width: 55px; height: 55px; font-size: 22px; }
+            #log-panel { order: 5; width: 100%; box-sizing: border-box; height: 160px; }
+            #stats-panel { order: 6; width: 100%; box-sizing: border-box; }
+            .clear-data { order: 7; width: 100%; margin-bottom: 20px; }
+            #controls-panel { display: contents; } 
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
+
+    <div id="main-app-content">
+        <div id="training-area">
+            <div id="display-board">
+                <div id="target-letter"></div>
+                <div id="f-t" class="flanker"></div><div id="f-tr" class="flanker"></div>
+                <div id="f-r" class="flanker"></div><div id="f-br" class="flanker"></div>
+                <div id="f-b" class="flanker"></div><div id="f-bl" class="flanker"></div>
+                <div id="f-l" class="flanker"></div><div id="f-tl" class="flanker"></div>
+            </div>
+            
+            <div id="quiz-area">
+                <div id="quiz-question">CHỌN CHỮ Ở GIỮA:</div>
+                <div id="answer-options">
+                    <button class="answer-btn"></button><button class="answer-btn"></button>
+                    <button class="answer-btn"></button><button class="answer-btn"></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="controls-panel">
+            <div class="control-group">
+                <label class="control-label">KÍCH THƯỚC (SIZE)</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="param-size" min="16" max="72" value="40">
+                    <div class="slider-control-hub">
+                        <button class="step-btn" id="size-minus">-</button>
+                        <div class="current-val" id="val-size">Medium - 40pt</div>
+                        <button class="step-btn" id="size-plus">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">KHOẢNG CÁCH (CROWDING)</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="param-crowd" min="20" max="100" value="51">
+                    <div class="slider-control-hub">
+                        <button class="step-btn" id="crowd-minus">-</button>
+                        <div class="current-val" id="val-crowd">Medium - 51px</div>
+                        <button class="step-btn" id="crowd-plus">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-randomize">⟳ TẠO MỚI (RANDOMIZE)</button>
+
+            <div id="log-panel">
+                <div class="log-label">NHẬT KÝ CHI TIẾT</div>
+                <div id="log-container"></div>
+            </div>
+
+            <div id="stats-panel">
+                <div class="stat-row stat-correct">✓ LẦN ĐÚNG: <strong id="score-correct">0</strong></div>
+                <div class="stat-row stat-wrong">🛇 LẦN SAI: <strong id="score-wrong">0</strong></div>
+                <div class="stat-speed">⚡ CHUỖI SIÊU TỐC (<2s): <strong id="score-speed">0</strong>/5</div>
+            </div>
+            <div class="clear-data" onclick="clearAllData()">Xóa toàn bộ lịch sử</div>
+        </div>
+    </div>
+
+    <div id="guide-modal">
+        <div class="modal-content">
+            <span class="close-guide" onclick="toggleGuide()">&times;</span>
+            <h2 style="color: var(--sh-blue); border-bottom: 2px solid #eee; padding-bottom: 10px;">Hướng dẫn sử dụng</h2>
+            <div id="guide-content" class="guide-body"></div>
+        </div>
+    </div>
+
     <script>
         // --- BẢO MẬT CONSOLE ---
         (function() {
@@ -69,186 +255,160 @@
             window.addEventListener('resize', check);
         })();
 
-        // --- CHẶN PHÍM TẮT VÀ KẾT NỐI README.JS ---
-        (function() {
-            const showHelp = () => {
-                const modal = document.getElementById('instruction-modal');
-                const content = document.getElementById('readme-text');
-                
-                // Kiểm tra xem readme.js có cung cấp nội dung không
-                // Giả sử trong readme.js anh đặt biến là: const readmeContent = "..."
-                if (typeof readmeContent !== 'undefined') {
-                    content.innerHTML = readmeContent;
-                } else if (typeof getReadmeContent === 'function') {
-                    content.innerHTML = getReadmeContent();
-                } else {
-                    content.innerHTML = "Đang tải hướng dẫn...";
-                }
-                
-                modal.style.display = 'block';
-            };
-
-            window.addEventListener('keydown', (e) => {
-                const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-                const metaOrCtrl = isMac ? e.metaKey : e.ctrlKey;
-                
-                // Các phím cấm: F12 (123), I (73), J (74), C (67), U (85), S (83)
-                const forbiddenCodes = [123, 73, 74, 67, 85, 83];
-                
-                if (forbiddenCodes.includes(e.keyCode)) {
-                    if (e.keyCode === 123 || metaOrCtrl) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        showHelp();
-                    }
-                }
-            }, true);
-
-            // Bẫy Debugger bảo mật
-            setInterval(() => {
-                const start = Date.now();
-                debugger;
-                if (Date.now() - start > 100) {
-                    localStorage.removeItem('user_login');
-                    window.location.reload();
-                }
-            }, 1000);
-        })();
-    </script>
-
-    <div id="pause-overlay">⏸ TẠM DỪNG<br><small>Di chuyển chuột vào trang web để tiếp tục</small></div>
-    <div id="main-app-content">
-        <div id="game-ui">Cặp còn lại: <span id="pairs-left">6</span> | <span id="timer">00:00</span></div>
-        <div id="grid-container"></div>
-        <div id="controls-wrapper">
-            <div class="control-section">
-                <div class="slider-group"><label>Độ rõ:</label><button class="btn-step" onclick="adjust('op', -5)">-</button><input type="range" id="opSlider" min="5" max="100" value="80"><button class="btn-step" onclick="adjust('op', 5)">+</button></div>
-                <div class="slider-group"><label>Cỡ sọc:</label><button class="btn-step" onclick="adjust('sz', -1)">-</button><input type="range" id="sizeSlider" min="2" max="10" value="4"><button class="btn-step" onclick="adjust('sz', 1)">+</button></div>
-                <button id="resetBtn">🔄 VÁN MỚI / ĐỔI VỊ TRÍ</button>
-                <div id="auto-msg" class="msg-alert">🔥 Tuyệt vời! Độ khó đã tự tăng.</div>
-            </div>
-            <div class="journal-section">
-                <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between;"><span>NHẬT KÝ TẬP</span><span style="color:red; cursor:pointer; font-size: 11px;" onclick="clearJournal()">Xóa hết</span></div>
-                <ul id="journal-list"></ul>
-            </div>
-        </div>
-        <div id="instruction-modal" onclick="this.style.display='none'">
-            <div id="instruction-content" onclick="event.stopPropagation()">
-                <div id="readme-text"></div>
-                <button onclick="document.getElementById('instruction-modal').style.display='none'" style="margin-top:20px; width:100%; padding:10px; cursor:pointer; font-weight:bold;">ĐÓNG</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // --- LOGIC ỨNG DỤNG (GIỮ NGUYÊN) ---
+        // --- KIỂM TRA ĐĂNG NHẬP ---
         (function() {
             const loginData = JSON.parse(localStorage.getItem('user_login'));
-            if (!loginData) { window.location.replace('../index.html'); } 
-            else { document.getElementById('main-app-content').style.display = 'flex'; }
+            if (!loginData) {
+                alert("Vui lòng đăng nhập để sử dụng tính năng này!");
+                window.location.href = '../index.html';
+            } else {
+                document.getElementById('main-app-content').style.display = 'flex';
+            }
         })();
 
-        const grid = document.getElementById('grid-container'), opS = document.getElementById('opSlider'), sizeS = document.getElementById('sizeSlider'), journalList = document.getElementById('journal-list'), timerEl = document.getElementById('timer'), autoMsg = document.getElementById('auto-msg'), pauseOverlay = document.getElementById('pause-overlay');
-        const dingSound = new Audio('sounds/Ding.wav'), failSound = new Audio('sounds/Fail.wav');
-        let cardData = [], first = null, second = null, pairs = 6, canClick = true, startTime, timerInterval, gameRunning = false, finalTimeSec = 0, elapsedBeforePause = 0;
+        const possibleLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const targetEl = document.getElementById('target-letter');
+        const flankerEls = { t: document.getElementById('f-t'), tr: document.getElementById('f-tr'), r: document.getElementById('f-r'), br: document.getElementById('f-br'), b: document.getElementById('f-b'), bl: document.getElementById('f-bl'), l: document.getElementById('f-l'), tl: document.getElementById('f-tl') };
+        const sizeInput = document.getElementById('param-size');
+        const crowdInput = document.getElementById('param-crowd');
+        const logContainerEl = document.getElementById('log-container');
+        const logPanelEl = document.getElementById('log-panel');
 
-        function loadSettings() { const savedOp = localStorage.getItem('gabor_op'), savedSz = localStorage.getItem('gabor_sz'); if (savedOp) opS.value = savedOp; if (savedSz) sizeS.value = savedSz; }
-        function saveSettings() { localStorage.setItem('gabor_op', opS.value); localStorage.setItem('gabor_sz', sizeS.value); }
-
-        document.body.onmouseleave = () => pauseGame();
-        document.body.onmouseenter = () => resumeGame();
-
-        function pauseGame() { if (gameRunning) { clearInterval(timerInterval); elapsedBeforePause = Date.now() - startTime; } grid.style.opacity = "0"; pauseOverlay.style.display = "flex"; }
-        function resumeGame() { if (gameRunning) { startTime = Date.now() - elapsedBeforePause; startTimer(true); } grid.style.opacity = "1"; pauseOverlay.style.display = "none"; }
-
-        function adjust(type, step) {
-            const s = type === 'op' ? opS : sizeS;
-            s.value = parseInt(s.value) + step;
-            updateStyles(); saveSettings(); autoMsg.style.display = 'none';
-        }
-
-        function startTimer(isResume = false) {
-            if (!isResume) { startTime = Date.now(); elapsedBeforePause = 0; }
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                finalTimeSec = Math.floor((Date.now() - startTime) / 1000);
-                let m = Math.floor(finalTimeSec / 60).toString().padStart(2, '0');
-                let s = (finalTimeSec % 60).toString().padStart(2, '0');
-                timerEl.innerText = `${m}:${s}`;
-            }, 1000);
-        }
-
-        function saveRecord(timeStr) {
-            const now = new Date();
-            const dateStr = `${now.getDate()}/${now.getMonth()+1}`;
-            const records = JSON.parse(localStorage.getItem('gabor_records') || '[]');
-            const sessionNum = records.filter(r => r.date === dateStr).length + 1;
-            records.unshift({ date: dateStr, session: sessionNum, op: opS.value, sz: sizeS.value, time: timeStr });
-            localStorage.setItem('gabor_records', JSON.stringify(records.slice(0, 50)));
-            renderJournal();
-            setTimeout(() => {
-                let changed = false;
-                if (parseInt(opS.value) <= 5 && finalTimeSec < 12 && parseInt(sizeS.value) > 2) { sizeS.value = parseInt(sizeS.value) - 1; opS.value = 50; changed = true; }
-                else if (finalTimeSec < 12 && parseInt(opS.value) > 5) { opS.value = parseInt(opS.value) - 5; changed = true; }
-                if (changed) { updateStyles(); saveSettings(); autoMsg.style.display = 'block'; }
-            }, 500);
-            setTimeout(() => { autoMsg.style.display = 'none'; init(); }, 1500);
-        }
-
-        function renderJournal() {
-            const records = JSON.parse(localStorage.getItem('gabor_records') || '[]');
-            journalList.innerHTML = records.map(r => `<li>${r.date}-L${r.session}-Rõ ${r.op}%-Sọc ${r.sz}-${r.time}</li>`).join('');
-        }
-
-        function clearJournal() { if(confirm("Xóa hết nhật ký?")) { localStorage.removeItem('gabor_records'); renderJournal(); } }
+        let currentTarget = '', correctCount = 0, wrongCount = 0, consecutiveSpeedCorrect = 0, totalQuestions = 0, isProcessing = false, startTime;
+        let gameLogs = [];
 
         function init() {
-            grid.innerHTML = ''; cardData = []; first = null; second = null; pairs = 6; canClick = true;
-            document.getElementById('pairs-left').innerText = pairs; timerEl.innerText = "00:00";
-            gameRunning = false; clearInterval(timerInterval);
-            if (!document.hasFocus() || !document.body.matches(':hover')) pauseGame();
-            else { grid.style.opacity = "1"; pauseOverlay.style.display = "none"; }
+            loadData();
+            const content = (typeof readmeContent !== 'undefined') ? readmeContent : "Vui lòng kiểm tra file readme.js";
+            document.getElementById('guide-content').innerText = content;
 
-            let angles = ["0deg", "45deg", "90deg", "135deg", "30deg", "60deg"];
-            let pool = [...angles, ...angles].sort(() => Math.random() - 0.5);
-            pool.forEach((ang) => {
-                const card = document.createElement('div');
-                card.className = 'card'; card.innerHTML = `<div class="gabor-content" style="--ang: ${ang};"></div>`;
-                grid.appendChild(card);
-                let data = { dom: card, ang: ang, matched: false };
-                card.onclick = () => {
-                    if (!canClick || data.matched || data === first) return;
-                    if (!gameRunning) { gameRunning = true; startTimer(); }
-                    card.classList.add('selected');
-                    if (!first) first = data;
-                    else {
-                        second = data;
-                        if (first.ang === second.ang) {
-                            dingSound.play(); first.dom.classList.replace('selected', 'matched'); second.dom.classList.replace('selected', 'matched');
-                            first.matched = second.matched = true; pairs--;
-                            document.getElementById('pairs-left').innerText = pairs; first = null; second = null;
-                            if(pairs === 0) { clearInterval(timerInterval); saveRecord(timerEl.innerText); }
-                        } else {
-                            canClick = false; failSound.play();
-                            setTimeout(() => { first.dom.classList.remove('selected'); second.dom.classList.remove('selected'); first = null; second = null; canClick = true; }, 400);
-                        }
-                    }
-                };
+            sizeInput.oninput = () => { updateVisuals(); saveSettings(); };
+            crowdInput.oninput = () => { updateVisuals(); saveSettings(); };
+            document.getElementById('size-minus').onclick = () => { step(-1, sizeInput); saveSettings(); };
+            document.getElementById('size-plus').onclick = () => { step(1, sizeInput); saveSettings(); };
+            document.getElementById('crowd-minus').onclick = () => { step(-1, crowdInput); saveSettings(); };
+            document.getElementById('crowd-plus').onclick = () => { step(1, crowdInput); saveSettings(); };
+            document.getElementById('btn-randomize').onclick = randomize;
+            document.querySelectorAll('.answer-btn').forEach(btn => btn.onclick = () => check(btn.innerText));
+            
+            document.addEventListener('contextmenu', e => e.preventDefault());
+
+            document.addEventListener('keydown', e => {
+                if (e.key === 'F12' || (e.ctrlKey && e.key === 's')) {
+                    e.preventDefault();
+                    toggleGuide();
+                }
             });
-            updateStyles();
+
+            randomize();
         }
 
-        function updateStyles() {
-            const op = opS.value / 100, size = parseInt(sizeS.value);
-            document.querySelectorAll('.gabor-content').forEach(el => {
-                el.style.setProperty('--op', op); el.style.setProperty('--sz', size + "px"); el.style.setProperty('--sz2', (size * 2) + "px");
-            });
+        function toggleGuide() {
+            const modal = document.getElementById('guide-modal');
+            modal.style.display = (modal.style.display === 'block') ? 'none' : 'block';
         }
 
-        opS.oninput = () => { updateStyles(); saveSettings(); };
-        sizeS.oninput = () => { updateStyles(); saveSettings(); };
-        document.getElementById('resetBtn').onclick = () => init();
-        loadSettings(); renderJournal(); init();
+        function loadData() {
+            const savedSize = localStorage.getItem('shine_size');
+            const savedCrowd = localStorage.getItem('shine_crowd');
+            const savedLogs = localStorage.getItem('shine_logs');
+            const savedStats = localStorage.getItem('shine_stats');
+            if (savedSize) sizeInput.value = savedSize;
+            if (savedCrowd) crowdInput.value = savedCrowd;
+            if (savedStats) { 
+                const stats = JSON.parse(savedStats); 
+                correctCount = stats.correct || 0; 
+                wrongCount = stats.wrong || 0; 
+                totalQuestions = stats.total || 0; 
+                consecutiveSpeedCorrect = stats.speedChain || 0;
+                document.getElementById('score-correct').innerText = correctCount; 
+                document.getElementById('score-wrong').innerText = wrongCount;
+                document.getElementById('score-speed').innerText = consecutiveSpeedCorrect;
+            }
+            if (savedLogs) { gameLogs = JSON.parse(savedLogs); gameLogs.forEach(log => renderLogEntry(log, false)); }
+            updateVisuals();
+        }
+
+        function saveSettings() { localStorage.setItem('shine_size', sizeInput.value); localStorage.setItem('shine_crowd', crowdInput.value); }
+        function saveGameData() { 
+            localStorage.setItem('shine_logs', JSON.stringify(gameLogs)); 
+            localStorage.setItem('shine_stats', JSON.stringify({ 
+                correct: correctCount, 
+                wrong: wrongCount, 
+                total: totalQuestions,
+                speedChain: consecutiveSpeedCorrect
+            })); 
+        }
+        function clearAllData() { if(confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử và cài đặt?")) { localStorage.clear(); location.reload(); } }
+        function step(v, el) { el.value = Math.max(el.min, Math.min(el.max, parseInt(el.value) + v)); updateVisuals(); }
+
+        function updateVisuals() {
+            const s = parseInt(sizeInput.value), c = parseInt(crowdInput.value);
+            document.getElementById('val-size').innerText = `${s < 35 ? 'Small' : s > 55 ? 'Large' : 'Medium'} - ${s}pt`;
+            document.getElementById('val-crowd').innerText = `${c < 45 ? 'Small' : c > 75 ? 'Large' : 'Medium'} - ${c}px`;
+            targetEl.style.fontSize = s + 'pt';
+            Object.values(flankerEls).forEach(e => e.style.fontSize = s + 'pt');
+            const off = s * 0.65, dOff = (c * 0.707) + off;
+            flankerEls.t.style.top = flankerEls.b.style.bottom = flankerEls.l.style.left = flankerEls.r.style.right = `calc(50% - ${c}px - ${off}px)`;
+            flankerEls.tr.style.top = flankerEls.tr.style.right = flankerEls.br.style.bottom = flankerEls.br.style.right = flankerEls.bl.style.bottom = flankerEls.bl.style.left = flankerEls.tl.style.top = flankerEls.tl.style.left = `calc(50% - ${dOff}px)`;
+        }
+
+        function randomize() {
+            if (isProcessing) return;
+            currentTarget = possibleLetters[Math.floor(Math.random() * 26)];
+            targetEl.innerText = currentTarget;
+            Object.values(flankerEls).forEach(e => { let l; do { l = possibleLetters[Math.floor(Math.random() * 26)]; } while (l === currentTarget); e.innerText = l; });
+            let opts = [currentTarget]; while (opts.length < 4) { let r = possibleLetters[Math.floor(Math.random() * 26)]; if (!opts.includes(r)) opts.push(r); }
+            opts.sort(() => Math.random() - 0.5);
+            document.querySelectorAll('.answer-btn').forEach((b, i) => b.innerText = opts[i]);
+            updateVisuals();
+            startTime = performance.now();
+        }
+
+        function check(sel) {
+            if (isProcessing) return; isProcessing = true;
+            const timeRaw = (performance.now() - startTime) / 1000;
+            const time = timeRaw.toFixed(2);
+            const isCorrect = sel === currentTarget;
+            
+            if (isCorrect) {
+                correctCount++;
+                if (timeRaw < 2.0) {
+                    consecutiveSpeedCorrect++;
+                }
+                document.getElementById('score-correct').innerText = correctCount;
+                if (consecutiveSpeedCorrect >= 5) {
+                    step(-2, sizeInput);
+                    step(-2, crowdInput);
+                    consecutiveSpeedCorrect = 0;
+                    saveSettings();
+                }
+                beep(880, 0.1);
+            } else {
+                wrongCount++;
+                consecutiveSpeedCorrect = 0;
+                document.getElementById('score-wrong').innerText = wrongCount;
+                beep(220, 0.3);
+            }
+
+            document.getElementById('score-speed').innerText = consecutiveSpeedCorrect;
+            const newLog = { n: ++totalQuestions, res: isCorrect, s: sizeInput.value, c: crowdInput.value, t: time };
+            gameLogs.unshift(newLog);
+            if (gameLogs.length > 100) gameLogs.pop();
+            renderLogEntry(newLog, true); 
+            saveGameData();
+            setTimeout(() => { isProcessing = false; randomize(); }, 800);
+        }
+
+        function renderLogEntry(data, isNew) {
+            const row = document.createElement('div');
+            row.className = `log-entry ${data.res ? 'correct' : 'wrong'}`;
+            row.innerHTML = `<span class="log-num">${data.n}</span><span class="log-status">- ${data.res ? 'Đúng' : 'Sai'} -</span><span class="log-params">${data.s}-${data.c}</span><span class="log-time">- ${data.t}s</span>`;
+            if (isNew) { logContainerEl.prepend(row); logPanelEl.scrollTop = 0; } else { logContainerEl.appendChild(row); }
+        }
+
+        function beep(f, d) { try { const c = new (window.AudioContext || window.webkitAudioContext)(); const o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = f; g.gain.setValueAtTime(0.05, c.currentTime); g.gain.exponentialRampToValueAtTime(0.01, c.currentTime + d); o.start(); o.stop(c.currentTime + d); } catch(e) {} }
+        init();
     </script>
 </body>
 </html>
