@@ -118,33 +118,40 @@
     </div>
 
     <script>
-        // --- CƠ CHẾ TỰ HỦY KHI MỞ CONSOLE (SELF-DESTRUCT) ---
+        // --- BẢO MẬT CONSOLE ---
         (function() {
-            function nuke() {
-                // Xoá sạch mọi thứ trong DOM ngay lập tức
-                document.body.innerHTML = "";
-                document.head.innerHTML = "";
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.replace('../index.html');
-            }
-
-            // Bẫy debugger: Nếu console mở, debugger sẽ làm chậm code -> phát hiện thời gian chênh lệch
+            const check = function() {
+                const threshold = 160;
+                const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+                const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+                const devtools = { open: false };
+                const element = new Image();
+                Object.defineProperty(element, 'id', {
+                    get: function() {
+                        devtools.open = true;
+                        terminateSession();
+                    }
+                });
+                function terminateSession() {
+                    localStorage.removeItem('user_login');
+                    window.location.replace("about:blank");
+                    document.body.innerHTML = "";
+                }
+                console.log(element);
+                console.clear();
+                if (widthThreshold || heightThreshold || devtools.open) {
+                    terminateSession();
+                }
+            };
             setInterval(function() {
-                const startTime = performance.now();
+                const start = performance.now();
                 debugger;
-                const endTime = performance.now();
-                if (endTime - startTime > 100) {
-                    nuke();
+                if (performance.now() - start > 50) {
+                    window.location.replace("about:blank");
                 }
-            }, 500);
-
-            // Bẫy kích thước màn hình (chặn việc resize để mở console side-by-side)
-            window.addEventListener('resize', function() {
-                if ((window.outerWidth - window.innerWidth > 160) || (window.outerHeight - window.innerHeight > 160)) {
-                    nuke();
-                }
-            });
+            }, 100);
+            setInterval(check, 100);
+            window.addEventListener('resize', check);
         })();
 
         // --- KIỂM TRA ĐĂNG NHẬP ---
