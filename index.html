@@ -303,48 +303,37 @@
     </div>
 
     <script>
-        // --- BẢO MẬT CONSOLE SIÊU CẤP ---
+        // --- CHỐNG MỞ CONSOLE (DEBUGGER LOGOUT & XÓA CODE) ---
         (function() {
-            const check = function() {
-                const threshold = 160;
-                const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-                const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-                const devtools = { open: false };
-                const element = new Image();
-                
-                // Bẫy Image trick
-                Object.defineProperty(element, 'id', {
-                    get: function() {
-                        devtools.open = true;
-                        terminateSession();
-                    }
-                });
-
-                function terminateSession() {
+            function detectDevTools() {
+                const start = performance.now();
+                debugger; 
+                const end = performance.now();
+                if (end - start > 100) { 
+                    // Xóa sạch dấu vết ngay lập tức
+                    document.body.innerHTML = ""; 
                     localStorage.removeItem('user_login');
-                    document.body.innerHTML = "";
-                    window.location.replace("about:blank");
+                    window.location.replace('../index.html');
                 }
+            }
+            setInterval(detectDevTools, 500); // Tăng tần suất kiểm tra (0.5s)
+            detectDevTools();
+        })();
 
-                console.log(element);
-                console.clear();
-
-                if (widthThreshold || heightThreshold || devtools.open) {
-                    terminateSession();
-                }
-            };
-
-            // Kiểm tra bằng Debugger lag
-            setInterval(function() {
+        // Bảo mật: Phát hiện Console
+        (function() {
+            function detect() {
                 const start = performance.now();
                 debugger;
-                if (performance.now() - start > 50) {
-                    window.location.replace("about:blank");
+                if (performance.now() - start > 100) {
+                    if (localStorage.getItem('user_login')) {
+                        localStorage.removeItem('user_login');
+                        location.reload();
+                    }
                 }
-            }, 100);
-
-            setInterval(check, 100);
-            window.addEventListener('resize', check);
+            }
+            detect();
+            setInterval(detect, 500);
         })();
 
         function logout() {
@@ -352,7 +341,6 @@
             location.reload();
         }
 
-        // Kiểm tra trạng thái đăng nhập
         if (localStorage.getItem('user_login')) {
             document.getElementById('main-content').style.display = 'block';
             document.getElementById('logout-btn').style.display = 'block'; 
@@ -360,7 +348,6 @@
             document.getElementById('login-section').style.display = 'block';
         }
 
-        // Logic Đăng nhập
         async function startLogin() {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
@@ -383,7 +370,6 @@
             }
         }
 
-        // Phím tắt và Thao tác chuột
         const inputs = [document.getElementById('username'), document.getElementById('password')];
         inputs.forEach(input => {
             input.addEventListener('keypress', (e) => {
