@@ -232,12 +232,34 @@
             let logs = JSON.parse(localStorage.getItem('piano_logs') || "[]");
             let now = new Date();
             let d = String(now.getDate()).padStart(2, '0') + '/' + String(now.getMonth() + 1).padStart(2, '0');
+            
+            // Tính toán số lần tập (count)
+            let newCount = 1;
+            if (logs.length > 0) {
+                let lastLog = logs[0]; // Lấy bản ghi gần nhất
+                if (lastLog.date === d) {
+                    newCount = lastLog.count + 1; // Cùng ngày thì tăng lên
+                } else {
+                    newCount = 1; // Sang ngày mới thì reset về 1
+                }
+            }
+
             let duration = Math.floor((performance.now() - startTime) / 1000);
             let m = Math.floor(duration / 60);
             let s = duration % 60;
             let timeStr = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-            logs.unshift({ date: d, count: logs.length + 1, score: score, duration: timeStr });
-            if (logs.length > 10) logs.pop();
+
+            // Thêm log mới vào đầu mảng
+            logs.unshift({ 
+                date: d, 
+                count: newCount, 
+                score: score, 
+                duration: timeStr 
+            });
+
+            // Giữ lại tối đa 20 bản ghi để anh tiện theo dõi
+            if (logs.length > 20) logs.pop(); 
+            
             localStorage.setItem('piano_logs', JSON.stringify(logs));
             updateLogDisplay();
         }
