@@ -40,12 +40,43 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            cursor: pointer;
-            background-color: var(--bg-color);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            width: 100%;
-            height: 100%;
-            isolation: isolate;
+            background-color: #ffffff; /* Nền trắng để multiply ra màu đen tốt nhất */
+        
+            /* QUAN TRỌNG: Tạo không gian hòa trộn riêng biệt cho iOS */
+            isolation: isolate; 
+            overflow: hidden;
+        }
+
+        .shape-container {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            top: 50%;
+            left: 50%;
+            pointer-events: none;
+
+            /* Logic tạo màu đen khi đè nhau */
+            mix-blend-mode: multiply; 
+
+            /* Ép iPhone dùng GPU để xử lý layer chính xác */
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d; /* Thêm cái này cho chắc ăn trên Safari cũ */
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            will-change: transform;
+        }
+
+        .circle-outer, .circle-inner, .cross {
+            border-style: solid;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            position: absolute;
+            /* Đảm bảo các thành phần bên trong không bị mất màu trên Safari */
+            -webkit-print-color-adjust: exact;
         }
 
         /* Nút điều khiển Mobile */
