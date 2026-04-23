@@ -422,12 +422,11 @@
             }
         })();
 
-        // --- BẢO MẬT CONSOLE ---
+        // --- BẢO MẬT CONSOLE (ĐÃ CẬP NHẬT CHỐNG LỖI MOBILE) ---
         (function() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
             const check = function() {
-                const threshold = 160;
-                const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-                const heightThreshold = window.outerHeight - window.innerHeight > threshold;
                 const devtools = { open: false };
                 const element = new Image();
                 Object.defineProperty(element, 'id', {
@@ -436,25 +435,43 @@
                         terminateSession();
                     }
                 });
+
                 function terminateSession() {
                     localStorage.removeItem('user_login');
                     window.location.replace("about:blank");
                     document.body.innerHTML = "";
                 }
+
                 console.log(element);
                 console.clear();
-                if (widthThreshold || heightThreshold || devtools.open) {
+
+                // Lớp 1: Chỉ kiểm tra kích thước màn hình nếu KHÔNG PHẢI điện thoại
+                // (Để tránh việc bàn phím ảo hiện lên làm thay đổi innerHeight gây lỗi)
+                if (!isMobile) {
+                    const threshold = 160;
+                    const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+                    const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+                    if (widthThreshold || heightThreshold) {
+                        terminateSession();
+                    }
+                }
+
+                // Lớp 2: Kiểm tra bẫy Console (Vẫn chạy trên cả mobile & desktop)
+                if (devtools.open) {
                     terminateSession();
                 }
             };
+
+            // Lớp 3: Bẫy Debugger - Tăng thời gian kiểm tra lên 500ms để mượt hơn
             setInterval(function() {
                 const start = performance.now();
                 debugger;
-                if (performance.now() - start > 50) {
+                if (performance.now() - start > 100) { 
                     window.location.replace("about:blank");
                 }
-            }, 100);
-            setInterval(check, 100);
+            }, 500);
+
+            setInterval(check, 1000); // Kiểm tra mỗi giây 1 lần thay vì 100ms để tiết kiệm pin
             window.addEventListener('resize', check);
         })();
 
