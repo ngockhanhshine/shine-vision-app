@@ -413,6 +413,15 @@
     <script src="readme.js"></script>
 
     <script>
+// Kiểm tra tên miền chính chủ
+        (function() {
+            const allowedDomain = "shinevisionapp.com";
+            if (window.location.hostname !== allowedDomain && !window.location.hostname.endsWith("." + allowedDomain)) {
+                document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;color:red;text-align:center;'><h3>Cảnh báo: Ứng dụng bị khoá</h3></div>";
+                throw new Error("Unauthorized domain usage.");
+            }
+        })();
+
         // --- BẢO MẬT CONSOLE ---
         (function() {
             const check = function() {
