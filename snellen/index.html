@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Snellen & Sloan - Shine Vision</title>
     <script src="readme.js"></script> 
+    <script src="auth.js"></script>
     <style>
         body { margin: 0; background: white; font-family: Arial, sans-serif; overflow: hidden; touch-action: none; }
-        /* Thêm thuộc tính hỗ trợ render ảnh mượt */
         canvas { 
             display: block; 
             background: white; 
@@ -51,7 +51,6 @@
         
         #credit { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #505050; font-size: 13px; line-height: 1.4; pointer-events: none; z-index: 5; }
 
-        /* Style cho trang Hướng dẫn */
         #readme-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); color: white; z-index: 1000;
@@ -237,7 +236,7 @@
 
             if(!isMobile && imgCache[chartData.rule]) {
                 const rs = baseScale * chartData.internalScale;
-                const rW = imgCache[chartData.rule].width * rs, rH = imgCache[chartData.rule].height * rs;
+                const rW = imgCache[chartData.rule].width * rs, rW2 = imgCache[chartData.rule].width * rs, rH = imgCache[chartData.rule].height * rs;
                 const rY = window.innerHeight - 180;
                 ctx.drawImage(imgCache[chartData.rule], (window.innerWidth - rW) / 2, rY, rW, rH);
                 ctx.textAlign = "center"; ctx.fillStyle = "rgb(100, 100, 100)"; ctx.font = "13px Arial";
@@ -257,11 +256,9 @@
             document.getElementById('input-display').innerText = inputBuffer ? "Input: " + inputBuffer : "";
         }
 
-        // --- NEW: README FUNCTIONS ---
         function showReadme() {
             const overlay = document.getElementById('readme-overlay');
             const content = document.getElementById('readme-content');
-            // Giả định trong readme.js có biến README_CONTENT hoặc hàm getReadme()
             if (typeof README_CONTENT !== 'undefined') {
                 content.innerHTML = README_CONTENT;
             } else {
@@ -271,6 +268,15 @@
         }
         function closeReadme() {
             document.getElementById('readme-overlay').style.display = 'none';
+        }
+
+        // --- RESET FUNCTION ---
+        function resetToFirstLevel() {
+            currentIndex = 0;
+            sessionCount = 0;
+            sessionCorrect = 0;
+            changeRandom();
+            draw();
         }
 
         // --- PC EVENTS ---
@@ -299,9 +305,15 @@
         };
 
         window.addEventListener('keydown', (e) => {
-            // Tính năng mới: Ctrl + S hoặc F12
+            // NEW: F1 to reset
+            if (e.key === 'F1') {
+                e.preventDefault();
+                resetToFirstLevel();
+                return;
+            }
+
             if (e.key === 'F12' || (e.ctrlKey && e.key.toLowerCase() === 's')) {
-                e.preventDefault(); // Chặn lưu trang hoặc devtools
+                e.preventDefault(); 
                 showReadme();
                 return;
             }
@@ -328,9 +340,25 @@
         }, { passive: false });
 
         // --- MOBILE EVENTS ---
-        let tStartX, tStartY, tStartTime;
-        window.addEventListener('touchstart', e => { if(e.touches.length === 1){ tStartX = e.touches[0].screenX; tStartY = e.touches[0].screenY; tStartTime = Date.now(); } });
+        let tStartX, tStartY, tStartTime, tTwoStartY;
+        window.addEventListener('touchstart', e => { 
+            if(e.touches.length === 1){ 
+                tStartX = e.touches[0].screenX; tStartY = e.touches[0].screenY; tStartTime = Date.now(); 
+            } else if (e.touches.length === 2) {
+                tTwoStartY = (e.touches[0].screenY + e.touches[1].screenY) / 2;
+            }
+        });
+
         window.addEventListener('touchend', e => {
+            // NEW: 2-finger swipe down to reset
+            if (e.touches.length === 0 && e.changedTouches.length === 2) {
+                let endTwoY = (e.changedTouches[0].screenY + e.changedTouches[1].screenY) / 2;
+                if (endTwoY - tTwoStartY > 60) {
+                    resetToFirstLevel();
+                    return;
+                }
+            }
+
             if (e.changedTouches.length === 1 && window.innerWidth <= 768) {
                 const dX = e.changedTouches[0].screenX - tStartX, dY = e.changedTouches[0].screenY - tStartY;
                 if (Math.abs(dX) < 15 && Math.abs(dY) < 15 && (Date.now() - tStartTime) < 250) { if (!isStageActive) { changeRandom(); draw(); } }
