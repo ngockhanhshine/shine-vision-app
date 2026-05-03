@@ -360,10 +360,28 @@
             }
 
             if (e.changedTouches.length === 1 && window.innerWidth <= 768) {
-                const dX = e.changedTouches[0].screenX - tStartX, dY = e.changedTouches[0].screenY - tStartY;
-                if (Math.abs(dX) < 15 && Math.abs(dY) < 15 && (Date.now() - tStartTime) < 250) { if (!isStageActive) { changeRandom(); draw(); } }
-                else if (Math.abs(dX) > 40) { isStageActive = (dX > 50); stageLeft.classList.toggle('active', isStageActive); draw(); }
-                else if (Math.abs(dY) > 40) { currentIndex = Math.max(0, Math.min(CHARTS[currentChart].levels.length-1, currentIndex + (dY > 0 ? -1 : 1))); sessionCount=0; sessionCorrect=0; changeRandom(); draw(); }
+                const dX = e.changedTouches[0].screenX - tStartX;
+                const dY = e.changedTouches[0].screenY - tStartY;
+                const absX = Math.abs(dX);
+                const absY = Math.abs(dY);
+
+                // 1. Kiểm tra Click (Chạm nhanh để đổi hình)
+                if (absX < 15 && absY < 15 && (Date.now() - tStartTime) < 250) { 
+                    if (!isStageActive) { changeRandom(); draw(); } 
+                } 
+                // 2. Kiểm tra Vuốt Ngang (Mở menu cài đặt)
+                // Phải vuốt dài hơn 60px VÀ chiều ngang phải dài hơn chiều dọc (tránh nhầm khi vuốt chéo)
+                else if (absX > 60 && absX > absY) { 
+                    isStageActive = (dX > 0); 
+                    stageLeft.classList.toggle('active', isStageActive); 
+                    draw(); 
+                } 
+                // 3. Kiểm tra Vuốt Dọc (Lên/Xuống hàng thị lực)
+                // Phải vuốt dọc dài hơn 40px VÀ chiều dọc phải dài hơn chiều ngang
+                else if (absY > 40 && absY > absX) { 
+                    currentIndex = Math.max(0, Math.min(CHARTS[currentChart].levels.length - 1, currentIndex + (dY > 0 ? -1 : 1))); 
+                    sessionCount = 0; sessionCorrect = 0; changeRandom(); draw(); 
+                }
             }
         });
 
