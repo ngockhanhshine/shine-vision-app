@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Circle Cross Training - Shine Vision App</title>
+    <style>
+        :root {
+            --bg-color: rgb(245, 245, 245);
+            --panel-bg: #ffffff;
+            --mobile-btn-bg: rgba(128, 128, 128, 0.4);
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-color);
+            overflow: hidden;
+            user-select: none;
+            touch-action: none;
+            position: fixed; 
+            width: 100%;
+        }
+
+        #controls {
+            width: 380px;
+            background: var(--panel-bg);
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            z-index: 10;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        #game-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+            background-color: var(--bg-color);
+            width: 100%;
+            height: 100%;
+            isolation: isolate; 
+            z-index: 1;
+        }
+
+        /* Nút điều khiển Mobile */
+        .mobile-nav-group {
+            position: absolute;
+            bottom: 40px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 150;
+        }
+
+        .mobile-nav-group.left { left: 20px; }
+        .mobile-nav-group.right { right: 20px; flex-direction: row; }
+
+        .m-btn {
+            width: 60px;
+            height: 60px;
+            background: var(--mobile-btn-bg);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .m-btn:active { background: rgba(128, 128, 128, 0.8); }
+
+        #rec-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            color: #ff0000;
+            font-size: 18px;
+            z-index: 100;
+        }
+
+        .shape-container {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            top: 50%;
+            left: 50%;
+            pointer-events: none;
+            mix-blend-mode: multiply; 
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            will-change: transform;
+            z-index: 2;
+        }
+
+        .circle-outer, .circle-inner {
+            border-style: solid;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            position: absolute;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .cross {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: block;
+            width: 10px; 
+            height: 10px;
+            z-index: 5;
+        }
+
+        .cross::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 2000% !important; 
+            height: inherit;
+            background-color: inherit;
+        }
+
+        .cross::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: inherit; 
+            height: 2000% !important;
+            background-color: inherit;
+        }
+
+        @media (max-width: 768px) {
+            #controls {
+                position: absolute;
+                left: 0; top: 0; height: 100%; width: 100%;
+                transform: translateX(0);
+            }
+            #game-stage {
+                position: absolute;
+                left: 0; top: 0;
+                transform: translateX(-100%);
+            }
+            body.training-mode #controls { transform: translateX(100%); }
+            body.training-mode #game-stage { transform: translateX(0); }
+            .mobile-nav-group { display: flex; }
+        }
+
+        .control-group { margin-bottom: 15px; border: 1px solid #ddd; padding: 12px; border-radius: 8px; background: #fff; }
+        h3 { margin-top: 0; font-size: 16px; text-transform: uppercase; text-align: center; margin-bottom: 15px; }
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 15px; }
+        .mode-btn { flex: 1; padding: 10px; border: 2px solid #ccc; background: white; cursor: pointer; border-radius: 5px; text-align: center; font-weight: bold; font-size: 14px; }
+        .mode-btn.active { border-color: #007bff; background: #e7f1ff; color: #007bff; }
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #444; }
+        .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .rgb-label { font-size: 12px; font-weight: bold; width: 15px; color: #666; }
+        .step-btn { width: 36px; height: 36px; border: 1px solid #ccc; background: #f8f8f8; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; justify-content: center; align-items: center; flex-shrink: 0; font-size: 18px; }
+        input[type="range"] { flex: 1; cursor: pointer; height: 25px; touch-action: pan-y; }
+        .demo-box { color: white; text-align: center; padding: 8px; font-weight: bold; border-radius: 6px; margin-top: 5px; font-size: 12px; text-transform: uppercase; }
+        .swap-btn { width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 15px; text-transform: uppercase; }
+        #log-container { margin-top: 10px; max-height: 150px; overflow-y: auto; border-top: 1px solid #eee; padding-top: 10px; }
+        .log-item { font-size: 13px; padding: 6px 0; border-bottom: 1px dashed #eee; color: #555; }
+        .clear-log { font-size: 11px; color: #007bff; cursor: pointer; text-decoration: underline; float: right; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="game-stage" onclick="handleStageClick()">
+        <div class="mobile-nav-group left">
+            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-v-space', 2)">▲</button>
+            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-v-space', -2)">▼</button>
+        </div>
+        <div class="mobile-nav-group right">
+            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-h-space', -2)">◀</button>
+            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-h-space', 2)">▶</button>
+        </div>
+
+        <div id="rec-indicator">
+            <div class="dot" style="width:12px; height:12px; background:#ff0000; border-radius:50%;"></div>
+            <span>REC <span id="timer-display">0.0</span>s</span>
+        </div>
+
+        <div id="container-left" class="shape-container">
+            <div class="circle-outer" id="outer-l">
+                <div class="circle-inner" id="inner-l">
+                    <div class="cross" id="cross-l"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="container-right" class="shape-container">
+            <div class="circle-outer" id="outer-r">
+                <div class="circle-inner" id="inner-r">
+                    <div class="cross" id="cross-r"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <h3>Cài đặt & Nhật ký</h3>
+        <div class="mode-selector">
+            <div class="mode-btn" id="btn-1" onclick="setMode(1)">1 Hình</div>
+            <div class="mode-btn" id="btn-2" onclick="setMode(2)">2 Hình</div>
+        </div>
+
+        <div class="control-group">
+            <label>KÍCH THƯỚC (SIZE): <span id="val-size">120</span>px</label>
+            <div class="slider-row">
+                <div class="step-btn" onclick="stepSlider('slider-size', -5)">-</div>
+                <input type="range" id="slider-size" min="50" max="400" value="120">
+                <div class="step-btn" onclick="stepSlider('slider-size', 5)">+</div>
+            </div>
+        </div>
+
+        <div id="spacing-controls">
+            <div class="control-group">
+                <label>KHOẢNG CÁCH NGANG: <span id="val-h-space">150</span>px</label>
+                <div class="slider-row">
+                    <div class="step-btn" onclick="stepSlider('slider-h-space', -2)">-</div>
+                    <input type="range" id="slider-h-space" min="-800" max="800" value="150">
+                    <div class="step-btn" onclick="stepSlider('slider-h-space', 2)">+</div>
+                </div>
+                <label>KHOẢNG CÁCH DỌC: <span id="val-v-space">0</span>px</label>
+                <div class="slider-row">
+                    <div class="step-btn" onclick="stepSlider('slider-v-space', -2)">-</div>
+                    <input type="range" id="slider-v-space" min="-400" max="400" value="0">
+                    <div class="step-btn" onclick="stepSlider('slider-v-space', 2)">+</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="swap-btn" onclick="swapColors()">Đổi màu nhanh</button>
+
+        <div class="control-group">
+            <label id="label-l">MÀU HÌNH TRÁI</label>
+            <div class="slider-row"><span class="rgb-label">R</span><input type="range" id="r-l" min="0" max="255" value="0"></div>
+            <div class="slider-row"><span class="rgb-label">G</span><input type="range" id="g-l" min="0" max="255" value="255"></div>
+            <div class="slider-row"><span class="rgb-label">B</span><input type="range" id="b-l" min="0" max="255" value="255"></div>
+            <div class="demo-box" id="demo-l">Màu hiện tại</div>
+        </div>
+
+        <div class="control-group" id="color-right-group">
+            <label>MÀU HÌNH PHẢI</label>
+            <div class="slider-row"><span class="rgb-label">R</span><input type="range" id="r-r" min="0" max="255" value="255"></div>
+            <div class="slider-row"><span class="rgb-label">G</span><input type="range" id="g-r" min="0" max="255" value="200"></div>
+            <div class="slider-row"><span class="rgb-label">B</span><input type="range" id="b-r" min="0" max="255" value="0"></div>
+            <div class="demo-box" id="demo-r">Màu hiện tại</div>
+        </div>
+
+        <div class="control-group">
+            <label>NHẬT KÝ LUYỆN TẬP <span class="clear-log" onclick="clearLog()">Xóa hết</span></label>
+            <div id="log-container"></div>
+        </div>
+    </div>
+
+    <script>
+        let mode = 1;
+        let isRecording = false;
+        let startTime, timerInterval;
+        
+        // Khởi tạo trainingLogs từ localStorage ngay lập tức
+        let trainingLogs = JSON.parse(localStorage.getItem('trainingLogs')) || [];
+
+        const sliders = document.querySelectorAll('input[type="range"]');
+        sliders.forEach(slider => {
+            slider.addEventListener('input', updateStyles);
+        });
+
+        function stepSlider(id, step) {
+            const slider = document.getElementById(id);
+            slider.value = parseInt(slider.value) + step;
+            updateStyles();
+        }
+
+        function updateStyles() {
+            const size = parseInt(document.getElementById('slider-size').value);
+            const hSpace = parseInt(document.getElementById('slider-h-space').value);
+            const vSpace = parseInt(document.getElementById('slider-v-space').value);
+    
+            const rL = document.getElementById('r-l').value, gL = document.getElementById('g-l').value, bL = document.getElementById('b-l').value;
+            const rR = document.getElementById('r-r').value, gR = document.getElementById('g-r').value, bR = document.getElementById('b-r').value;
+            const colorL = `rgb(${rL}, ${gL}, ${bL})`;
+            const colorR = `rgb(${rR}, ${gR}, ${bR})`;
+
+            document.getElementById('val-size').innerText = size;
+            document.getElementById('val-h-space').innerText = hSpace;
+            document.getElementById('val-v-space').innerText = vSpace;
+            document.getElementById('demo-l').style.backgroundColor = colorL;
+            document.getElementById('demo-r').style.backgroundColor = colorR;
+
+            const thickness = Math.max(2, Math.round(size * 0.06));
+            const crossThickness = Math.max(2, Math.round(size * 0.08));
+
+            const outL = document.getElementById('outer-l'), inL = document.getElementById('inner-l'), crsL = document.getElementById('cross-l');
+            outL.style.width = outL.style.height = size + 'px';
+            outL.style.borderWidth = thickness + 'px';
+            outL.style.borderColor = colorL;
+            inL.style.width = inL.style.height = Math.round(size * 0.55) + 'px';
+            inL.style.borderWidth = thickness + 'px';
+            inL.style.borderColor = colorL;
+            crsL.style.width = crossThickness + 'px';
+            crsL.style.height = crossThickness + 'px';
+            crsL.style.backgroundColor = colorL;
+
+            const outR = document.getElementById('outer-r'), inR = document.getElementById('inner-r'), crsR = document.getElementById('cross-r');
+            outR.style.width = outR.style.height = size + 'px';
+            outR.style.borderWidth = thickness + 'px';
+            outR.style.borderColor = colorR;
+            inR.style.width = inR.style.height = Math.round(size * 0.55) + 'px';
+            inR.style.borderWidth = thickness + 'px';
+            inR.style.borderColor = colorR;
+            crsR.style.width = crossThickness + 'px';
+            crsR.style.height = crossThickness + 'px';
+            crsR.style.backgroundColor = colorR;
+
+            const leftCont = document.getElementById('container-left'), rightCont = document.getElementById('container-right');
+            if (mode === 1) {
+                rightCont.style.display = 'none';
+                leftCont.style.transform = 'translate(-50%, -50%)';
+            } else {
+                rightCont.style.display = 'flex';
+                leftCont.style.transform = `translate(calc(-50% - ${hSpace/2}px), calc(-50% - ${vSpace/2}px))`;
+                rightCont.style.transform = `translate(calc(-50% + ${hSpace/2}px), calc(-50% + ${vSpace/2}px))`;
+            }
+        }
+
+        function setMode(m) {
+            mode = m;
+            document.getElementById('btn-1').classList.toggle('active', m === 1);
+            document.getElementById('btn-2').classList.toggle('active', m === 2);
+            updateStyles();
+        }
+
+        function handleStageClick() {
+            if (!isRecording) {
+                isRecording = true; 
+                startTime = Date.now();
+                document.getElementById('rec-indicator').style.display = 'flex';
+                timerInterval = setInterval(() => {
+                    document.getElementById('timer-display').innerText = ((Date.now() - startTime) / 1000).toFixed(1);
+                }, 100);
+            } else {
+                isRecording = false; 
+                clearInterval(timerInterval);
+                document.getElementById('rec-indicator').style.display = 'none';
+                addLog(((Date.now() - startTime) / 1000).toFixed(1));
+            }
+        }
+
+        function addLog(seconds) {
+            const now = new Date();
+            const timeStr = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+            const dateStr = now.getDate() + "/" + (now.getMonth() + 1);
+            
+            // Lấy lại dữ liệu thực tế từ Storage để tránh bị đè dữ liệu cũ
+            let currentLogs = JSON.parse(localStorage.getItem('trainingLogs')) || [];
+            
+            const newEntry = { 
+                date: dateStr, 
+                timeOfDay: timeStr,
+                trial: currentLogs.length + 1, 
+                time: seconds 
+            };
+
+            currentLogs.unshift(newEntry);
+            trainingLogs = currentLogs;
+
+            localStorage.setItem('trainingLogs', JSON.stringify(currentLogs));
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('log-container');
+            if (!container) return;
+            
+            const logsToRender = JSON.parse(localStorage.getItem('trainingLogs')) || [];
+            
+            container.innerHTML = logsToRender.map(log => 
+                `<div class="log-item">
+                    <strong>${log.date} ${log.timeOfDay || ''}</strong> - Lần ${log.trial}: 
+                    <span style="color: #28a745;">${log.time}s</span>
+                </div>`
+            ).join('');
+        }
+
+        function swapColors() {
+            const rL = document.getElementById('r-l'), gL = document.getElementById('g-l'), bL = document.getElementById('b-l');
+            const rR = document.getElementById('r-r'), gR = document.getElementById('g-r'), bR = document.getElementById('b-r');
+            const temp = { r: rL.value, g: gL.value, b: bL.value };
+            rL.value = rR.value; gL.value = gR.value; bL.value = bR.value;
+            rR.value = temp.r; gR.value = temp.g; bR.value = temp.b;
+            updateStyles();
+        }
+
+        function clearLog() {
+            if(confirm("Xóa toàn bộ nhật ký?")) {
+                trainingLogs = []; 
+                localStorage.removeItem('trainingLogs'); 
+                renderLogs();
+            }
+        }
+
+        // Chạy ngay khi load trang
+        updateStyles();
+        renderLogs();
+
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            switch (e.key) {
+                case 'ArrowUp': e.preventDefault(); stepSlider('slider-v-space', 2); break;
+                case 'ArrowDown': e.preventDefault(); stepSlider('slider-v-space', -2); break;
+                case 'ArrowLeft': e.preventDefault(); stepSlider('slider-h-space', -2); break;
+                case 'ArrowRight': e.preventDefault(); stepSlider('slider-h-space', 2); break;
+            }
+        });
+    </script>
+</body>
+</html>
