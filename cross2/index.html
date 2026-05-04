@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Circle Cross Training - Shine Vision App</title>
+    <!-- Giữ nguyên toàn bộ CSS của anh -->
     <style>
         :root {
             --bg-color: rgb(245, 245, 245);
@@ -50,7 +51,6 @@
             z-index: 1;
         }
 
-        /* Nút điều khiển Mobile */
         .mobile-nav-group {
             position: absolute;
             bottom: 40px;
@@ -222,7 +222,7 @@
         <h3>Cài đặt & Nhật ký</h3>
         <div class="mode-selector">
             <div class="mode-btn" id="btn-1" onclick="setMode(1)">1 Hình</div>
-            <div class="mode-btn" id="btn-2" onclick="setMode(2)">2 Hình</div>
+            <div class="mode-btn active" id="btn-2" onclick="setMode(2)">2 Hình</div>
         </div>
 
         <div class="control-group">
@@ -275,23 +275,91 @@
         </div>
     </div>
 
+    <!-- Nhúng auth.js nếu cần -->
+    <script src="auth.js"></script>
+
     <script>
-        let mode = 1;
+        let mode = 2;
         let isRecording = false;
         let startTime, timerInterval;
-        
-        // Khởi tạo trainingLogs từ localStorage ngay lập tức
-        let trainingLogs = JSON.parse(localStorage.getItem('trainingLogs')) || [];
+        let trainingLogs = [];
 
-        const sliders = document.querySelectorAll('input[type="range"]');
-        sliders.forEach(slider => {
-            slider.addEventListener('input', updateStyles);
-        });
+        // HÀM KHỞI TẠO CHÍNH
+        window.onload = function() {
+            // 1. Tải Nhật ký
+            try {
+                const savedLogs = localStorage.getItem('trainingLogs');
+                trainingLogs = savedLogs ? JSON.parse(savedLogs) : [];
+            } catch (e) { trainingLogs = []; }
+
+            // 2. Tải Cấu hình (Size, Khoảng cách, Màu, Mode)
+            loadConfig();
+
+            // 3. Lắng nghe sự kiện input để cập nhật và LƯU tự động
+            const sliders = document.querySelectorAll('input[type="range"]');
+            sliders.forEach(slider => {
+                slider.addEventListener('input', () => {
+                    updateStyles();
+                    saveConfig(); // Lưu cấu hình mỗi khi kéo thanh trượt
+                });
+            });
+
+            updateStyles();
+            renderLogs();
+        };
+
+        // HÀM LƯU CẤU HÌNH
+        function saveConfig() {
+            const config = {
+                mode: mode,
+                size: document.getElementById('slider-size').value,
+                hSpace: document.getElementById('slider-h-space').value,
+                vSpace: document.getElementById('slider-v-space').value,
+                colorL: {
+                    r: document.getElementById('r-l').value,
+                    g: document.getElementById('g-l').value,
+                    b: document.getElementById('b-l').value
+                },
+                colorR: {
+                    r: document.getElementById('r-r').value,
+                    g: document.getElementById('g-r').value,
+                    b: document.getElementById('b-r').value
+                }
+            };
+            localStorage.setItem('circleCrossConfig', JSON.stringify(config));
+        }
+
+        // HÀM TẢI CẤU HÌNH
+        function loadConfig() {
+            const savedConfig = localStorage.getItem('circleCrossConfig');
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig);
+                mode = config.mode || 2;
+                document.getElementById('slider-size').value = config.size;
+                document.getElementById('slider-h-space').value = config.hSpace;
+                document.getElementById('slider-v-space').value = config.vSpace;
+                
+                document.getElementById('r-l').value = config.colorL.r;
+                document.getElementById('g-l').value = config.colorL.g;
+                document.getElementById('b-l').value = config.colorL.b;
+
+                document.getElementById('r-r').value = config.colorR.r;
+                document.getElementById('g-r').value = config.colorR.g;
+                document.getElementById('b-r').value = config.colorR.b;
+
+                // Cập nhật giao diện nút mode
+                document.getElementById('btn-1').classList.toggle('active', mode === 1);
+                document.getElementById('btn-2').classList.toggle('active', mode === 2);
+            }
+        }
 
         function stepSlider(id, step) {
             const slider = document.getElementById(id);
-            slider.value = parseInt(slider.value) + step;
-            updateStyles();
+            if(slider) {
+                slider.value = parseInt(slider.value) + step;
+                updateStyles();
+                saveConfig(); // Lưu sau khi bấm nút +-
+            }
         }
 
         function updateStyles() {
@@ -313,6 +381,7 @@
             const thickness = Math.max(2, Math.round(size * 0.06));
             const crossThickness = Math.max(2, Math.round(size * 0.08));
 
+            // Cập nhật Hình Trái
             const outL = document.getElementById('outer-l'), inL = document.getElementById('inner-l'), crsL = document.getElementById('cross-l');
             outL.style.width = outL.style.height = size + 'px';
             outL.style.borderWidth = thickness + 'px';
@@ -324,6 +393,7 @@
             crsL.style.height = crossThickness + 'px';
             crsL.style.backgroundColor = colorL;
 
+            // Cập nhật Hình Phải
             const outR = document.getElementById('outer-r'), inR = document.getElementById('inner-r'), crsR = document.getElementById('cross-r');
             outR.style.width = outR.style.height = size + 'px';
             outR.style.borderWidth = thickness + 'px';
@@ -351,6 +421,7 @@
             document.getElementById('btn-1').classList.toggle('active', m === 1);
             document.getElementById('btn-2').classList.toggle('active', m === 2);
             updateStyles();
+            saveConfig(); // Lưu mode
         }
 
         function handleStageClick() {
@@ -374,30 +445,22 @@
             const timeStr = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
             const dateStr = now.getDate() + "/" + (now.getMonth() + 1);
             
-            // Lấy lại dữ liệu thực tế từ Storage để tránh bị đè dữ liệu cũ
-            let currentLogs = JSON.parse(localStorage.getItem('trainingLogs')) || [];
-            
             const newEntry = { 
                 date: dateStr, 
                 timeOfDay: timeStr,
-                trial: currentLogs.length + 1, 
+                trial: trainingLogs.length + 1, 
                 time: seconds 
             };
 
-            currentLogs.unshift(newEntry);
-            trainingLogs = currentLogs;
-
-            localStorage.setItem('trainingLogs', JSON.stringify(currentLogs));
+            trainingLogs.unshift(newEntry);
+            localStorage.setItem('trainingLogs', JSON.stringify(trainingLogs));
             renderLogs();
         }
 
         function renderLogs() {
             const container = document.getElementById('log-container');
             if (!container) return;
-            
-            const logsToRender = JSON.parse(localStorage.getItem('trainingLogs')) || [];
-            
-            container.innerHTML = logsToRender.map(log => 
+            container.innerHTML = trainingLogs.map(log => 
                 `<div class="log-item">
                     <strong>${log.date} ${log.timeOfDay || ''}</strong> - Lần ${log.trial}: 
                     <span style="color: #28a745;">${log.time}s</span>
@@ -406,12 +469,16 @@
         }
 
         function swapColors() {
-            const rL = document.getElementById('r-l'), gL = document.getElementById('g-l'), bL = document.getElementById('b-l');
-            const rR = document.getElementById('r-r'), gR = document.getElementById('g-r'), bR = document.getElementById('b-r');
-            const temp = { r: rL.value, g: gL.value, b: bL.value };
-            rL.value = rR.value; gL.value = gR.value; bL.value = bR.value;
-            rR.value = temp.r; gR.value = temp.g; bR.value = temp.b;
+            const ids = ['r-l','g-l','b-l','r-r','g-r','b-r'];
+            const vals = ids.map(id => document.getElementById(id).value);
+            document.getElementById('r-l').value = vals[3];
+            document.getElementById('g-l').value = vals[4];
+            document.getElementById('b-l').value = vals[5];
+            document.getElementById('r-r').value = vals[0];
+            document.getElementById('g-r').value = vals[1];
+            document.getElementById('b-r').value = vals[2];
             updateStyles();
+            saveConfig(); // Lưu sau khi đổi màu
         }
 
         function clearLog() {
@@ -421,10 +488,6 @@
                 renderLogs();
             }
         }
-
-        // Chạy ngay khi load trang
-        updateStyles();
-        renderLogs();
 
         document.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT') return;
