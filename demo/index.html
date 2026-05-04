@@ -148,17 +148,35 @@
             -webkit-print-color-adjust: exact;
         }
 
+        /* Đã sửa: Làm dấu cộng dài ra ngoài vòng tròn */
         .cross {
             position: absolute;
-            font-weight: bold;
-            line-height: 5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            -webkit-print-color-adjust: exact;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+
+        /* Thanh ngang */
+        .cross::before {
+            content: "";
+            position: absolute;
+            width: 300%; /* Độ dài gấp 3 lần container (vượt ra ngoài vòng tròn) */
+            height: 4px;  /* Độ dày của nét vẽ */
+            background-color: inherit; /* Lấy màu theo màu của hình (trái/phải) */
+        }
+
+        /* Thanh dọc */
+        .cross::after {
+            content: "";
+            position: absolute;
+            width: 4px;   /* Độ dày của nét vẽ */
+            height: 300%; /* Độ dài gấp 3 lần container */
+            background-color: inherit;
         }
 
         @media (max-width: 768px) {
