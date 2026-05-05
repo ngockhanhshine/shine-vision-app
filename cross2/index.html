@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Circle Cross Training - Shine Vision App</title>
-    <!-- Giữ nguyên toàn bộ CSS của anh -->
     <style>
         :root {
             --bg-color: rgb(245, 245, 245);
@@ -267,6 +266,10 @@
             <div class="slider-row"><span class="rgb-label">G</span><input type="range" id="g-r" min="0" max="255" value="200"></div>
             <div class="slider-row"><span class="rgb-label">B</span><input type="range" id="b-r" min="0" max="255" value="0"></div>
             <div class="demo-box" id="demo-r">Màu hiện tại</div>
+            <!-- Phần góc xoay mới thêm -->
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee;">
+                <label>GÓC XOAY (PHÍM 1, 2): <span id="val-rotation">0</span>°</label>
+            </div>
         </div>
 
         <div class="control-group">
@@ -275,32 +278,27 @@
         </div>
     </div>
 
-    <!-- Nhúng auth.js nếu cần -->
     <script src="auth.js"></script>
-
     <script>
         let mode = 2;
+        let rotationR = 0; // Biến lưu góc xoay hình phải
         let isRecording = false;
         let startTime, timerInterval;
         let trainingLogs = [];
 
-        // HÀM KHỞI TẠO CHÍNH
         window.onload = function() {
-            // 1. Tải Nhật ký
             try {
                 const savedLogs = localStorage.getItem('trainingLogs');
                 trainingLogs = savedLogs ? JSON.parse(savedLogs) : [];
             } catch (e) { trainingLogs = []; }
 
-            // 2. Tải Cấu hình (Size, Khoảng cách, Màu, Mode)
             loadConfig();
 
-            // 3. Lắng nghe sự kiện input để cập nhật và LƯU tự động
             const sliders = document.querySelectorAll('input[type="range"]');
             sliders.forEach(slider => {
                 slider.addEventListener('input', () => {
                     updateStyles();
-                    saveConfig(); // Lưu cấu hình mỗi khi kéo thanh trượt
+                    saveConfig();
                 });
             });
 
@@ -308,10 +306,10 @@
             renderLogs();
         };
 
-        // HÀM LƯU CẤU HÌNH
         function saveConfig() {
             const config = {
                 mode: mode,
+                rotationR: rotationR,
                 size: document.getElementById('slider-size').value,
                 hSpace: document.getElementById('slider-h-space').value,
                 vSpace: document.getElementById('slider-v-space').value,
@@ -329,12 +327,12 @@
             localStorage.setItem('circleCrossConfig', JSON.stringify(config));
         }
 
-        // HÀM TẢI CẤU HÌNH
         function loadConfig() {
             const savedConfig = localStorage.getItem('circleCrossConfig');
             if (savedConfig) {
                 const config = JSON.parse(savedConfig);
                 mode = config.mode || 2;
+                rotationR = config.rotationR || 0;
                 document.getElementById('slider-size').value = config.size;
                 document.getElementById('slider-h-space').value = config.hSpace;
                 document.getElementById('slider-v-space').value = config.vSpace;
@@ -347,7 +345,6 @@
                 document.getElementById('g-r').value = config.colorR.g;
                 document.getElementById('b-r').value = config.colorR.b;
 
-                // Cập nhật giao diện nút mode
                 document.getElementById('btn-1').classList.toggle('active', mode === 1);
                 document.getElementById('btn-2').classList.toggle('active', mode === 2);
             }
@@ -358,7 +355,7 @@
             if(slider) {
                 slider.value = parseInt(slider.value) + step;
                 updateStyles();
-                saveConfig(); // Lưu sau khi bấm nút +-
+                saveConfig();
             }
         }
 
@@ -375,6 +372,7 @@
             document.getElementById('val-size').innerText = size;
             document.getElementById('val-h-space').innerText = hSpace;
             document.getElementById('val-v-space').innerText = vSpace;
+            document.getElementById('val-rotation').innerText = rotationR;
             document.getElementById('demo-l').style.backgroundColor = colorL;
             document.getElementById('demo-r').style.backgroundColor = colorR;
 
@@ -411,8 +409,9 @@
                 leftCont.style.transform = 'translate(-50%, -50%)';
             } else {
                 rightCont.style.display = 'flex';
+                // Áp dụng xoay vào Transform của Container phải
                 leftCont.style.transform = `translate(calc(-50% - ${hSpace/2}px), calc(-50% - ${vSpace/2}px))`;
-                rightCont.style.transform = `translate(calc(-50% + ${hSpace/2}px), calc(-50% + ${vSpace/2}px))`;
+                rightCont.style.transform = `translate(calc(-50% + ${hSpace/2}px), calc(-50% + ${vSpace/2}px)) rotate(${rotationR}deg)`;
             }
         }
 
@@ -421,7 +420,7 @@
             document.getElementById('btn-1').classList.toggle('active', m === 1);
             document.getElementById('btn-2').classList.toggle('active', m === 2);
             updateStyles();
-            saveConfig(); // Lưu mode
+            saveConfig();
         }
 
         function handleStageClick() {
@@ -478,7 +477,7 @@
             document.getElementById('g-r').value = vals[1];
             document.getElementById('b-r').value = vals[2];
             updateStyles();
-            saveConfig(); // Lưu sau khi đổi màu
+            saveConfig();
         }
 
         function clearLog() {
@@ -496,6 +495,18 @@
                 case 'ArrowDown': e.preventDefault(); stepSlider('slider-v-space', -2); break;
                 case 'ArrowLeft': e.preventDefault(); stepSlider('slider-h-space', -2); break;
                 case 'ArrowRight': e.preventDefault(); stepSlider('slider-h-space', 2); break;
+                // Thêm phím xoay: 1 (xuôi), 2 (ngược)
+                case '1': 
+                    rotationR = (rotationR + 1) % 360; 
+                    updateStyles(); 
+                    saveConfig(); 
+                    break;
+                case '2': 
+                    rotationR = (rotationR - 1) % 360; 
+                    if(rotationR < 0) rotationR += 360;
+                    updateStyles(); 
+                    saveConfig(); 
+                    break;
             }
         });
     </script>
