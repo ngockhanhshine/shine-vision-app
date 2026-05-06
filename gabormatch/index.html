@@ -216,7 +216,7 @@
 
         function renderJournal() {
             const records = JSON.parse(localStorage.getItem('gabor_records') || '[]');
-            journalList.innerHTML = records.map(r => `<li>${r.date}-L${r.session}-Rõ ${r.op}%-Sọc ${r.sz}-${r.time}</li>`).join('');
+            journalList.innerHTML = records.map(r => `<li>${r.date} - L${r.session}-Rõ ${r.op}%-Sọc ${r.sz} - ${r.time}</li>`).join('');
         }
 
         function clearJournal() { if(confirm("Xóa hết nhật ký?")) { localStorage.removeItem('gabor_records'); renderJournal(); } }
