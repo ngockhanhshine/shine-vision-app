@@ -4,10 +4,9 @@
     <script src="../auth.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Anaglyph Piano V2 - Shine Vision App</title>
-    <script src="readme.js"></script>
+    <title>Anaglyph RG Dot Training - Shine Vision</title>
     <style>
-        body { margin: 0; padding: 0; background: #000; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
+        body { margin: 0; background: #f5f5f5; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; touch-action: none; }
         
         #main-app-content { 
             display: none; 
@@ -17,112 +16,112 @@
             align-items: center; 
         }
 
-        #game-container { position: relative; width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        canvas { background: white; box-shadow: 0 0 30px rgba(255,255,255,0.2); height: 100vh; aspect-ratio: 9 / 16; object-fit: contain; }
-        #ui-layer { position: absolute; background: rgb(245, 245, 245); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 90%; max-height: 90%; overflow-y: auto; z-index: 10; }
-        @media (min-width: 768px) { #ui-layer { flex-direction: row; padding: 25px; gap: 30px; } }
-        .column { display: flex; flex-direction: column; min-width: 280px; }
-        h2 { margin-top: 0; color: #333; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .song-list { height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; }
-        .song-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; }
-        .selected { background: #ffebeb !important; color: #d32f2f; font-weight: bold; }
-        .custom-upload { background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 10px; }
-        .color-control { margin-bottom: 10px; padding: 10px; border: 1px solid #eee; border-radius: 8px; }
-        
-        /* Cập nhật style cho slider group để chứa ô input */
-        .slider-group { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
-        .slider-group label { width: 15px; font-weight: bold; font-size: 11px; }
-        input[type=range] { flex: 1; cursor: pointer; }
-        .rgb-input { width: 45px !important; padding: 2px 4px !important; margin: 0 !important; font-size: 11px; text-align: center; height: 24px; }
+        #pause-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; color: #333; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999; font-size: 24px; font-weight: bold;
+        }
 
-        .demo-box { height: 50px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; border-radius: 4px; }
-        .start-btn { background: #d32f2f; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        input[type=number], input[type=file] { width: 100%; margin: 5px 0; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        #readme-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 600px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 0 100px rgba(0,0,0,0.8); z-index: 9999; max-height: 80vh; overflow-y: auto; }
-        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998; }
-        .pause-screen { position: absolute; inset: 0; background: #000; display: flex; justify-content: center; align-items: center; z-index: 10000; color: white; font-size: 40px; font-weight: bold; border: 5px solid #d32f2f; }
+        canvas { background: #f5f5f5; display: block; }
+        #ui-layer { position: absolute; background: rgb(245,245,245); padding: 20px; border-radius: 12px; display: flex; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 95%; z-index: 10; max-height: 90vh; overflow-y: auto; }
         
-        .log-section { margin-top: 10px; padding: 10px; background: #f4f4f4; border-radius: 8px; border: 1px solid #ddd; }
-        .log-title { font-size: 13px; font-weight: bold; color: #d32f2f; margin-bottom: 5px; border-bottom: 1px solid #ccc; }
-        #log-container { max-height: 100px; overflow-y: auto; font-size: 12px; color: #333; }
-        .log-item { padding: 3px 0; border-bottom: 1px dashed #ddd; }
-        #back-to-menu { position: absolute; left: 50px; top: 100px; font-size: 60px; color: gray; cursor: pointer; display: none; z-index: 100; user-select: none; }
+        @media (max-width: 900px) {
+            #ui-layer { flex-direction: column; gap: 10px; padding: 15px; top: 10px; }
+            .column { min-width: unset !important; width: 100%; }
+        }
+
+        .column { display: flex; flex-direction: column; min-width: 250px; }
+        h2 { margin-top: 0; color: #333; font-size: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .difficulty-btns { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        .btn { border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; background: #eee; }
+        .btn-start { background: #d32f2f; color: white; margin-top: auto; padding: 15px; font-size: 16px; }
+
+        .color-control { margin-bottom: 10px; padding: 8px; border: 1px solid #eee; border-radius: 8px; }
+        .slider-group { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+        .slider-group label { width: 12px; font-weight: bold; font-size: 12px; }
+        input[type=range] { flex: 1; cursor: pointer; }
+        /* Style cho ô nhập số */
+        .color-input { width: 45px; border: 1px solid #ccc; border-radius: 4px; padding: 2px 4px; font-size: 12px; text-align: center; }
+        
+        .demo-box { height: 40px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; border-radius: 4px; }
+
+        #log-container { font-size: 12px; color: #444; max-height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 5px; border-radius: 5px; background: #fafafa; }
+        .log-item { padding: 4px 0; border-bottom: 1px dashed #ddd; white-space: nowrap; }
+
+        #instruction-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); color: white; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; text-align: center; padding: 20px; box-sizing: border-box;
+        }
+        .close-btn { margin-top: 20px; padding: 10px 30px; background: #d32f2f; border: none; color: white; border-radius: 5px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
+    <div id="pause-overlay">ỨNG DỤNG ĐANG TẠM DỪNG</div>
+
     <div id="main-app-content">
-        <div id="game-container">
-            <div id="modal-overlay"></div>
-            <div id="readme-modal">
-                <h1>HƯỚNG DẪN SỬ DỤNG</h1>
-                <div id="readme-content">Nội dung đang tải...</div>
-                <button id="readme-close" style="background: #333; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px; float: right;">ĐÓNG</button>
-            </div>
-
-            <div id="ui-layer">
-                <div class="column">
-                    <h2>1. CHỌN BÀI HÁT</h2>
-                    <div id="song-list" class="song-list"></div>
-                    <h2>2. TỰ THÊM NHẠC CỦA BẠN</h2>
-                    <div class="custom-upload">
-                        <input type="file" id="audio-upload" accept="audio/*">
-                        <label style="font-size: 12px; font-weight: bold;">Nhập BPM:</label>
-                        <input type="number" id="custom-bpm" value="120" min="40" max="300">
-                    </div>
-                    <p style="font-size: 12px; color: #666; margin: 5px 0;">Phím: <b>F G H J</b> | Chạm | Thoát: <b>ESC</b></p>
-                    
-                    <div class="log-section">
-                        <div class="log-title">NHẬT KÝ LUYỆN TẬP</div>
-                        <div id="log-container">Chưa có dữ liệu.</div>
-                    </div>
-
-                    <button class="start-btn" onclick="handleStart()">BẮT ĐẦU CHƠI</button>
-                </div>
-                <div class="column">
-                    <h2>3. CÂN CHỈNH ANAGLYPH</h2>
-                    <div class="color-control">
-                        <span style="font-weight: bold; color: #d32f2f; font-size: 13px;">KÍNH TRÁI (MÀU ĐỎ)</span>
-                        <div class="slider-group">
-                            <label>R</label><input type="range" id="r1" min="0" max="255" value="255">
-                            <input type="number" id="r1_num" class="rgb-input" min="0" max="255" value="255">
-                        </div>
-                        <div class="slider-group">
-                            <label>G</label><input type="range" id="g1" min="0" max="255" value="131">
-                            <input type="number" id="g1_num" class="rgb-input" min="0" max="255" value="131">
-                        </div>
-                        <div class="slider-group">
-                            <label>B</label><input type="range" id="b1" min="0" max="255" value="55">
-                            <input type="number" id="b1_num" class="rgb-input" min="0" max="255" value="55">
-                        </div>
-                        <div id="demo1" class="demo-box">DEMO ĐỎ</div>
-                    </div>
-                    <div class="color-control">
-                        <span style="font-weight: bold; color: #008b8b; font-size: 13px;">KÍNH PHẢI (MÀU XANH)</span>
-                        <div class="slider-group">
-                            <label>R</label><input type="range" id="r2" min="0" max="255" value="0">
-                            <input type="number" id="r2_num" class="rgb-input" min="0" max="255" value="0">
-                        </div>
-                        <div class="slider-group">
-                            <label>G</label><input type="range" id="g2" min="0" max="255" value="255">
-                            <input type="number" id="g2_num" class="rgb-input" min="0" max="255" value="255">
-                        </div>
-                        <div class="slider-group">
-                            <label>B</label><input type="range" id="b2" min="0" max="255" value="255">
-                            <input type="number" id="b2_num" class="rgb-input" min="0" max="255" value="255">
-                        </div>
-                        <div id="demo2" class="demo-box">DEMO XANH</div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="back-to-menu" onclick="exitToMenu()">←</div>
-            <canvas id="gameCanvas" width="1080" height="1920"></canvas>
+        <div id="instruction-overlay">
+            <h1>HƯỚNG DẪN SỬ DỤNG</h1>
+            <p>
+                1. Đeo kính <b>Anaglyph (Đỏ/Xanh)</b>.<br>
+                2. Chỉnh thanh trượt RGB sao cho mỗi mắt chỉ nhìn thấy đúng một màu.<br>
+                3. Mục tiêu: Nhìn vào vòng tròn và gõ đúng chữ cái hiển thị.<br>
+                4. <b>Phím tắt PC:</b><br>
+                    - Phím (+/-): Chỉnh kích thước vòng tròn.<br>
+                    - Phím ESC: Quay lại Menu.<br>
+                    - <b>Ctrl + S / F12:</b> Đóng/Mở hướng dẫn này.<br>
+                5. <b>Mobile:</b> Chạm vào vòng tròn để chọn. Chạm <b>4 ngón</b> để thoát.<br>
+            </p>
+            <button class="close-btn" onclick="toggleInstructions()">ĐÓNG (ESC)</button>
         </div>
+
+        <div id="ui-layer">
+            <div class="column">
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <a href="https://shinevisioncenter.com" target="_blank" style="text-decoration: none; color: #d32f2f; font-weight: bold; font-size: 22px;">KHÔI PHỤC THỊ LỰC SHINE</a>
+                </div>
+                <h2>1. ĐỘ KHÓ</h2>
+                <div class="difficulty-btns">
+                    <button class="btn" id="diff-3" onclick="setDiff(3)">DỄ (3 Giây)</button>
+                    <button class="btn" id="diff-2" onclick="setDiff(2)" style="background: #ffebeb; color: #d32f2f;">TRUNG BÌNH (2 Giây)</button>
+                    <button class="btn" id="diff-1" onclick="setDiff(1)">KHÓ (1 Giây)</button>
+                </div>
+                <button class="btn btn-start" onclick="startGame()">BẮT ĐẦU</button>
+            </div>
+
+            <div class="column">
+                <h2>2. CÂN MÀU (RGB)</h2>
+                <div class="color-control">
+                    <span style="font-weight: bold; color: #d32f2f; font-size: 12px;">MÀU ĐỎ</span>
+                    <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"><input type="number" id="r1_val" class="color-input" min="0" max="255" value="255"></div>
+                    <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="200"><input type="number" id="g1_val" class="color-input" min="0" max="255" value="200"></div>
+                    <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="0"><input type="number" id="b1_val" class="color-input" min="0" max="255" value="0"></div>
+                    <div id="demo1" class="demo-box">DEMO ĐỎ</div>
+                </div>
+                <div class="color-control">
+                    <span style="font-weight: bold; color: #008b8b; font-size: 12px;">MÀU XANH</span>
+                    <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"><input type="number" id="r2_val" class="color-input" min="0" max="255" value="0"></div>
+                    <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"><input type="number" id="g2_val" class="color-input" min="0" max="255" value="255"></div>
+                    <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"><input type="number" id="b2_val" class="color-input" min="0" max="255" value="255"></div>
+                    <div id="demo2" class="demo-box">DEMO XANH</div>
+                </div>
+            </div>
+
+            <div class="column">
+                <h2>3. NHẬT KÝ</h2>
+                <div id="log-container"></div>
+                <button class="btn" style="margin-top:10px; font-size:10px; padding:5px;" onclick="clearLogs()">Xoá lịch sử</button>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
     </div>
 
     <script>
-        // --- BẢO MẬT CONSOLE ---
+        // --- BẢO MẬT CONSOLE (PHIÊN BẢN MOBILE-FRIENDLY) ---
         (function() {
             const check = function() {
                 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -132,7 +131,10 @@
                 const devtools = { open: false };
                 const element = new Image();
                 Object.defineProperty(element, 'id', {
-                    get: function() { devtools.open = true; terminateSession(); }
+                    get: function() {
+                        devtools.open = true;
+                        terminateSession();
+                    }
                 });
                 function terminateSession() {
                     localStorage.removeItem('user_login');
@@ -160,148 +162,106 @@
         (function() {
             const loginData = JSON.parse(localStorage.getItem('user_login'));
             if (!loginData) {
-                alert("Bạn cần đăng nhập để chơi bài này!");
                 window.location.href = '../index.html';
             } else {
                 document.getElementById('main-app-content').style.display = 'flex';
             }
         })();
 
-        const container = document.getElementById('game-container');
-        let canvas = document.getElementById('gameCanvas');
-        let ctx = canvas.getContext('2d');
-        let backupNodes = null; 
-        let isPaused = false; 
-        let pauseTimeStart = 0; 
+        // --- XỬ LÝ DI CHUỘT RA NGOÀI (ANTI-DOWNLOAD) ---
+        const mainContent = document.getElementById('main-app-content');
+        const pauseOverlay = document.getElementById('pause-overlay');
+        document.addEventListener('mouseleave', () => { mainContent.style.visibility = 'hidden'; pauseOverlay.style.display = 'flex'; });
+        document.addEventListener('mouseenter', () => { mainContent.style.visibility = 'visible'; pauseOverlay.style.display = 'none'; });
 
-        window.addEventListener('beforeunload', () => {
-            if (typeof gameState !== 'undefined' && gameState === 'PLAYING') saveLog();
-        });
+        // --- LOGIC GAME GỐC ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const uiLayer = document.getElementById('ui-layer');
+        const instructionOverlay = document.getElementById('instruction-overlay');
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (window.innerWidth < 600);
 
-        // --- QUẢN LÝ PAUSE ---
-        container.addEventListener('mouseleave', () => {
-            if (isPaused) return;
-            isPaused = true;
-            pauseTimeStart = performance.now(); 
-            if (currentAudio) currentAudio.pause();
-            backupNodes = Array.from(container.childNodes);
-            container.innerHTML = '<div class="pause-screen">Tạm Dừng</div>';
-        });
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+        resize();
 
-        container.addEventListener('mouseenter', () => {
-            if (backupNodes && isPaused) {
-                isPaused = false;
-                const pauseDuration = performance.now() - pauseTimeStart;
-                startTime += pauseDuration; 
-                container.innerHTML = ''; 
-                backupNodes.forEach(node => container.appendChild(node)); 
-                canvas = document.getElementById('gameCanvas');
-                ctx = canvas.getContext('2d');
-                attachColorEvents(); // Gán lại sự kiện cho các input
-                renderSongList();
-                updateLogDisplay();
-                if (gameState === 'PLAYING') {
-                    document.getElementById('back-to-menu').style.display = 'block';
-                    if (currentAudio) currentAudio.play();
-                    requestAnimationFrame(gameLoop);
-                } else {
-                    document.getElementById('ui-layer').style.display = 'flex';
-                }
-                backupNodes = null;
-            }
-        });
+        let score = 0, level = 1, timeLimit = 2;
+        let correctCount = 0, wrongCount = 0;
+        let gameStartTime = 0;
+        const baseRadius = isMobile ? 40 : 80;
+        const baseLetterSize = isMobile ? 45 : 90;
+        let radius = baseRadius, letterSize = baseLetterSize;
+        let gameState = 'MENU';
+        let currentRound = null;
+        let roundStartTime = 0;
 
-        const WIDTH = 1080, HEIGHT = 1920, LANE_WIDTH = WIDTH / 4;
-        const HIT_ZONE_Y = HEIGHT * 0.75, HIT_WINDOW = HEIGHT * 0.85, NOTE_HEIGHT = HEIGHT * 0.15;
-
-        const SONGS = [
-            {name: "Shape Of You (96 BPM)", bpm: 96, file: "sounds/Shape-Of-You.mp3"},
-            {name: "Monkey Dance (98 BPM)", bpm: 98, file: "sounds/Monkey-Dance.mp3"},
-            {name: "BabyShark (115 BPM)", bpm: 115, file: "sounds/BabyShark.mp3"},
-            {name: "Counting Star (124 BPM)", bpm: 124, file: "sounds/Counting-Star.mp3"},
-            {name: "Sugar (120 BPM)", bpm: 120, file: "sounds/Sugar.mp3"},
-            {name: "Beliver (125 BPM)", bpm: 125, file: "sounds/Beliver.mp3"}
-        ];
-
-        let selectedSongIdx = 0, gameState = 'MENU', score = 0, notes = [], particles = [];
-        let startTime = 0, currentAudio = null, feedbackTimer = 0, feedbackText = "";
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let dingBuffer = null, failBuffer = null;
+        let soundBuffers = {};
 
-        // --- NHẬT KÝ ---
-        function saveLog() {
-            if (score === 0) return;
-            let logs = JSON.parse(localStorage.getItem('piano_logs') || "[]");
-            let now = new Date();
-            let d = String(now.getDate()).padStart(2, '0') + '/' + String(now.getMonth() + 1).padStart(2, '0');
-            let newCount = 1;
-            if (logs.length > 0) {
-                let lastLog = logs[0];
-                newCount = (lastLog.date === d) ? lastLog.count + 1 : 1;
+        async function loadSound(name, url) {
+            try {
+                const response = await fetch(url);
+                const arrayBuffer = await response.arrayBuffer();
+                soundBuffers[name] = await audioCtx.decodeAudioData(arrayBuffer);
+            } catch (e) { generateFallbackSound(name); }
+        }
+
+        function generateFallbackSound(name) {
+            const duration = 0.1;
+            const sampleRate = audioCtx.sampleRate;
+            const buffer = audioCtx.createBuffer(1, sampleRate * duration, sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < data.length; i++) {
+                if (name === 'ding') data[i] = Math.sin(2 * Math.PI * 880 * i / sampleRate) * Math.exp(-9 * i / (sampleRate * duration));
+                else data[i] = (Math.random() * 2 - 1) * Math.exp(-12 * i / (sampleRate * duration));
             }
-            let duration = Math.floor((performance.now() - startTime) / 1000);
-            let timeStr = String(Math.floor(duration / 60)).padStart(2, '0') + ':' + String(duration % 60).padStart(2, '0');
-            logs.unshift({ date: d, count: newCount, score: score, duration: timeStr });
-            if (logs.length > 20) logs.pop(); 
-            localStorage.setItem('piano_logs', JSON.stringify(logs));
-            updateLogDisplay();
+            soundBuffers[name] = buffer;
         }
 
-        function updateLogDisplay() {
-            const logBox = document.getElementById('log-container');
-            if(!logBox) return;
-            let logs = JSON.parse(localStorage.getItem('piano_logs') || "[]");
-            if(logs.length === 0) { logBox.innerHTML = "Chưa có dữ liệu."; return; }
-            logBox.innerHTML = logs.map(l => `<div class="log-item">${l.date} - Lần ${l.count} - ${l.score}đ - ${l.duration}</div>`).join('');
+        function playSound(name) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (soundBuffers[name]) {
+                const source = audioCtx.createBufferSource();
+                source.buffer = soundBuffers[name];
+                source.connect(audioCtx.destination);
+                source.start(0);
+            }
         }
 
-        function exitToMenu() {
-            if (currentAudio) currentAudio.pause();
-            saveLog();
-            gameState = 'MENU';
-            document.getElementById('ui-layer').style.display = 'flex';
-            document.getElementById('back-to-menu').style.display = 'none';
+        loadSound('ding', 'sounds/Ding.wav');
+        loadSound('fail', 'sounds/Fail.wav');
+
+        let colorRed = { r: 255, g: 131, b: 55 };
+        let colorCyan = { r: 0, g: 255, b: 255 };
+
+        function loadSettings() {
+            const savedRed = localStorage.getItem('rg_dot_red');
+            const savedCyan = localStorage.getItem('rg_dot_cyan');
+            if (savedRed) {
+                colorRed = JSON.parse(savedRed);
+                syncInputs('r1', colorRed.r);
+                syncInputs('g1', colorRed.g);
+                syncInputs('b1', colorRed.b);
+            }
+            if (savedCyan) {
+                colorCyan = JSON.parse(savedCyan);
+                syncInputs('r2', colorCyan.r);
+                syncInputs('g2', colorCyan.g);
+                syncInputs('b2', colorCyan.b);
+            }
+            updateColors();
+            displayLogs();
         }
 
-        async function loadSound(url) { try { const r = await fetch(url); const ab = await r.arrayBuffer(); return await audioCtx.decodeAudioData(ab); } catch(e) { return null; } }
-        async function initSounds() { dingBuffer = await loadSound('sounds/Ding.wav'); failBuffer = await loadSound('sounds/Fail.wav'); }
-        
-        function playSound(buffer) { 
-            if (isPaused || !buffer || audioCtx.state === 'suspended') return; 
-            const s = audioCtx.createBufferSource(); 
-            s.buffer = buffer; 
-            s.connect(audioCtx.destination); 
-            s.start(0); 
+        // Hàm hỗ trợ đồng bộ Slider và Ô nhập số
+        function syncInputs(id, value) {
+            const slider = document.getElementById(id);
+            const input = document.getElementById(id + '_val');
+            if(slider) slider.value = value;
+            if(input) input.value = value;
         }
 
-        class Particle {
-            constructor(x, y, color) { this.x = x; this.y = y; this.color = color; this.size = Math.random() * 20 + 10; this.speedX = (Math.random() - 0.5) * 30; this.speedY = (Math.random() - 0.5) * 30; this.life = 1.0; this.decay = Math.random() * 0.05 + 0.02; }
-            update() { this.x += this.speedX; this.y += this.speedY; this.life -= this.decay; }
-            draw() { ctx.globalAlpha = this.life; ctx.fillStyle = this.color; ctx.fillRect(this.x, this.y, this.size, this.size); ctx.globalAlpha = 1.0; }
-        }
-        function createExplosion(x, y, color) { for (let i = 0; i < 15; i++) particles.push(new Particle(x, y, color)); }
-
-        // --- QUẢN LÝ MÀU SẮC & ĐỒNG BỘ ---
-        let colorRed = {r:255, g:131, b:55}, colorCyan = {r:0, g:255, b:255};
-
-        function attachColorEvents() {
-            const ids = ['r1', 'g1', 'b1', 'r2', 'g2', 'b2'];
-            ids.forEach(id => {
-                const slider = document.getElementById(id);
-                const numInput = document.getElementById(id + '_num');
-                if (slider && numInput) {
-                    slider.oninput = () => { numInput.value = slider.value; updateUIColors(); };
-                    numInput.oninput = () => { 
-                        if(numInput.value > 255) numInput.value = 255;
-                        if(numInput.value < 0) numInput.value = 0;
-                        slider.value = numInput.value; 
-                        updateUIColors(); 
-                    };
-                }
-            });
-        }
-
-        function updateUIColors() {
+        function updateColors() {
             colorRed = { 
                 r: document.getElementById('r1').value, 
                 g: document.getElementById('g1').value, 
@@ -312,127 +272,154 @@
                 g: document.getElementById('g2').value, 
                 b: document.getElementById('b2').value 
             };
-            localStorage.setItem('anaglyph_red', JSON.stringify(colorRed));
-            localStorage.setItem('anaglyph_cyan', JSON.stringify(colorCyan));
+            localStorage.setItem('rg_dot_red', JSON.stringify(colorRed));
+            localStorage.setItem('rg_dot_cyan', JSON.stringify(colorCyan));
             document.getElementById('demo1').style.backgroundColor = `rgb(${colorRed.r},${colorRed.g},${colorRed.b})`;
             document.getElementById('demo2').style.backgroundColor = `rgb(${colorCyan.r},${colorCyan.g},${colorCyan.b})`;
         }
 
-        function loadSavedColors() {
-            const r = localStorage.getItem('anaglyph_red'), c = localStorage.getItem('anaglyph_cyan');
-            if(r) { 
-                colorRed = JSON.parse(r); 
-                document.getElementById('r1').value = document.getElementById('r1_num').value = colorRed.r;
-                document.getElementById('g1').value = document.getElementById('g1_num').value = colorRed.g;
-                document.getElementById('b1').value = document.getElementById('b1_num').value = colorRed.b;
-            }
-            if(c) { 
-                colorCyan = JSON.parse(c); 
-                document.getElementById('r2').value = document.getElementById('r2_num').value = colorCyan.r;
-                document.getElementById('g2').value = document.getElementById('g2_num').value = colorCyan.g;
-                document.getElementById('b2').value = document.getElementById('b2_num').value = colorCyan.b;
-            }
-            updateUIColors();
-        }
+        // Lắng nghe sự kiện cho cả Slider và Ô số
+        ['r1', 'g1', 'b1', 'r2', 'g2', 'b2'].forEach(id => {
+            const slider = document.getElementById(id);
+            const input = document.getElementById(id + '_val');
 
-        function renderSongList() {
-            const list = document.getElementById('song-list'); if(!list) return;
-            list.innerHTML = '';
-            SONGS.forEach((song, i) => {
-                const div = document.createElement('div'); div.className = `song-item ${i === selectedSongIdx ? 'selected' : ''}`;
-                div.innerHTML = (i === selectedSongIdx ? "▶ " : "　") + song.name;
-                div.onclick = () => { selectedSongIdx = i; document.getElementById('audio-upload').value = ""; renderSongList(); };
-                list.appendChild(div);
+            slider.addEventListener('input', (e) => {
+                input.value = e.target.value;
+                updateColors();
+            });
+
+            input.addEventListener('input', (e) => {
+                let val = parseInt(e.target.value);
+                if (isNaN(val)) val = 0;
+                if (val > 255) val = 255;
+                if (val < 0) val = 0;
+                e.target.value = val;
+                slider.value = val;
+                updateColors();
+            });
+        });
+
+        function setDiff(d) {
+            timeLimit = d;
+            [1, 2, 3].forEach(v => {
+                document.getElementById('diff-' + v).style.background = (v === d) ? '#ffebeb' : '#eee';
+                document.getElementById('diff-' + v).style.color = (v === d) ? '#d32f2f' : '#333';
             });
         }
 
-        class Note {
-            constructor(lane, hitTime, speed) { this.lane = lane; this.hitTime = hitTime; this.speed = speed; this.hit = false; this.y = -NOTE_HEIGHT; }
-            update(currentTime) { this.y = HIT_ZONE_Y - ((this.hitTime - currentTime) * this.speed); }
-            draw() {
-                const c = (this.lane % 2 === 0) ? colorRed : colorCyan; ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
-                const p = LANE_WIDTH * 0.08; ctx.fillRect(this.lane * LANE_WIDTH + p, this.y, LANE_WIDTH - p*2, NOTE_HEIGHT);
-            }
+        function startGame() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            gameState = 'PLAYING';
+            uiLayer.style.display = 'none';
+            score = 0; level = 1; correctCount = 0; wrongCount = 0;
+            gameStartTime = Date.now();
+            nextRound();
+            requestAnimationFrame(gameLoop);
         }
 
-        async function handleStart() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const f = document.getElementById('audio-upload');
-            let bpm, src;
-            if (f.files.length > 0) { bpm = parseInt(document.getElementById('custom-bpm').value); src = URL.createObjectURL(f.files[0]); }
-            else { const s = SONGS[selectedSongIdx]; bpm = s.bpm; src = s.file; }
-            gameState = 'PLAYING'; document.getElementById('ui-layer').style.display = 'none';
-            document.getElementById('back-to-menu').style.display = 'block';
-            score = 0; notes = []; particles = [];
-            const beat = 60 / bpm; const spd = HIT_ZONE_Y / (beat * 2);
-            for (let i = 0; i < 800; i++) notes.push(new Note(Math.floor(Math.random() * 4), 3.0 + i * beat, spd));
-            currentAudio = new Audio(src); currentAudio.play(); startTime = performance.now();
-            requestAnimationFrame(gameLoop);
+        function stopGameAndReturn() {
+            if (gameState !== 'PLAYING') return;
+            const duration = Math.floor((Date.now() - gameStartTime) / 1000);
+            if (duration > 2) saveLog(score, correctCount, wrongCount, duration, timeLimit);
+            gameState = 'MENU';
+            uiLayer.style.display = 'flex';
+            displayLogs();
+        }
+
+        function saveLog(sc, cr, wr, dur, diff) {
+            let logs = JSON.parse(localStorage.getItem('rg_dot_logs') || '[]');
+            const now = new Date();
+            const dateStr = `${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')}`;
+            const min = Math.floor(dur / 60).toString().padStart(2,'0');
+            const sec = (dur % 60).toString().padStart(2,'0');
+            const diffMap = { 1: 'K', 2: 'T', 3: 'D' };
+            const newEntry = { date: dateStr, score: sc, right: cr, wrong: wr, time: `${min}:${sec}`, diff: diffMap[diff] || 'T' };
+            logs.unshift(newEntry);
+            if (logs.length > 50) logs.pop();
+            localStorage.setItem('rg_dot_logs', JSON.stringify(logs));
+        }
+
+        function displayLogs() {
+            const logs = JSON.parse(localStorage.getItem('rg_dot_logs') || '[]');
+            const container = document.getElementById('log-container');
+            if(!container) return;
+            container.innerHTML = logs.map((l, index) => `<div class="log-item">${l.date} - Lần ${logs.length - index} - ${l.score}đ - ${l.right}/${l.wrong} - ${l.time} - ${l.diff}</div>`).join('');
+        }
+
+        function clearLogs() {
+            if(confirm("Xoá toàn bộ nhật ký?")) { localStorage.removeItem('rg_dot_logs'); displayLogs(); }
+        }
+
+        function nextRound() {
+            const padding = isMobile ? 60 : 100;
+            const isRed = Math.random() > 0.5;
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            currentRound = {
+                color: isRed ? colorRed : colorCyan,
+                letter: alphabet[Math.floor(Math.random() * alphabet.length)],
+                x: Math.random() * (canvas.width - padding * 2) + padding,
+                y: Math.random() * (canvas.height - padding * 2) + padding
+            };
+            roundStartTime = Date.now();
         }
 
         function gameLoop() {
-            if (isPaused || gameState !== 'PLAYING' || !ctx) return; 
-            let currentTime = (performance.now() - startTime) / 1000;
-            ctx.fillStyle = "white"; ctx.fillRect(0, 0, WIDTH, HEIGHT);
-            ctx.fillStyle = "#fcfcfc"; ctx.fillRect(0, HIT_ZONE_Y - HIT_WINDOW/2, WIDTH, HIT_WINDOW);
-            ctx.strokeStyle = "#eee"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, HIT_ZONE_Y); ctx.lineTo(WIDTH, HIT_ZONE_Y); ctx.stroke();
-            for (let i = notes.length - 1; i >= 0; i--) {
-                let n = notes[i]; n.update(currentTime);
-                if (!n.hit) { n.draw(); if (n.y > (HIT_ZONE_Y + HIT_WINDOW / 2)) { playSound(failBuffer); notes.splice(i, 1); } }
-                else notes.splice(i, 1);
-            }
-            if (notes.length === 0 && currentAudio && currentAudio.ended) { exitToMenu(); return; }
-            for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); particles[i].draw(); if (particles[i].life <= 0) particles.splice(i, 1); }
-            const chars = ['F','G','H','J']; ctx.font = `bold ${LANE_WIDTH * 0.45}px Arial`;
-            chars.forEach((char, i) => {
-                const c = (i % 2 === 0) ? colorRed : colorCyan; ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
-                ctx.fillText(char, i * LANE_WIDTH + (LANE_WIDTH/2) - (ctx.measureText(char).width/2), HIT_ZONE_Y + LANE_WIDTH * 0.45);
-            });
-            ctx.fillStyle = "black"; ctx.font = `bold 50px Arial`; ctx.fillText(`Điểm: ${score}`, 50, 80);
-            if (feedbackTimer > 0) { ctx.fillStyle = "#2e7d32"; ctx.font = "bold 80px Arial"; ctx.fillText(feedbackText, (WIDTH/2) - (ctx.measureText(feedbackText).width/2), HEIGHT * 0.25); feedbackTimer--; }
+            if (gameState !== 'PLAYING') return;
+            const elapsed = (Date.now() - roundStartTime) / 1000;
+            if (elapsed > timeLimit) { playSound('fail'); score--; wrongCount++; nextRound(); }
+            ctx.fillStyle = "#f5f5f5";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.fillStyle = `rgb(${currentRound.color.r},${currentRound.color.g},${currentRound.color.b})`;
+            ctx.arc(currentRound.x, currentRound.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#f5f5f5";
+            ctx.font = `bold ${letterSize}px Arial`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(currentRound.letter, currentRound.x, currentRound.y);
+            ctx.fillStyle = "black";
+            ctx.font = isMobile ? "14px Arial" : "16px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText(`Score: ${score}`, 20, 30);
+            ctx.fillText(`Level: ${level}`, 20, 50);
             requestAnimationFrame(gameLoop);
         }
 
-        function checkHit(laneIdx) {
-            if (gameState !== 'PLAYING' || isPaused) return;
-            let hit = false;
-            for (let n of notes) {
-                if (n.lane === laneIdx && !n.hit && Math.abs(n.y - HIT_ZONE_Y) < HIT_WINDOW / 2) {
-                    n.hit = true; hit = true; playSound(dingBuffer); score += 10; feedbackText = "CHÍNH XÁC!"; feedbackTimer = 30;
-                    const c = (n.lane % 2 === 0) ? colorRed : colorCyan; createExplosion(n.lane * LANE_WIDTH + LANE_WIDTH/2, n.y + NOTE_HEIGHT/2, `rgb(${c.r},${c.g},${c.b})`);
-                    break;
-                }
-            }
-            if (!hit) playSound(failBuffer);
+        function toggleInstructions() {
+            const isVisible = instructionOverlay.style.display === 'flex';
+            instructionOverlay.style.display = isVisible ? 'none' : 'flex';
         }
 
+        canvas.addEventListener('touchstart', (e) => {
+            if (gameState !== 'PLAYING') return;
+            e.preventDefault();
+            if (e.touches.length >= 4) { stopGameAndReturn(); return; }
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
+            const dist = Math.sqrt((touchX - currentRound.x)**2 + (touchY - currentRound.y)**2);
+            if (dist < (isMobile ? radius + 20 : radius)) { playSound('ding'); score++; level++; correctCount++; nextRound(); }
+        }, { passive: false });
+
         window.addEventListener('keydown', (e) => {
-            if (gameState === 'PLAYING' && !isPaused) {
-                if (e.key === 'Escape') { exitToMenu(); return; }
-                let idx = ['f', 'g', 'h', 'j'].indexOf(e.key.toLowerCase());
-                if (idx !== -1) checkHit(idx);
+            const isConsoleKey = (e.key === 'F12') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || (e.ctrlKey && e.key === 's') || (e.metaKey && e.key === 's') || (e.key === 'u' && (e.ctrlKey || e.metaKey));
+            if (isConsoleKey) { e.preventDefault(); if (instructionOverlay.style.display !== 'flex') toggleInstructions(); return; }
+            if (e.key === 'Escape' && instructionOverlay.style.display === 'flex') { toggleInstructions(); return; }
+            if (gameState === 'PLAYING') {
+                if (e.key === 'Escape') { stopGameAndReturn(); return; }
+                if (e.key === '+' || e.key === '=') { radius += 5; letterSize += 5; }
+                if (e.key === '-') { radius = Math.max(10, radius - 5); letterSize = Math.max(10, letterSize - 5); }
+                const pressed = e.key.toUpperCase();
+                if (pressed.length === 1 && pressed >= 'A' && pressed <= 'Z') {
+                    if (pressed === currentRound.letter) { playSound('ding'); score++; level++; correctCount++; nextRound(); }
+                    else { playSound('fail'); score--; wrongCount++; nextRound(); }
+                }
             }
         });
 
-        canvas.addEventListener('touchstart', (e) => {
-            if (gameState !== 'PLAYING' || isPaused) return; e.preventDefault();
-            const rect = canvas.getBoundingClientRect(); const sX = WIDTH / rect.width;
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                let t = e.changedTouches[i];
-                let idx = Math.floor(((t.clientX - rect.left) * sX) / LANE_WIDTH);
-                if (idx >= 0 && idx < 4) checkHit(idx);
-            }
-        }, {passive: false});
-
-        function showReadme() {
-            const m = document.getElementById('readme-modal'); const o = document.getElementById('modal-overlay');
-            document.getElementById('readme-content').innerHTML = (typeof readmeContent !== 'undefined') ? readmeContent : "No readme found.";
-            m.style.display = 'block'; o.style.display = 'block'; if(currentAudio) currentAudio.pause();
-        }
-        function closeReadme() { document.getElementById('readme-modal').style.display = 'none'; document.getElementById('modal-overlay').style.display = 'none'; }
-        document.getElementById('readme-close').onclick = closeReadme;
-
-        initSounds(); loadSavedColors(); renderSongList(); updateLogDisplay(); attachColorEvents();
+        loadSettings();
     </script>
 </body>
 </html>
