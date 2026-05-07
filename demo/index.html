@@ -19,7 +19,7 @@
 
         #game-container { position: relative; width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; }
         canvas { background: white; box-shadow: 0 0 30px rgba(255,255,255,0.2); height: 100vh; aspect-ratio: 9 / 16; object-fit: contain; }
-        #ui-layer { position: absolute; background: rgb(245,245,245); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 90%; max-height: 90%; overflow-y: auto; z-index: 10; }
+        #ui-layer { position: absolute; background: rgb(245, 245, 245); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 90%; max-height: 90%; overflow-y: auto; z-index: 10; }
         @media (min-width: 768px) { #ui-layer { flex-direction: row; padding: 25px; gap: 30px; } }
         .column { display: flex; flex-direction: column; min-width: 280px; }
         h2 { margin-top: 0; color: #333; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
@@ -29,13 +29,11 @@
         .custom-upload { background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 10px; }
         .color-control { margin-bottom: 10px; padding: 10px; border: 1px solid #eee; border-radius: 8px; }
         
-        /* Chỉnh lại Slider Group để chứa thêm ô nhập số */
-        .slider-group { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+        /* Cập nhật style cho slider group để chứa ô input */
+        .slider-group { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
         .slider-group label { width: 15px; font-weight: bold; font-size: 11px; }
         input[type=range] { flex: 1; cursor: pointer; }
-        
-        /* Ô nhập số bên cạnh slider */
-        .color-num { width: 45px !important; padding: 2px !important; margin: 0 !important; font-size: 11px; text-align: center; border: 1px solid #ccc; border-radius: 3px; }
+        .rgb-input { width: 45px !important; padding: 2px 4px !important; margin: 0 !important; font-size: 11px; text-align: center; height: 24px; }
 
         .demo-box { height: 50px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-top: 5px; border-radius: 4px; }
         .start-btn { background: #d32f2f; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
@@ -85,16 +83,34 @@
                     <h2>3. CÂN CHỈNH ANAGLYPH</h2>
                     <div class="color-control">
                         <span style="font-weight: bold; color: #d32f2f; font-size: 13px;">KÍNH TRÁI (MÀU ĐỎ)</span>
-                        <div class="slider-group"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"><input type="number" id="r1_num" class="color-num" min="0" max="255" value="255"></div>
-                        <div class="slider-group"><label>G</label><input type="range" id="g1" min="0" max="255" value="131"><input type="number" id="g1_num" class="color-num" min="0" max="255" value="131"></div>
-                        <div class="slider-group"><label>B</label><input type="range" id="b1" min="0" max="255" value="55"><input type="number" id="b1_num" class="color-num" min="0" max="255" value="55"></div>
+                        <div class="slider-group">
+                            <label>R</label><input type="range" id="r1" min="0" max="255" value="255">
+                            <input type="number" id="r1_num" class="rgb-input" min="0" max="255" value="255">
+                        </div>
+                        <div class="slider-group">
+                            <label>G</label><input type="range" id="g1" min="0" max="255" value="131">
+                            <input type="number" id="g1_num" class="rgb-input" min="0" max="255" value="131">
+                        </div>
+                        <div class="slider-group">
+                            <label>B</label><input type="range" id="b1" min="0" max="255" value="55">
+                            <input type="number" id="b1_num" class="rgb-input" min="0" max="255" value="55">
+                        </div>
                         <div id="demo1" class="demo-box">DEMO ĐỎ</div>
                     </div>
                     <div class="color-control">
                         <span style="font-weight: bold; color: #008b8b; font-size: 13px;">KÍNH PHẢI (MÀU XANH)</span>
-                        <div class="slider-group"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"><input type="number" id="r2_num" class="color-num" min="0" max="255" value="0"></div>
-                        <div class="slider-group"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"><input type="number" id="g2_num" class="color-num" min="0" max="255" value="255"></div>
-                        <div class="slider-group"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"><input type="number" id="b2_num" class="color-num" min="0" max="255" value="255"></div>
+                        <div class="slider-group">
+                            <label>R</label><input type="range" id="r2" min="0" max="255" value="0">
+                            <input type="number" id="r2_num" class="rgb-input" min="0" max="255" value="0">
+                        </div>
+                        <div class="slider-group">
+                            <label>G</label><input type="range" id="g2" min="0" max="255" value="255">
+                            <input type="number" id="g2_num" class="rgb-input" min="0" max="255" value="255">
+                        </div>
+                        <div class="slider-group">
+                            <label>B</label><input type="range" id="b2" min="0" max="255" value="255">
+                            <input type="number" id="b2_num" class="rgb-input" min="0" max="255" value="255">
+                        </div>
                         <div id="demo2" class="demo-box">DEMO XANH</div>
                     </div>
                 </div>
@@ -106,49 +122,41 @@
     </div>
 
     <script>
-        // --- BẢO MẬT CONSOLE (PHIÊN BẢN MOBILE-FRIENDLY) ---
+        // --- BẢO MẬT CONSOLE ---
         (function() {
             const check = function() {
-                // Bước 1: Kiểm tra xem có phải điện thoại không
                 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                
                 const threshold = 160;
                 const widthThreshold = window.outerWidth - window.innerWidth > threshold;
                 const heightThreshold = window.outerHeight - window.innerHeight > threshold;
                 const devtools = { open: false };
                 const element = new Image();
-                
-                // Bẫy Image trick (Vẫn chạy tốt trên cả Mobile và PC)
                 Object.defineProperty(element, 'id', {
-                    get: function() {
-                        devtools.open = true;
-                        terminateSession();
-                    }
+                    get: function() { devtools.open = true; terminateSession(); }
                 });
-
                 function terminateSession() {
                     localStorage.removeItem('user_login');
                     document.body.innerHTML = "";
                     window.location.replace("about:blank");
                 }
-
                 console.log(element);
                 console.clear();
-
-                // Bước 2: Chỉ check width/height nếu KHÔNG PHẢI mobile
-                // Nếu là mobile thì chỉ check devtools.open (qua bẫy Image)
                 if (!isMobile) {
-                    if (widthThreshold || heightThreshold || devtools.open) {
-                        terminateSession();
-                    }
+                    if (widthThreshold || heightThreshold || devtools.open) terminateSession();
                 } else {
-                    if (devtools.open) {
-                        terminateSession();
-                    }
+                    if (devtools.open) terminateSession();
                 }
             };
+            setInterval(function() {
+                const start = performance.now();
+                debugger;
+                if (performance.now() - start > 100) window.location.replace("about:blank");
+            }, 500);
+            setInterval(check, 500);
+            window.addEventListener('resize', check);
+        })();
 
-        // --- KIỂM TRA ĐĂNG NHẬP (Giữ nguyên) ---
+        // --- KIỂM TRA ĐĂNG NHẬP ---
         (function() {
             const loginData = JSON.parse(localStorage.getItem('user_login'));
             if (!loginData) {
@@ -170,6 +178,7 @@
             if (typeof gameState !== 'undefined' && gameState === 'PLAYING') saveLog();
         });
 
+        // --- QUẢN LÝ PAUSE ---
         container.addEventListener('mouseleave', () => {
             if (isPaused) return;
             isPaused = true;
@@ -188,8 +197,7 @@
                 backupNodes.forEach(node => container.appendChild(node)); 
                 canvas = document.getElementById('gameCanvas');
                 ctx = canvas.getContext('2d');
-                attachColorEvents(); // Gán lại sự kiện sau khi menu hồi phục
-                document.getElementById('readme-close').onclick = closeReadme;
+                attachColorEvents(); // Gán lại sự kiện cho các input
                 renderSongList();
                 updateLogDisplay();
                 if (gameState === 'PLAYING') {
@@ -220,17 +228,21 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let dingBuffer = null, failBuffer = null;
 
+        // --- NHẬT KÝ ---
         function saveLog() {
             if (score === 0) return;
             let logs = JSON.parse(localStorage.getItem('piano_logs') || "[]");
             let now = new Date();
             let d = String(now.getDate()).padStart(2, '0') + '/' + String(now.getMonth() + 1).padStart(2, '0');
+            let newCount = 1;
+            if (logs.length > 0) {
+                let lastLog = logs[0];
+                newCount = (lastLog.date === d) ? lastLog.count + 1 : 1;
+            }
             let duration = Math.floor((performance.now() - startTime) / 1000);
-            let m = Math.floor(duration / 60);
-            let s = duration % 60;
-            let timeStr = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-            logs.unshift({ date: d, count: logs.length + 1, score: score, duration: timeStr });
-            if (logs.length > 10) logs.pop();
+            let timeStr = String(Math.floor(duration / 60)).padStart(2, '0') + ':' + String(duration % 60).padStart(2, '0');
+            logs.unshift({ date: d, count: newCount, score: score, duration: timeStr });
+            if (logs.length > 20) logs.pop(); 
             localStorage.setItem('piano_logs', JSON.stringify(logs));
             updateLogDisplay();
         }
@@ -269,28 +281,26 @@
         }
         function createExplosion(x, y, color) { for (let i = 0; i < 15; i++) particles.push(new Particle(x, y, color)); }
 
+        // --- QUẢN LÝ MÀU SẮC & ĐỒNG BỘ ---
         let colorRed = {r:255, g:131, b:55}, colorCyan = {r:0, g:255, b:255};
 
-        function loadSavedColors() {
-            const r = localStorage.getItem('anaglyph_red'), c = localStorage.getItem('anaglyph_cyan');
-            if(r) { 
-                colorRed = JSON.parse(r); 
-                ['r1','g1','b1'].forEach(id => {
-                    document.getElementById(id).value = colorRed[id[0]];
-                    document.getElementById(id+'_num').value = colorRed[id[0]];
-                });
-            }
-            if(c) { 
-                colorCyan = JSON.parse(c); 
-                ['r2','g2','b2'].forEach(id => {
-                    document.getElementById(id).value = colorCyan[id[0]];
-                    document.getElementById(id+'_num').value = colorCyan[id[0]];
-                });
-            }
-            updateUIColors();
+        function attachColorEvents() {
+            const ids = ['r1', 'g1', 'b1', 'r2', 'g2', 'b2'];
+            ids.forEach(id => {
+                const slider = document.getElementById(id);
+                const numInput = document.getElementById(id + '_num');
+                if (slider && numInput) {
+                    slider.oninput = () => { numInput.value = slider.value; updateUIColors(); };
+                    numInput.oninput = () => { 
+                        if(numInput.value > 255) numInput.value = 255;
+                        if(numInput.value < 0) numInput.value = 0;
+                        slider.value = numInput.value; 
+                        updateUIColors(); 
+                    };
+                }
+            });
         }
 
-        // Hàm cập nhật đồng bộ Slider và Ô số
         function updateUIColors() {
             colorRed = { 
                 r: document.getElementById('r1').value, 
@@ -302,35 +312,27 @@
                 g: document.getElementById('g2').value, 
                 b: document.getElementById('b2').value 
             };
-            
-            // Cập nhật ô số theo slider
-            ['r1','g1','b1'].forEach(id => document.getElementById(id+'_num').value = document.getElementById(id).value);
-            ['r2','g2','b2'].forEach(id => document.getElementById(id+'_num').value = document.getElementById(id).value);
-
             localStorage.setItem('anaglyph_red', JSON.stringify(colorRed));
             localStorage.setItem('anaglyph_cyan', JSON.stringify(colorCyan));
             document.getElementById('demo1').style.backgroundColor = `rgb(${colorRed.r},${colorRed.g},${colorRed.b})`;
             document.getElementById('demo2').style.backgroundColor = `rgb(${colorCyan.r},${colorCyan.g},${colorCyan.b})`;
         }
 
-        function attachColorEvents() {
-            // Slider thay đổi -> Ô số thay đổi
-            document.querySelectorAll('input[type=range]').forEach(input => {
-                input.addEventListener('input', updateUIColors);
-            });
-            // Ô số thay đổi -> Slider thay đổi
-            document.querySelectorAll('.color-num').forEach(numInput => {
-                numInput.addEventListener('input', (e) => {
-                    let val = parseInt(e.target.value);
-                    if (isNaN(val)) val = 0;
-                    if (val > 255) val = 255;
-                    if (val < 0) val = 0;
-                    e.target.value = val;
-                    const sliderId = e.target.id.replace('_num', '');
-                    document.getElementById(sliderId).value = val;
-                    updateUIColors();
-                });
-            });
+        function loadSavedColors() {
+            const r = localStorage.getItem('anaglyph_red'), c = localStorage.getItem('anaglyph_cyan');
+            if(r) { 
+                colorRed = JSON.parse(r); 
+                document.getElementById('r1').value = document.getElementById('r1_num').value = colorRed.r;
+                document.getElementById('g1').value = document.getElementById('g1_num').value = colorRed.g;
+                document.getElementById('b1').value = document.getElementById('b1_num').value = colorRed.b;
+            }
+            if(c) { 
+                colorCyan = JSON.parse(c); 
+                document.getElementById('r2').value = document.getElementById('r2_num').value = colorCyan.r;
+                document.getElementById('g2').value = document.getElementById('g2_num').value = colorCyan.g;
+                document.getElementById('b2').value = document.getElementById('b2_num').value = colorCyan.b;
+            }
+            updateUIColors();
         }
 
         function renderSongList() {
@@ -405,21 +407,6 @@
         }
 
         window.addEventListener('keydown', (e) => {
-            const isConsoleKey = (
-                e.key === "F12" || 
-                (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "i" || e.key === "J" || e.key === "j" || e.key === "C" || e.key === "c")) ||
-                (e.metaKey && e.altKey && (e.key === "I" || e.key === "i" || e.key === "J" || e.key === "j" || e.key === "C" || e.key === "c")) ||
-                (e.ctrlKey && (e.key === "U" || e.key === "u")) ||
-                (e.metaKey && (e.key === "U" || e.key === "u")) ||
-                (e.ctrlKey && (e.key === "s" || e.key === "S"))
-            );
-
-            if (isConsoleKey) {
-                e.preventDefault();
-                showReadme();
-                return;
-            }
-
             if (gameState === 'PLAYING' && !isPaused) {
                 if (e.key === 'Escape') { exitToMenu(); return; }
                 let idx = ['f', 'g', 'h', 'j'].indexOf(e.key.toLowerCase());
@@ -445,8 +432,7 @@
         function closeReadme() { document.getElementById('readme-modal').style.display = 'none'; document.getElementById('modal-overlay').style.display = 'none'; }
         document.getElementById('readme-close').onclick = closeReadme;
 
-        initSounds(); loadSavedColors(); renderSongList(); updateLogDisplay();
-        attachColorEvents();
+        initSounds(); loadSavedColors(); renderSongList(); updateLogDisplay(); attachColorEvents();
     </script>
 </body>
 </html>
