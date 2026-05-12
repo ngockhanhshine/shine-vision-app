@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Chart - Sloan Training</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Kết nối file auth.js từ thư mục mẹ -->
+    <script src="../auth.js"></script>
+    <style>
+        :root {
+            --primary-red: #ff0000;
+            --bg-color: #ffffff;
+            --text-main: #1a1a1a;
+            --modal-bg: rgba(0, 0, 0, 0.8);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #setup-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+
+        .rule-container { margin-bottom: 30px; }
+        #rule-img { height: 2px; background-color: var(--primary-red); display: block; }
+
+        #scale-value {
+            font-size: 32px; font-weight: bold; color: var(--primary-red);
+            cursor: pointer; border: 2px dashed #ccc; padding: 5px 15px; border-radius: 8px;
+        }
+
+        .start-btn {
+            margin-top: 30px; padding: 12px 40px; font-size: 18px;
+            background: #000; color: #fff; border: none; border-radius: 5px; cursor: pointer;
+        }
+
+        #main-app {
+            display: none; flex-direction: column; width: 100%; height: 100vh;
+        }
+
+        #back-btn {
+            position: absolute; top: 20px; left: 20px;
+            background: none; border: none; font-size: 24px;
+            cursor: pointer; color: #888; z-index: 700;
+        }
+
+        .half { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; }
+        #upper-half { border-bottom: 1px solid #eee; }
+
+        .optotype-row { display: flex; align-items: center; justify-content: center; }
+        .letter-slot { display: flex; justify-content: center; align-items: center; }
+
+        img.letter { height: auto; object-fit: contain; transition: opacity 0.1s; }
+
+        .vision-note {
+            position: absolute; right: 20px; bottom: 10px;
+            font-size: 14px; color: #999; font-weight: bold;
+        }
+
+        .manual-controls {
+            position: absolute; left: 20px; top: 100px; /* Đẩy lên trên, dưới nút Back */
+            display: flex; flex-direction: column; gap: 10px; z-index: 600;
+        }
+
+        .ctrl-btn {
+            width: 45px; height: 45px; border-radius: 10px; border: 1px solid #ddd;
+            background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer; display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 20px;
+        }
+
+        /* Guide Modal Styles */
+        #guide-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-bg); z-index: 2000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #fff; width: 90%; max-width: 600px;
+            padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-height: 80vh; overflow-y: auto; position: relative;
+        }
+
+        .guide-item { margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+        .guide-key { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-weight: bold; }
+
+        @media (max-width: 768px) {
+            #setup-layer, #back-btn, .manual-controls, .vision-note, #lower-half { display: none !important; }
+            #main-app { display: flex !important; }
+            #upper-half { height: 100vh; border: none; }
+            #h-fixed { width: 80vw !important; height: auto !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="setup-layer">
+        <h2>CĂN CHỈNH TỶ LỆ (SCALE)</h2>
+        <p>Lăn chuột (hoặc Ctrl+Lăn) để đoạn thẳng dài đúng 10cm thực tế</p>
+        <div class="rule-container">
+            <div id="rule-img"></div>
+        </div>
+        <div class="scale-control">
+            <span id="scale-value">100%</span>
+        </div>
+        <button class="start-btn" onclick="startApp()">BẮT ĐẦU TẬP</button>
+    </div>
+
+    <div id="main-app">
+        <button id="back-btn" onclick="backToMenu()">←</button>
+        <div id="upper-half" class="half">
+            <img src="images/H.png" id="h-fixed" class="letter">
+            <div class="vision-note" id="upper-label">20/200</div>
+        </div>
+        <div id="lower-half" class="half">
+            <div id="random-row" class="optotype-row"></div>
+            <div class="vision-note" id="lower-label">20/100</div>
+        </div>
+        <div class="manual-controls">
+            <button class="ctrl-btn" onclick="changeLevel(-1)">▲</button>
+            <button class="ctrl-btn" onclick="changeLevel(1)">▼</button>
+        </div>
+    </div>
+
+    <div id="guide-modal" onclick="closeGuide()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 style="margin-top:0; color: #ff0000;">HƯỚNG DẪN SỬ DỤNG</h2>
+            <div id="guide-body"></div>
+            <button class="start-btn" style="width:100%; margin-top:20px;" onclick="closeGuide()">ĐÃ HIỂU</button>
+        </div>
+    </div>
+
+<script>
+    // Chặn thông báo alert từ file auth.js để chuyển hướng âm thầm
+    const originalAlert = window.alert;
+    window.alert = function(msg) {
+        if (msg === "Vui lòng đăng nhập để tiếp tục!") return;
+        originalAlert(msg);
+    };
+
+    function performRedirect() {
+        const fallbackURL = '../index.html';
+        try {
+            window.location.replace(fallbackURL);
+        } catch (e) {
+            window.location.href = fallbackURL;
+        }
+    }
+
+    // Kiểm tra login ngay lập tức và theo dõi thay đổi từ tab khác
+    function validateAccess() {
+        const loginData = JSON.parse(localStorage.getItem('user_login'));
+        const currentTime = new Date().getTime();
+        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+        if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
+            performRedirect();
+            return false;
+        }
+        return true;
+    }
+
+    // Lắng nghe sự kiện storage: Nếu tab khác xóa localStorage (Logout), tab này sẽ tự out
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'user_login' && e.newValue === null) {
+            performRedirect();
+        }
+    });
+
+    // Kiểm tra định kỳ mỗi 2 giây để đảm bảo an toàn tối đa
+    setInterval(validateAccess, 2000);
+
+    validateAccess();
+
+    const ALPHABET = ['C', 'D', 'H', 'K', 'N', 'O', 'P', 'R', 'V', 'Z'];
+    const SLOAN_RATIO_TO_RULE = 0.723; // 7.23cm / 10cm
+    const LEVELS = [200, 160, 125, 100, 80, 63, 50, 40, 32, 25, 20];
+    const STORAGE_KEY = 'shift_chart_scale';
+
+    const readme = {
+        content: [
+            { key: "Lăn chuột", desc: "Thay đổi tỷ lệ Scale (10cm thực tế)." },
+            { key: "Ctrl + Lăn", desc: "Tinh chỉnh Scale chính xác 0.1%." },
+            { key: "Bàn phím (A-Z)", desc: "Nhập 5 chữ cái ở hàng dưới. Chữ sẽ ẩn đi khi ấn." },
+            { key: "Phím ↑ / ↓", desc: "Thay đổi mức thị lực thủ công." },
+            { key: "Tỷ lệ chuẩn", desc: "72.3% (Chữ 20/200 = 7.23cm ứng với thước 10cm)." },
+            { key: "Đăng nhập", desc: "Tài khoản có hiệu lực trong 24 giờ." }
+        ]
+    };
+
+    let currentScale = 100.0;
+    let upperLevelIdx = 0;
+    let currentRandomSet = [];
+    let userInput = [];
+
+    const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+    const feedbackSynth = new Tone.MonoSynth({
+        oscillator: { type: "triangle" },
+        envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 }
+    }).toDestination();
+
+    const setupLayer = document.getElementById('setup-layer');
+    const mainApp = document.getElementById('main-app');
+    const ruleImg = document.getElementById('rule-img');
+    const scaleLabel = document.getElementById('scale-value');
+
+    function init() {
+        const savedScale = localStorage.getItem(STORAGE_KEY);
+        if (savedScale) {
+            currentScale = parseFloat(savedScale);
+        }
+        updateScaleUI();
+        injectGuideContent();
+    }
+
+    function injectGuideContent() {
+        const body = document.getElementById('guide-body');
+        body.innerHTML = readme.content.map(item => `
+            <div class="guide-item">
+                <span class="guide-key">${item.key}</span>: ${item.desc}
+            </div>
+        `).join('');
+    }
+
+    function showUserGuide() {
+        document.getElementById('guide-modal').style.display = 'flex';
+    }
+
+    function closeGuide() {
+        document.getElementById('guide-modal').style.display = 'none';
+    }
+
+    window.addEventListener('keydown', (e) => {
+        const cmdOrCtrl = e.metaKey || e.ctrlKey;
+        const shift = e.shiftKey;
+        
+        const isSave = cmdOrCtrl && e.key.toLowerCase() === 's';
+        const isInspect = cmdOrCtrl && shift && (['I','J','C'].includes(e.key.toUpperCase()));
+        const isF12 = e.key === 'F12';
+        const isViewSource = cmdOrCtrl && e.key.toLowerCase() === 'u';
+
+        if (isSave || isInspect || isF12 || isViewSource) {
+            e.preventDefault();
+            showUserGuide();
+            return false;
+        }
+    });
+
+    window.addEventListener('wheel', (e) => {
+        if (setupLayer.style.display !== 'none') {
+            e.preventDefault();
+            let step = e.ctrlKey ? 0.1 : 1.0;
+            if (e.deltaY < 0) currentScale += step;
+            else currentScale -= step;
+            currentScale = Math.min(Math.max(currentScale, 10), 150);
+            updateScaleUI();
+        }
+    }, { passive: false });
+
+    scaleLabel.addEventListener('click', () => {
+        let val = prompt("Nhập tỷ lệ scale mong muốn (10 - 150):", currentScale);
+        if (val !== null) {
+            let num = parseFloat(val);
+            if (!isNaN(num)) {
+                currentScale = Math.min(Math.max(num, 10), 150);
+                updateScaleUI();
+            }
+        }
+    });
+
+    function updateScaleUI() {
+        const baseWidth = 378; // ~10cm at 96dpi
+        ruleImg.style.width = (baseWidth * (currentScale / 100)) + "px";
+        scaleLabel.innerText = currentScale.toFixed(1) + "%";
+        localStorage.setItem(STORAGE_KEY, currentScale);
+    }
+
+    async function startApp() {
+        await Tone.start();
+        setupLayer.style.display = 'none';
+        mainApp.style.display = 'flex';
+        renderGame();
+    }
+
+    function backToMenu() {
+        mainApp.style.display = 'none';
+        setupLayer.style.display = 'flex';
+    }
+
+    function getLevelSize(denominator) {
+        const baseWidth = 378;
+        let ruleWidthPx = baseWidth * (currentScale / 100);
+        let size20_200 = ruleWidthPx * SLOAN_RATIO_TO_RULE;
+        return size20_200 * (denominator / 200);
+    }
+
+    function renderGame() {
+        const upperDenom = LEVELS[upperLevelIdx];
+        const lowerIdx = Math.min(upperLevelIdx + 1, LEVELS.length - 1);
+        const lowerDenom = LEVELS[lowerIdx];
+
+        const hFixed = document.getElementById('h-fixed');
+        const hSize = getLevelSize(upperDenom);
+        hFixed.style.height = hSize + "px";
+        hFixed.style.visibility = 'visible';
+        document.getElementById('upper-label').innerText = `20/${upperDenom}`;
+
+        const randomContainer = document.getElementById('random-row');
+        randomContainer.innerHTML = '';
+        currentRandomSet = [];
+        userInput = [];
+
+        const lowerSize = getLevelSize(lowerDenom);
+        const maxLetterSize = getLevelSize(200);
+        const slotWidth = maxLetterSize * 1.2; 
+
+        for(let i=0; i<5; i++) {
+            let char = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+            currentRandomSet.push(char);
+            
+            let slot = document.createElement('div');
+            slot.className = 'letter-slot';
+            slot.style.width = slotWidth + "px";
+
+            let img = document.createElement('img');
+            img.src = `images/${char}.png`; 
+            img.className = 'letter';
+            img.style.height = lowerSize + "px";
+            img.style.visibility = 'visible';
+            img.onerror = function() { this.style.display = 'none'; };
+            
+            slot.appendChild(img);
+            randomContainer.appendChild(slot);
+        }
+        document.getElementById('lower-label').innerText = `20/${lowerDenom}`;
+    }
+
+    function changeLevel(dir) {
+        upperLevelIdx += dir;
+        upperLevelIdx = Math.max(0, Math.min(upperLevelIdx, LEVELS.length - 2));
+        renderGame();
+    }
+
+    function playFeedback(type) {
+        if (type === 'ting') {
+            feedbackSynth.triggerAttackRelease("B5", "16n");
+        } else if (type === 'fail') {
+            const lowOsc = new Tone.Oscillator("F2", "sawtooth").toDestination();
+            lowOsc.start().stop("+0.15");
+        } else if (type === 'congrat') {
+            const now = Tone.now();
+            synth.triggerAttackRelease("C4", "8n", now);
+            synth.triggerAttackRelease("E4", "8n", now + 0.1);
+            synth.triggerAttackRelease("G4", "8n", now + 0.2);
+            synth.triggerAttackRelease("C5", "4n", now + 0.3);
+        }
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (mainApp.style.display === 'flex') {
+            const key = e.key.toUpperCase();
+            if (e.key === "ArrowUp") changeLevel(-1);
+            if (e.key === "ArrowDown") changeLevel(1);
+
+            if (ALPHABET.includes(key) && userInput.length < 5) {
+                const currentIndex = userInput.length;
+                const currentImgs = document.querySelectorAll('#random-row .letter');
+                
+                if (currentImgs[currentIndex]) {
+                    currentImgs[currentIndex].style.visibility = 'hidden';
+                }
+
+                if (key === currentRandomSet[currentIndex]) {
+                    playFeedback('ting');
+                } else {
+                    playFeedback('fail');
+                }
+
+                userInput.push(key);
+                if (userInput.length === 5) {
+                    setTimeout(checkAnswer, 150);
+                }
+            }
+        }
+    });
+
+    function checkAnswer() {
+        let correct = 0;
+        for (let i = 0; i < 5; i++) {
+            if (userInput[i] === currentRandomSet[i]) correct++;
+        }
+        if (correct >= 4) {
+            playFeedback('congrat');
+            if (upperLevelIdx < LEVELS.length - 2) {
+                setTimeout(() => {
+                    upperLevelIdx++;
+                    renderGame();
+                }, 600);
+                return;
+            }
+        }
+        setTimeout(renderGame, 500);
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
