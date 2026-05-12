@@ -277,7 +277,12 @@
                 </a>
                 <a href="schulte/index.html" class="app-card">
                     <img src="assets/schulte.png" alt="Schulte Table">
-                    <div class="app-title">Schulte Table - Tìm Số</div>
+                    <div class="app-title">Schulte Table</div>
+                </a>
+                <!-- App mới thêm ở đây -->
+                <a href="randomtext/index.html" class="app-card">
+                    <img src="assets/rtext.png" alt="Random Text">
+                    <div class="app-title">Thẻ chữ Ngẫu nhiên</div>
                 </a>
             </div>
 
@@ -303,37 +308,51 @@
     </div>
 
     <script>
-        // --- CHỐNG MỞ CONSOLE (DEBUGGER LOGOUT & XÓA CODE) ---
+        // --- CHỐNG MỞ CONSOLE TỐI ƯU CHO IPHONE/SAFARI ---
         (function() {
-            function detectDevTools() {
-                const start = performance.now();
-                debugger; 
-                const end = performance.now();
-                if (end - start > 100) { 
-                    // Xóa sạch dấu vết ngay lập tức
-                    document.body.innerHTML = ""; 
-                    localStorage.removeItem('user_login');
-                    window.location.replace('../index.html');
-                }
-            }
-            setInterval(detectDevTools, 500); // Tăng tần suất kiểm tra (0.5s)
-            detectDevTools();
-        })();
+            const check = function() {
+                const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+                const threshold = 160;
+                const devtools = { open: false };
+                const element = new Image();
+                
+                Object.defineProperty(element, 'id', {
+                    get: function() {
+                        devtools.open = true;
+                        terminateSession();
+                    }
+                });
 
-        // Bảo mật: Phát hiện Console
-        (function() {
-            function detect() {
+                function terminateSession() {
+                    localStorage.removeItem('user_login');
+                    document.body.innerHTML = "";
+                    window.location.replace("about:blank");
+                }
+
+                console.log(element);
+                console.clear();
+
+                if (!isMobile) {
+                    const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+                    const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+                    if (widthThreshold || heightThreshold || devtools.open) {
+                        terminateSession();
+                    }
+                } else {
+                    if (devtools.open) terminateSession();
+                }
+            };
+
+            setInterval(function() {
                 const start = performance.now();
                 debugger;
-                if (performance.now() - start > 100) {
-                    if (localStorage.getItem('user_login')) {
-                        localStorage.removeItem('user_login');
-                        location.reload();
-                    }
+                if (performance.now() - start > 200) { 
+                    window.location.replace("about:blank");
                 }
-            }
-            detect();
-            setInterval(detect, 500);
+            }, 1000);
+
+            setInterval(check, 1000);
+            window.addEventListener('resize', check);
         })();
 
         function logout() {
@@ -354,21 +373,16 @@
             
             if (!user || !pass) return;
 
-            // Hiện trạng thái đang tải
             document.getElementById('login-btn').style.display = 'none';
             document.getElementById('loading-text').style.display = 'block';
 
             try {
-                // Gọi hàm login từ auth.js
                 const success = await handleLogin(user, pass);
-                
-                // Nếu không thành công (sai pass hoặc lỗi), phải hiện lại nút bấm
                 if (!success) {
                     document.getElementById('login-btn').style.display = 'block';
                     document.getElementById('loading-text').style.display = 'none';
                 }
             } catch (e) {
-                // Xử lý lỗi hệ thống
                 document.getElementById('login-btn').style.display = 'block';
                 document.getElementById('loading-text').style.display = 'none';
             }
