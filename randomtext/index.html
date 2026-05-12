@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Text App</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            display: flex; flex-direction: column;
+            background-color: white; font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #display-container {
+            flex: 1; display: flex; justify-content: center;
+            align-items: center; text-align: center; padding: 20px;
+            cursor: pointer;
+        }
+        #random-text { word-wrap: break-word; max-width: 90%; line-height: 1.4; }
+        #controls {
+            padding: 20px; background: #f9f9f9; border-top: 1px solid #ddd;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+        .btn { width: 45px; height: 45px; font-size: 24px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; }
+        #size-input { width: 70px; height: 40px; text-align: center; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- Gọi file chứa dữ liệu -->
+    <script src="source.js"></script>
+
+    <div id="display-container" onclick="loadRandomText()">
+        <div id="random-text">Đang tải dữ liệu...</div>
+    </div>
+
+    <div id="controls">
+        <button class="btn" onclick="changeSize(-2)">-</button>
+        <input type="number" id="size-input" value="30" onchange="updateSizeFromInput()">
+        <span style="font-weight: bold;">px</span>
+        <button class="btn" onclick="changeSize(2)">+</button>
+    </div>
+
+    <script>
+        const textDisplay = document.getElementById('random-text');
+        const sizeInput = document.getElementById('size-input');
+        let currentSize = 30;
+
+        // Hàm lưu kích thước vào LocalStorage
+        function saveSize(size) {
+            localStorage.setItem('savedFontSize', size);
+        }
+
+        // Hàm lấy kích thước từ LocalStorage khi khởi động
+        function getSavedSize() {
+            const saved = localStorage.getItem('savedFontSize');
+            if (saved) {
+                currentSize = parseInt(saved);
+            }
+        }
+
+        function loadRandomText() {
+            if (typeof dataSource !== 'undefined' && dataSource.length > 0) {
+                const randomIndex = Math.floor(Math.random() * dataSource.length);
+                textDisplay.innerText = dataSource[randomIndex];
+            } else {
+                textDisplay.innerText = "Không tìm thấy dữ liệu trong source.js";
+            }
+        }
+
+        function updateDisplay() {
+            textDisplay.style.fontSize = currentSize + "px";
+            sizeInput.value = currentSize;
+            saveSize(currentSize); // Lưu lại mỗi khi có thay đổi
+        }
+
+        function changeSize(delta) {
+            currentSize += delta;
+            if (currentSize < 5) currentSize = 5;
+            updateDisplay();
+        }
+
+        function updateSizeFromInput() {
+            currentSize = parseInt(sizeInput.value) || 30;
+            updateDisplay();
+        }
+
+        // Khởi tạo app
+        getSavedSize();     // 1. Kiểm tra xem có cỡ chữ cũ không
+        updateDisplay();    // 2. Hiển thị lên màn hình
+        loadRandomText();   // 3. Hiển thị chữ ngẫu nhiên
+    </script>
+</body>
+</html>
