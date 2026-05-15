@@ -54,7 +54,7 @@
         .mobile-nav-group {
             position: absolute;
             bottom: 40px;
-            display: none; /* Ẩn mặc định trên PC */
+            display: none; 
             flex-direction: column;
             gap: 15px;
             z-index: 150;
@@ -92,7 +92,6 @@
             z-index: 100;
         }
 
-        /* LOGIC QUAN TRỌNG: Giao thoa màu đen */
         .shape-container {
             position: absolute;
             display: flex;
@@ -101,7 +100,11 @@
             top: 50%;
             left: 50%;
             pointer-events: none;
-            mix-blend-mode: multiply; /* Điểm chồng nhau sẽ thành màu đen */
+            mix-blend-mode: multiply; 
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            will-change: transform;
+            z-index: 2;
         }
 
         .dot {
@@ -117,25 +120,6 @@
             50% { opacity: 0; }
         }
 
-        .shape-container {
-            position: absolute;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            top: 50%;
-            left: 50%;
-            pointer-events: none;
-            
-            /* Chế độ hòa trộn */
-            mix-blend-mode: multiply; 
-            
-            /* Ép Safari dùng GPU để tính toán màu sắc chính xác */
-            transform-style: preserve-3d;
-            -webkit-transform-style: preserve-3d;
-            will-change: transform;
-            z-index: 2;
-        }
-
         .circle-outer, .circle-inner {
             border-style: solid;
             border-radius: 50%;
@@ -144,7 +128,6 @@
             align-items: center;
             box-sizing: border-box;
             position: absolute;
-            /* Đảm bảo màu sắc không bị nhạt trên iOS */
             -webkit-print-color-adjust: exact;
         }
 
@@ -178,8 +161,6 @@
             }
             body.training-mode #controls { transform: translateX(100%); }
             body.training-mode #game-stage { transform: translateX(0); }
-            
-            /* Hiện nút trên Mobile */
             .mobile-nav-group { display: flex; }
         }
 
@@ -216,6 +197,16 @@
             cursor: pointer; 
             height: 25px; 
             touch-action: pan-y; 
+        }
+
+        /* Thêm style cho ô input số RGB */
+        .rgb-num {
+            width: 45px;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 12px;
         }
         
         .demo-box { color: white; text-align: center; padding: 8px; font-weight: bold; border-radius: 6px; margin-top: 5px; font-size: 12px; text-transform: uppercase; }
@@ -382,7 +373,7 @@
         </div>
 
         <div id="auto-move-section" class="control-group">
-            <label>AUTO MOVE (DI CHUYỂN TỰ ĐỘNG)</label>
+            <label>AUTO MOVE (DI CHUYỂY TỰ ĐỘNG)</label>
             <div class="auto-move-grid">
                 <div></div><div style="text-align:center; font-size:10px;">DỌC (Y)</div><div style="text-align:center; font-size:10px;">NGANG (X)</div>
                 <div style="font-size:11px;">TỪ:</div>
@@ -401,19 +392,45 @@
 
         <button class="swap-btn" onclick="swapColors()">Đổi màu nhanh</button>
 
+        <!-- PHẦN MÀU TRÁI - ĐÃ THÊM INPUT SỐ -->
         <div class="control-group">
             <label id="label-l">MÀU HÌNH TRÁI</label>
-            <div class="slider-row"><span class="rgb-label">R</span><input type="range" id="r-l" min="0" max="255" value="0"></div>
-            <div class="slider-row"><span class="rgb-label">G</span><input type="range" id="g-l" min="0" max="255" value="255"></div>
-            <div class="slider-row"><span class="rgb-label">B</span><input type="range" id="b-l" min="0" max="255" value="255"></div>
+            <div class="slider-row">
+                <span class="rgb-label">R</span>
+                <input type="range" id="r-l" min="0" max="255" value="0">
+                <input type="number" id="num-r-l" class="rgb-num" min="0" max="255" value="0">
+            </div>
+            <div class="slider-row">
+                <span class="rgb-label">G</span>
+                <input type="range" id="g-l" min="0" max="255" value="255">
+                <input type="number" id="num-g-l" class="rgb-num" min="0" max="255" value="255">
+            </div>
+            <div class="slider-row">
+                <span class="rgb-label">B</span>
+                <input type="range" id="b-l" min="0" max="255" value="255">
+                <input type="number" id="num-b-l" class="rgb-num" min="0" max="255" value="255">
+            </div>
             <div class="demo-box" id="demo-l">Màu hiện tại</div>
         </div>
 
+        <!-- PHẦN MÀU PHẢI - ĐÃ THÊM INPUT SỐ -->
         <div class="control-group" id="color-right-group">
             <label>MÀU HÌNH PHẢI</label>
-            <div class="slider-row"><span class="rgb-label">R</span><input type="range" id="r-r" min="0" max="255" value="255"></div>
-            <div class="slider-row"><span class="rgb-label">G</span><input type="range" id="g-r" min="0" max="255" value="200"></div>
-            <div class="slider-row"><span class="rgb-label">B</span><input type="range" id="b-r" min="0" max="255" value="0"></div>
+            <div class="slider-row">
+                <span class="rgb-label">R</span>
+                <input type="range" id="r-r" min="0" max="255" value="255">
+                <input type="number" id="num-r-r" class="rgb-num" min="0" max="255" value="255">
+            </div>
+            <div class="slider-row">
+                <span class="rgb-label">G</span>
+                <input type="range" id="g-r" min="0" max="255" value="200">
+                <input type="number" id="num-g-r" class="rgb-num" min="0" max="255" value="200">
+            </div>
+            <div class="slider-row">
+                <span class="rgb-label">B</span>
+                <input type="range" id="b-r" min="0" max="255" value="0">
+                <input type="number" id="num-b-r" class="rgb-num" min="0" max="255" value="0">
+            </div>
             <div class="demo-box" id="demo-r">Màu hiện tại</div>
         </div>
 
@@ -426,7 +443,7 @@
     <script src="readme.js"></script>
 
     <script>
-// Kiểm tra tên miền chính chủ
+        // Kiểm tra tên miền chính chủ
         (function() {
             const allowedDomain = "shinevisionapp.com";
             if (window.location.hostname !== allowedDomain && !window.location.hostname.endsWith("." + allowedDomain)) {
@@ -435,114 +452,82 @@
             }
         })();
 
-        // --- BẢO MẬT CONSOLE (ĐÃ CẬP NHẬT CHỐNG LỖI MOBILE) ---
         (function() {
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
             const check = function() {
                 const devtools = { open: false };
                 const element = new Image();
-                Object.defineProperty(element, 'id', {
-                    get: function() {
-                        devtools.open = true;
-                        terminateSession();
-                    }
-                });
-
-                function terminateSession() {
-                    localStorage.removeItem('user_login');
-                    window.location.replace("about:blank");
-                    document.body.innerHTML = "";
-                }
-
-                console.log(element);
-                console.clear();
-
-                // Lớp 1: Chỉ kiểm tra kích thước màn hình nếu KHÔNG PHẢI điện thoại
-                // (Để tránh việc bàn phím ảo hiện lên làm thay đổi innerHeight gây lỗi)
+                Object.defineProperty(element, 'id', { get: function() { devtools.open = true; terminateSession(); } });
+                function terminateSession() { localStorage.removeItem('user_login'); window.location.replace("about:blank"); document.body.innerHTML = ""; }
+                console.log(element); console.clear();
                 if (!isMobile) {
                     const threshold = 160;
-                    const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-                    const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-                    if (widthThreshold || heightThreshold) {
-                        terminateSession();
-                    }
+                    if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) terminateSession();
                 }
-
-                // Lớp 2: Kiểm tra bẫy Console (Vẫn chạy trên cả mobile & desktop)
-                if (devtools.open) {
-                    terminateSession();
-                }
+                if (devtools.open) terminateSession();
             };
-
-            // Lớp 3: Bẫy Debugger - Tăng thời gian kiểm tra lên 500ms để mượt hơn
             setInterval(function() {
                 const start = performance.now();
                 debugger;
-                if (performance.now() - start > 100) { 
-                    window.location.replace("about:blank");
-                }
+                if (performance.now() - start > 100) window.location.replace("about:blank");
             }, 500);
-
-            setInterval(check, 1000); // Kiểm tra mỗi giây 1 lần thay vì 100ms để tiết kiệm pin
+            setInterval(check, 1000);
             window.addEventListener('resize', check);
         })();
 
-        /* =========================================================
-           MÃ KIỂM TRA ĐĂNG NHẬP (CẬP NHẬT ĐƯỜNG DẪN THƯ MỤC MẸ)
-           ========================================================= */
         (function() {
             function checkAccess() {
                 const loginData = JSON.parse(localStorage.getItem('user_login'));
                 const currentTime = new Date().getTime();
                 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
                 if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
                     localStorage.removeItem('user_login');
-                    if(confirm("Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập!\nNhấn OK để quay về trang chủ.")) {
-                        window.location.href = '../index.html'; // Đi ngược ra thư mục mẹ
-                    } else {
-                        window.location.href = '../index.html'; 
-                    }
+                    window.location.href = '../index.html';
                 }
             }
             checkAccess();
-            window.addEventListener('storage', (e) => {
-                if (e.key === 'user_login' && e.newValue === null) {
-                    window.location.href = '../index.html';
-                }
-            });
+            window.addEventListener('storage', (e) => { if (e.key === 'user_login' && e.newValue === null) window.location.href = '../index.html'; });
             window.onfocus = () => checkAccess();
         })();
 
-        /* =========================================================
-           GIỮ NGUYÊN TOÀN BỘ LOGIC GỐC
-           ========================================================= */
+        // --- LOGIC GAME & ĐỒNG BỘ MÀU ---
         let mode = 1;
         let isRecording = false;
         let startTime, timerInterval;
         let trainingLogs = JSON.parse(localStorage.getItem('trainingLogs')) || [];
         let isTouchingSlider = false;
-
         let isAutoMoving = false;
         let autoMoveInterval = null;
         let movingToTarget = true;
 
         const sliders = document.querySelectorAll('input[type="range"]');
-
         sliders.forEach(slider => {
             slider.addEventListener('touchstart', () => { isTouchingSlider = true; }, {passive: true});
             slider.addEventListener('touchend', () => { isTouchingSlider = false; }, {passive: true});
             slider.addEventListener('input', updateStyles);
         });
 
+        // Lắng nghe sự kiện trên các ô input số RGB
+        const numInputs = document.querySelectorAll('.rgb-num');
+        numInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                let val = parseInt(e.target.value);
+                if (isNaN(val)) val = 0;
+                if (val < 0) val = 0;
+                if (val > 255) val = 255;
+                e.target.value = val;
+                
+                // Tìm slider tương ứng để đồng bộ
+                const sliderId = e.target.id.replace('num-', '');
+                document.getElementById(sliderId).value = val;
+                updateStyles();
+            });
+        });
+
         window.addEventListener('contextmenu', e => e.preventDefault());
 
         window.addEventListener('keydown', e => {
-            if (e.key === "F12" || (e.ctrlKey && e.key === "s")) {
-                e.preventDefault();
-                openReadme();
-            }
+            if (e.key === "F12" || (e.ctrlKey && e.key === "s")) { e.preventDefault(); openReadme(); }
             if (e.key === "Escape") closeReadme();
             if (e.key === "ArrowLeft") { e.preventDefault(); stepSlider('slider-h-space', -2); }
             if (e.key === "ArrowRight") { e.preventDefault(); stepSlider('slider-h-space', 2); }
@@ -562,7 +547,6 @@
             container.innerHTML = (typeof readmeContent !== 'undefined') ? readmeContent : "<h2>Hướng dẫn</h2><p>Vui lòng kiểm tra file readme.js</p>";
             document.getElementById('readme-modal').style.display = 'flex';
         }
-
         function closeReadme() { document.getElementById('readme-modal').style.display = 'none'; }
 
         let touchStartX = 0;
@@ -610,9 +594,7 @@
         }
 
         function clearLog() {
-            if(confirm("Xóa toàn bộ nhật ký?")) {
-                trainingLogs = []; localStorage.removeItem('trainingLogs'); renderLogs();
-            }
+            if(confirm("Xóa toàn bộ nhật ký?")) { trainingLogs = []; localStorage.removeItem('trainingLogs'); renderLogs(); }
         }
 
         function stepSlider(id, step) {
@@ -627,6 +609,13 @@
             const temp = { r: rL.value, g: gL.value, b: bL.value };
             rL.value = rR.value; gL.value = gR.value; bL.value = bR.value;
             rR.value = temp.r; gR.value = temp.g; bR.value = temp.b;
+            updateStyles();
+        }
+
+        function setMode(m) {
+            mode = m;
+            document.getElementById('btn-1').classList.toggle('active', m === 1);
+            document.getElementById('btn-2').classList.toggle('active', m === 2);
             updateStyles();
         }
 
@@ -668,9 +657,6 @@
             autoMoveInterval = null;
             document.querySelectorAll('.shape-container').forEach(el => el.style.transition = 'none');
         }
-
-        document.getElementById('game-stage').addEventListener('mouseleave', () => { if (isAutoMoving) clearTimeout(autoMoveInterval); });
-        document.getElementById('game-stage').addEventListener('mouseenter', () => { if (isAutoMoving) startAutoMoveLoop(); });
 
         function saveData() {
             const settings = {
@@ -715,8 +701,25 @@
             const size = parseInt(document.getElementById('slider-size').value);
             const hSpace = parseInt(document.getElementById('slider-h-space').value);
             const vSpace = parseInt(document.getElementById('slider-v-space').value);
-            const colorL = `rgb(${document.getElementById('r-l').value}, ${document.getElementById('g-l').value}, ${document.getElementById('b-l').value})`;
-            const colorR = `rgb(${document.getElementById('r-r').value}, ${document.getElementById('g-r').value}, ${document.getElementById('b-r').value})`;
+            
+            // Lấy giá trị màu
+            const rL = document.getElementById('r-l').value;
+            const gL = document.getElementById('g-l').value;
+            const bL = document.getElementById('b-l').value;
+            const rR = document.getElementById('r-r').value;
+            const gR = document.getElementById('g-r').value;
+            const bR = document.getElementById('b-r').value;
+
+            // Đồng bộ sang ô input số
+            document.getElementById('num-r-l').value = rL;
+            document.getElementById('num-g-l').value = gL;
+            document.getElementById('num-b-l').value = bL;
+            document.getElementById('num-r-r').value = rR;
+            document.getElementById('num-g-r').value = gR;
+            document.getElementById('num-b-r').value = bR;
+
+            const colorL = `rgb(${rL}, ${gL}, ${bL})`;
+            const colorR = `rgb(${rR}, ${gR}, ${bR})`;
 
             document.getElementById('val-size').innerText = size;
             document.getElementById('val-h-space').innerText = hSpace;
@@ -734,14 +737,16 @@
 
             configs.forEach(item => {
                 const outEl = document.getElementById(item.outer), inEl = document.getElementById(item.inner), crossEl = document.getElementById(item.cross);
-                outEl.style.width = outEl.style.height = size + 'px';
-                outEl.style.borderWidth = thickness + 'px';
-                outEl.style.borderColor = item.color;
-                inEl.style.width = inEl.style.height = Math.round(size * 0.55) + 'px';
-                inEl.style.borderWidth = thickness + 'px';
-                inEl.style.borderColor = item.color;
-                crossEl.style.fontSize = Math.round(size * 0.4) + 'px';
-                crossEl.style.color = item.color;
+                if(outEl) {
+                    outEl.style.width = outEl.style.height = size + 'px';
+                    outEl.style.borderWidth = thickness + 'px';
+                    outEl.style.borderColor = item.color;
+                    inEl.style.width = inEl.style.height = Math.round(size * 0.55) + 'px';
+                    inEl.style.borderWidth = thickness + 'px';
+                    inEl.style.borderColor = item.color;
+                    crossEl.style.fontSize = Math.round(size * 0.4) + 'px';
+                    crossEl.style.color = item.color;
+                }
             });
 
             const leftCont = document.getElementById('container-left'), rightCont = document.getElementById('container-right');
@@ -750,35 +755,21 @@
                 document.getElementById('spacing-controls').style.opacity = '0.3';
                 document.getElementById('spacing-controls').style.pointerEvents = 'none';
                 document.getElementById('color-right-group').style.display = 'none';
-                document.querySelector('.swap-btn').style.display = 'none';
-                document.getElementById('label-l').innerText = "MÀU HÌNH";
-                document.getElementById('auto-move-section').style.display = 'none';
-                document.querySelectorAll('.mobile-nav-group').forEach(el => el.style.display = 'none');
             } else {
                 rightCont.style.display = 'flex';
                 leftCont.style.transform = `translate(calc(-50% - ${hSpace/2}px), calc(-50% - ${vSpace/2}px))`;
                 rightCont.style.transform = `translate(calc(-50% + ${hSpace/2}px), calc(-50% + ${vSpace/2}px))`;
                 document.getElementById('spacing-controls').style.opacity = '1';
-                document.getElementById('spacing-controls').style.pointerEvents = 'all';
+                document.getElementById('spacing-controls').style.pointerEvents = 'auto';
                 document.getElementById('color-right-group').style.display = 'block';
-                document.querySelector('.swap-btn').style.display = 'block';
-                document.getElementById('label-l').innerText = "MÀU HÌNH TRÁI";
-                document.getElementById('auto-move-section').style.display = 'block';
-                if(window.innerWidth <= 768) document.querySelectorAll('.mobile-nav-group').forEach(el => el.style.display = 'flex');
             }
             saveData();
         }
 
-        function setMode(m) {
-            mode = m; 
-            document.getElementById('btn-1').classList.toggle('active', m === 1);
-            document.getElementById('btn-2').classList.toggle('active', m === 2);
-            updateStyles();
-        }
-
         loadData();
-        renderLogs();
         setMode(mode);
+        renderLogs();
+        updateStyles();
     </script>
 </body>
 </html>
