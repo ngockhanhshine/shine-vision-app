@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shift Chart - Sloan Training</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <!-- Kết nối file auth.js từ thư mục mẹ -->
     <script src="../auth.js"></script>
     <style>
         :root {
@@ -13,6 +12,7 @@
             --bg-color: #ffffff;
             --text-main: #1a1a1a;
             --modal-bg: rgba(0, 0, 0, 0.8);
+            --accent-blue: #007AFF;
         }
 
         body, html {
@@ -23,6 +23,7 @@
             user-select: none;
         }
 
+        /* --- Màn hình Căn chỉnh --- */
         #setup-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #fff; z-index: 1000;
@@ -42,6 +43,7 @@
             background: #000; color: #fff; border: none; border-radius: 5px; cursor: pointer;
         }
 
+        /* --- Màn hình Tập luyện --- */
         #main-app {
             display: none; flex-direction: column; width: 100%; height: 100vh;
         }
@@ -65,19 +67,28 @@
             font-size: 14px; color: #999; font-weight: bold;
         }
 
+        /* Nút điều hướng ▲▼ bên trái */
         .manual-controls {
-            position: absolute; left: 20px; top: 100px; /* Đẩy lên trên, dưới nút Back */
+            position: absolute; left: 20px; top: 100px;
             display: flex; flex-direction: column; gap: 10px; z-index: 600;
+        }
+
+        /* Nút Audio Tutorial bên phải */
+        .audio-controls {
+            position: absolute; top: 20px; right: 20px;
+            display: flex; gap: 10px; z-index: 800;
         }
 
         .ctrl-btn {
             width: 45px; height: 45px; border-radius: 10px; border: 1px solid #ddd;
             background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             cursor: pointer; display: flex; justify-content: center; align-items: center;
-            font-weight: bold; font-size: 20px;
+            font-weight: bold; font-size: 18px; color: #555;
         }
+        .ctrl-btn:hover { background: #f9f9f9; color: var(--accent-blue); }
+        .ctrl-btn.playing { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
 
-        /* Guide Modal Styles */
+        /* Guide Modal */
         #guide-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--modal-bg); z-index: 2000;
@@ -95,7 +106,7 @@
         .guide-key { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-weight: bold; }
 
         @media (max-width: 768px) {
-            #setup-layer, #back-btn, .manual-controls, .vision-note, #lower-half { display: none !important; }
+            #setup-layer, #back-btn, .manual-controls, .audio-controls, .vision-note, #lower-half { display: none !important; }
             #main-app { display: flex !important; }
             #upper-half { height: 100vh; border: none; }
             #h-fixed { width: 80vw !important; height: auto !important; }
@@ -118,14 +129,23 @@
 
     <div id="main-app">
         <button id="back-btn" onclick="backToMenu()">←</button>
+
+        <div class="audio-controls">
+            <button class="ctrl-btn" id="btn-audio-1" onclick="playTutorial(1)" title="Hướng dẫn 1 (Phím 1)"><i class="fa-solid fa-volume-high"></i> 1</button>
+            <button class="ctrl-btn" id="btn-audio-2" onclick="playTutorial(2)" title="Hướng dẫn 2 (Phím 2)"><i class="fa-solid fa-volume-high"></i> 2</button>
+            <button class="ctrl-btn" id="btn-audio-3" onclick="playTutorial(3)" title="Hướng dẫn 3 (Phím 3)"><i class="fa-solid fa-volume-high"></i> 3</button>
+        </div>
+
         <div id="upper-half" class="half">
             <img src="images/H.png" id="h-fixed" class="letter">
             <div class="vision-note" id="upper-label">20/200</div>
         </div>
+
         <div id="lower-half" class="half">
             <div id="random-row" class="optotype-row"></div>
             <div class="vision-note" id="lower-label">20/100</div>
         </div>
+
         <div class="manual-controls">
             <button class="ctrl-btn" onclick="changeLevel(-1)">▲</button>
             <button class="ctrl-btn" onclick="changeLevel(1)">▼</button>
@@ -140,8 +160,10 @@
         </div>
     </div>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <script>
-    // Chặn thông báo alert từ file auth.js để chuyển hướng âm thầm
+    // --- BẢO MẬT & AUTH ---
     const originalAlert = window.alert;
     window.alert = function(msg) {
         if (msg === "Vui lòng đăng nhập để tiếp tục!") return;
@@ -150,40 +172,24 @@
 
     function performRedirect() {
         const fallbackURL = '../index.html';
-        try {
-            window.location.replace(fallbackURL);
-        } catch (e) {
-            window.location.href = fallbackURL;
-        }
+        try { window.location.replace(fallbackURL); } catch (e) { window.location.href = fallbackURL; }
     }
 
-    // Kiểm tra login ngay lập tức và theo dõi thay đổi từ tab khác
     function validateAccess() {
         const loginData = JSON.parse(localStorage.getItem('user_login'));
         const currentTime = new Date().getTime();
         const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-        if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
-            performRedirect();
-            return false;
-        }
+        if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) { performRedirect(); return false; }
         return true;
     }
 
-    // Lắng nghe sự kiện storage: Nếu tab khác xóa localStorage (Logout), tab này sẽ tự out
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'user_login' && e.newValue === null) {
-            performRedirect();
-        }
-    });
-
-    // Kiểm tra định kỳ mỗi 2 giây để đảm bảo an toàn tối đa
+    window.addEventListener('storage', (e) => { if (e.key === 'user_login' && e.newValue === null) performRedirect(); });
     setInterval(validateAccess, 2000);
-
     validateAccess();
 
+    // --- CONFIG & APP LOGIC ---
     const ALPHABET = ['C', 'D', 'H', 'K', 'N', 'O', 'P', 'R', 'V', 'Z'];
-    const SLOAN_RATIO_TO_RULE = 0.723; // 7.23cm / 10cm
+    const SLOAN_RATIO_TO_RULE = 0.723;
     const LEVELS = [200, 160, 125, 100, 80, 63, 50, 40, 32, 25, 20];
     const STORAGE_KEY = 'shift_chart_scale';
 
@@ -191,10 +197,10 @@
         content: [
             { key: "Lăn chuột", desc: "Thay đổi tỷ lệ Scale (10cm thực tế)." },
             { key: "Ctrl + Lăn", desc: "Tinh chỉnh Scale chính xác 0.1%." },
-            { key: "Bàn phím (A-Z)", desc: "Nhập 5 chữ cái ở hàng dưới. Chữ sẽ ẩn đi khi ấn." },
+            { key: "Phím A-Z", desc: "Nhập 5 chữ cái hàng dưới. Chữ ẩn ngay khi ấn." },
             { key: "Phím ↑ / ↓", desc: "Thay đổi mức thị lực thủ công." },
-            { key: "Tỷ lệ chuẩn", desc: "72.3% (Chữ 20/200 = 7.23cm ứng với thước 10cm)." },
-            { key: "Đăng nhập", desc: "Tài khoản có hiệu lực trong 24 giờ." }
+            { key: "Phím 1, 2, 3", desc: "Nghe Audio hướng dẫn tập luyện." },
+            { key: "Tỉ lệ 72.3%", desc: "Chữ 20/200 = 7.23cm ứng với thước 10cm." }
         ]
     };
 
@@ -202,6 +208,13 @@
     let upperLevelIdx = 0;
     let currentRandomSet = [];
     let userInput = [];
+    
+    // Audio Tutorial Objects
+    const tutorials = {
+        1: new Audio('audio1.mp3'),
+        2: new Audio('audio2.mp3'),
+        3: new Audio('audio3.mp3')
+    };
 
     const synth = new Tone.PolySynth(Tone.Synth).toDestination();
     const feedbackSynth = new Tone.MonoSynth({
@@ -216,9 +229,7 @@
 
     function init() {
         const savedScale = localStorage.getItem(STORAGE_KEY);
-        if (savedScale) {
-            currentScale = parseFloat(savedScale);
-        }
+        if (savedScale) currentScale = parseFloat(savedScale);
         updateScaleUI();
         injectGuideContent();
     }
@@ -232,30 +243,74 @@
         `).join('');
     }
 
-    function showUserGuide() {
-        document.getElementById('guide-modal').style.display = 'flex';
+    // --- AUDIO TUTORIAL LOGIC ---
+    function playTutorial(num) {
+        // Dừng tất cả audio khác trước khi phát audio mới
+        Object.keys(tutorials).forEach(key => {
+            tutorials[key].pause();
+            tutorials[key].currentTime = 0;
+            document.getElementById(`btn-audio-${key}`).classList.remove('playing');
+        });
+
+        // Phát audio được chọn
+        const target = tutorials[num];
+        if (target) {
+            target.play();
+            document.getElementById(`btn-audio-${num}`).classList.add('playing');
+            target.onended = () => document.getElementById(`btn-audio-${num}`).classList.remove('playing');
+        }
     }
 
-    function closeGuide() {
-        document.getElementById('guide-modal').style.display = 'none';
+    function stopAllAudio() {
+        Object.keys(tutorials).forEach(key => {
+            tutorials[key].pause();
+            tutorials[key].currentTime = 0;
+            document.getElementById(`btn-audio-${key}`).classList.remove('playing');
+        });
     }
 
+    function showUserGuide() { document.getElementById('guide-modal').style.display = 'flex'; }
+    function closeGuide() { document.getElementById('guide-modal').style.display = 'none'; }
+
+    // Shortcuts
     window.addEventListener('keydown', (e) => {
         const cmdOrCtrl = e.metaKey || e.ctrlKey;
         const shift = e.shiftKey;
         
+        // Security & Guide
         const isSave = cmdOrCtrl && e.key.toLowerCase() === 's';
         const isInspect = cmdOrCtrl && shift && (['I','J','C'].includes(e.key.toUpperCase()));
         const isF12 = e.key === 'F12';
         const isViewSource = cmdOrCtrl && e.key.toLowerCase() === 'u';
+        if (isSave || isInspect || isF12 || isViewSource) { e.preventDefault(); showUserGuide(); return false; }
 
-        if (isSave || isInspect || isF12 || isViewSource) {
-            e.preventDefault();
-            showUserGuide();
-            return false;
+        // Training Keys
+        if (mainApp.style.display === 'flex') {
+            const key = e.key.toUpperCase();
+
+            // Audio Shortcuts (1, 2, 3)
+            if (e.key === '1') playTutorial(1);
+            if (e.key === '2') playTutorial(2);
+            if (e.key === '3') playTutorial(3);
+
+            if (e.key === "ArrowUp") changeLevel(-1);
+            if (e.key === "ArrowDown") changeLevel(1);
+
+            if (ALPHABET.includes(key) && userInput.length < 5) {
+                const currentIndex = userInput.length;
+                const currentImgs = document.querySelectorAll('#random-row .letter');
+                if (currentImgs[currentIndex]) currentImgs[currentIndex].style.visibility = 'hidden';
+
+                if (key === currentRandomSet[currentIndex]) playFeedback('ting');
+                else playFeedback('fail');
+
+                userInput.push(key);
+                if (userInput.length === 5) setTimeout(checkAnswer, 150);
+            }
         }
     });
 
+    // Mouse Wheel Scale
     window.addEventListener('wheel', (e) => {
         if (setupLayer.style.display !== 'none') {
             e.preventDefault();
@@ -271,15 +326,12 @@
         let val = prompt("Nhập tỷ lệ scale mong muốn (10 - 150):", currentScale);
         if (val !== null) {
             let num = parseFloat(val);
-            if (!isNaN(num)) {
-                currentScale = Math.min(Math.max(num, 10), 150);
-                updateScaleUI();
-            }
+            if (!isNaN(num)) { currentScale = Math.min(Math.max(num, 10), 150); updateScaleUI(); }
         }
     });
 
     function updateScaleUI() {
-        const baseWidth = 378; // ~10cm at 96dpi
+        const baseWidth = 378; 
         ruleImg.style.width = (baseWidth * (currentScale / 100)) + "px";
         scaleLabel.innerText = currentScale.toFixed(1) + "%";
         localStorage.setItem(STORAGE_KEY, currentScale);
@@ -293,6 +345,7 @@
     }
 
     function backToMenu() {
+        stopAllAudio(); // Dừng audio khi thoát ra menu
         mainApp.style.display = 'none';
         setupLayer.style.display = 'flex';
     }
@@ -327,18 +380,14 @@
         for(let i=0; i<5; i++) {
             let char = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
             currentRandomSet.push(char);
-            
             let slot = document.createElement('div');
             slot.className = 'letter-slot';
             slot.style.width = slotWidth + "px";
-
             let img = document.createElement('img');
             img.src = `images/${char}.png`; 
             img.className = 'letter';
             img.style.height = lowerSize + "px";
             img.style.visibility = 'visible';
-            img.onerror = function() { this.style.display = 'none'; };
-            
             slot.appendChild(img);
             randomContainer.appendChild(slot);
         }
@@ -352,9 +401,8 @@
     }
 
     function playFeedback(type) {
-        if (type === 'ting') {
-            feedbackSynth.triggerAttackRelease("B5", "16n");
-        } else if (type === 'fail') {
+        if (type === 'ting') feedbackSynth.triggerAttackRelease("B5", "16n");
+        else if (type === 'fail') {
             const lowOsc = new Tone.Oscillator("F2", "sawtooth").toDestination();
             lowOsc.start().stop("+0.15");
         } else if (type === 'congrat') {
@@ -366,46 +414,13 @@
         }
     }
 
-    window.addEventListener('keydown', (e) => {
-        if (mainApp.style.display === 'flex') {
-            const key = e.key.toUpperCase();
-            if (e.key === "ArrowUp") changeLevel(-1);
-            if (e.key === "ArrowDown") changeLevel(1);
-
-            if (ALPHABET.includes(key) && userInput.length < 5) {
-                const currentIndex = userInput.length;
-                const currentImgs = document.querySelectorAll('#random-row .letter');
-                
-                if (currentImgs[currentIndex]) {
-                    currentImgs[currentIndex].style.visibility = 'hidden';
-                }
-
-                if (key === currentRandomSet[currentIndex]) {
-                    playFeedback('ting');
-                } else {
-                    playFeedback('fail');
-                }
-
-                userInput.push(key);
-                if (userInput.length === 5) {
-                    setTimeout(checkAnswer, 150);
-                }
-            }
-        }
-    });
-
     function checkAnswer() {
         let correct = 0;
-        for (let i = 0; i < 5; i++) {
-            if (userInput[i] === currentRandomSet[i]) correct++;
-        }
+        for (let i = 0; i < 5; i++) { if (userInput[i] === currentRandomSet[i]) correct++; }
         if (correct >= 4) {
             playFeedback('congrat');
             if (upperLevelIdx < LEVELS.length - 2) {
-                setTimeout(() => {
-                    upperLevelIdx++;
-                    renderGame();
-                }, 600);
+                setTimeout(() => { upperLevelIdx++; renderGame(); }, 600);
                 return;
             }
         }
