@@ -333,6 +333,33 @@
             savedLogs.unshift(logText);
             localStorage.setItem('schulte_history', JSON.stringify(savedLogs.slice(0, 100)));
             localStorage.setItem('schulte_session_count', sessionCount);
+
+            // --- ĐỒNG BỘ LÊN GOOGLE SHEETS ---
+            sendToGoogleSheet(logText);
+        }
+
+        function sendToGoogleSheet(logText) {
+            // Khởi tạo URL Web App từ Apps Script của anh
+            const scriptUrl = "https://script.google.com/macros/s/AKfycbwzweq717uqyUR6de6D_gzs2Q1BO9n7bzVTTQBp-KNHHNUL2JzGmtYAKs2q8oFMQrOR2A/exec"; 
+            
+            let accountName = "Ẩn danh";
+            try {
+                const loginData = JSON.parse(localStorage.getItem('user_login'));
+                if (loginData && loginData.username) {
+                    accountName = loginData.username;
+                }
+            } catch (e) { console.log(e); }
+
+            // Gửi dữ liệu dưới dạng POST không đồng bộ để tránh delay game
+            fetch(scriptUrl, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    account: accountName,
+                    log: logText
+                })
+            }).catch(err => console.log("Lỗi đồng bộ Sheet: ", err));
         }
 
         function addLogToUI(text) {
