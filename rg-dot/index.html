@@ -66,7 +66,7 @@
         <div id="instruction-overlay">
             <h1>HƯỚNG DẪN SỬ DỤNG</h1>
             <p>
-                1. Đeo kính <b>Anaglyph (Đỏ/Xanh)</b>.<br>
+                1. ĐEO KÍNH <b>Anaglyph (Đỏ/Xanh)</b>.<br>
                 2. Chỉnh thanh trượt RGB sao cho mỗi mắt chỉ nhìn thấy đúng một màu.<br>
                 3. Mục tiêu: Nhìn vào vòng tròn và gõ đúng chữ cái hiển thị.<br>
                 4. <b>Phím tắt PC:</b><br>
@@ -158,13 +158,25 @@
             window.addEventListener('resize', check);
         })();
 
+        // --- TỰ ĐỘNG LOGOUT IM LẶNG KHI TRANG CHÍNH LOGOUT ---
+        window.addEventListener('storage', function(e) {
+            // Nếu dữ liệu đăng nhập bị xóa hoặc thay đổi từ tab khác
+            if (e.key === 'user_login' && !e.newValue) {
+                window.location.replace('../index.html');
+                document.body.innerHTML = "";
+            }
+        });
+
         // --- KIỂM TRA ĐĂNG NHẬP ---
+        let currentUserAccount = "Ẩn danh";
         (function() {
             const loginData = JSON.parse(localStorage.getItem('user_login'));
             if (!loginData) {
                 window.location.href = '../index.html';
             } else {
                 document.getElementById('main-app-content').style.display = 'flex';
+                // Lấy tên tài khoản (Ưu tiên lấy username, nếu không có thì dùng email hoặc trường định danh tương đương)
+                currentUserAccount = loginData.username || loginData.email || loginData.user || "Thành viên";
             }
         })();
 
@@ -333,10 +345,43 @@
             const min = Math.floor(dur / 60).toString().padStart(2,'0');
             const sec = (dur % 60).toString().padStart(2,'0');
             const diffMap = { 1: 'K', 2: 'T', 3: 'D' };
-            const newEntry = { date: dateStr, score: sc, right: cr, wrong: wr, time: `${min}:${sec}`, diff: diffMap[diff] || 'T' };
+            const currentDiffText = diffMap[diff] || 'T';
+            const logNumber = logs.length + 1;
+            
+            const textLog = `${dateStr} - Lần ${logNumber} - ${sc}đ - ${cr}/${wr} - ${min}:${sec} - ${currentDiffText}`;
+            
+            const newEntry = { date: dateStr, score: sc, right: cr, wrong: wr, time: `${min}:${sec}`, diff: currentDiffText };
             logs.unshift(newEntry);
             if (logs.length > 50) logs.pop();
             localStorage.setItem('rg_dot_logs', JSON.stringify(logs));
+
+            // Đồng bộ trực tiếp lên Google Sheet qua Apps Script API của anh
+            sendToGoogleSheet(currentUserAccount, textLog);
+        }
+
+        function sendToGoogleSheet(account, logContent) {
+            // URL Web App Google Apps Script của anh
+            const scriptUrl = "https://script.google.com/macros/s/AKfycbwNxCayYBB4ndoo9chaRnpT5qp4NnEBwmQdIJ5dNPpMZM0inOv4xKsGVvxoBcefTaXz3g/exec"; 
+    
+            // Đóng gói dữ liệu thành một Object JSON sạch
+            const payload = {
+                taiKhoan: account,
+                nhatKy: logContent,
+                rgb: `Đỏ(${colorRed.r},${colorRed.g},${colorRed.b}) - Xanh(${colorCyan.r},${colorCyan.g},${colorCyan.b})` 
+                // Em gom luôn cả mã màu RGB hiện tại học viên đang chỉnh gửi lên theo đúng 3 cột anh cần nhé!
+            };
+
+            // Gửi bằng phương thức POST chuẩn JSON
+            fetch(scriptUrl, {
+                method: "POST",
+                mode: "no-cors", // Giữ nguyên no-cors để tránh lỗi bảo mật chéo của Google
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload) // Chuyển object thành chuỗi JSON gửi đi
+            })
+            .then(() => console.log("Đồng bộ dữ liệu thành công!"))
+            .catch(err => console.error("Lỗi đồng bộ Google Sheet: ", err));
         }
 
         function displayLogs() {
