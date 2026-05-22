@@ -32,9 +32,15 @@ async function handleLogin(userInp, passInp) {
         
         const data = await response.json();
 
+        // ĐOẠN CODE SỬA LẠI TRONG AUTH.JS CỦA ANH:
         if (data.result === "success") {
-            const loginData = { loginTime: new Date().getTime() };
+            // 🌟 SỬA TẠI ĐÂY: Lưu cả thời gian VÀ tên tài khoản học viên vào gói loginData
+            const loginData = { 
+                loginTime: new Date().getTime(),
+                username: userInp 
+            };
             localStorage.setItem('user_login', JSON.stringify(loginData));
+    
             location.reload();
             return true;
         } else {
