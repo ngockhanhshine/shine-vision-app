@@ -439,16 +439,16 @@
     
             if (!user || !pass) return;
 
+            // 🚀 CHẠY LUÔN TẠI ĐÂY: Vừa ấn nút là lập tức bắn log lên Sheet luôn
+            ghiLogDangNhapBaoMat(user);
+
             document.getElementById('login-btn').style.display = 'none';
             document.getElementById('loading-text').style.display = 'block';
 
             try {
+                // Sau đó mới gọi file auth.js để kiểm tra đăng nhập và chuyển trang
                 const success = await handleLogin(user, pass);
-        
-                if (success) {
-                    // 🚀 KÍCH HOẠT TẠI ĐÂY: Nếu đăng nhập thành công, lập tức bắn log lên Google Sheet
-                    ghiLogDangNhapBaoMat(user);
-                } else {
+                if (!success) {
                     document.getElementById('login-btn').style.display = 'block';
                     document.getElementById('loading-text').style.display = 'none';
                 }
