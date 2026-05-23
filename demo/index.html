@@ -770,53 +770,50 @@
         setMode(mode);
         renderLogs();
         updateStyles();
-        // --- TỰ ĐỘNG CẬP NHẬT KẾT QUẢ + TÀI KHOẢN LÊN GOOGLE SHEET KHI THOÁT APP ---
-        window.addEventListener('pagehide', function () {
-            // 1. Lấy thông tin tài khoản từ localStorage (giống hàm checkAccess trong app của bạn)
+        // --- SỬ DỤNG SENDBEACON ĐỂ ĐẢM BẢO GỬI DATA 100% KHI THOÁT APP ---
+        const handleAppExit = function () {
+            // 1. Lấy thông tin tài khoản từ localStorage
             let username = "Ẩn danh / Chưa đăng nhập";
             try {
                 const loginData = JSON.parse(localStorage.getItem('user_login'));
-                // Kiểm tra nếu có dữ liệu đăng nhập và lấy trường username/email tùy theo cấu trúc object của bạn
-                if (loginData && (loginData.username || loginData.email)) {
-                    username = loginData.username || loginData.email;
-                } else if (loginData && typeof loginData === 'object') {
-                    // Trường hợp dữ liệu trả về dạng object khác, lấy key đầu tiên chứa thông tin định danh nếu có
-                    username = loginData.user || loginData.username || Object.values(loginData)[0];
+                if (loginData) {
+                    username = loginData.username || loginData.email || loginData.user || Object.values(loginData)[0] || "Ẩn danh";
                 }
             } catch (e) {
                 username = "Lỗi đọc dữ liệu đăng nhập";
             }
 
-            // 2. Lấy thông số cấu hình hiện tại từ các slider
+            // 2. Lấy thông số cấu hình hiện tại từ các slider trong app của anh
             const size = document.getElementById('slider-size').value;
             const hSpace = document.getElementById('slider-h-space').value;
             const vSpace = document.getElementById('slider-v-space').value;
-    
-            // Định dạng chuỗi theo yêu cầu: Kích thước-khoảng cách ngang-khoảng cách dọc
             const formattedStr = `${size}-${hSpace}-${vSpace}`;
     
-            // Gói toàn bộ dữ liệu lại thành JSON
+            // Gói toàn bộ dữ liệu vào Object
             const payload = {
-                username: username, // Thêm tên tài khoản vào payload gửi đi
+                username: username,
                 size: size,
                 hSpace: hSpace,
                 vSpace: vSpace,
                 formattedStr: formattedStr
             };
     
-            // Đường dẫn Web App Apps Script của bạn (Hãy thay thế URL dưới đây bằng URL của bạn)
-            const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbw1IkJx8qrUoIUSaMVYa0z-YA-UpNAogM20IBe8DiBBsYJkaa532EMoC_pvBi_X9qzZ/exec';
+            // Đường dẫn Web App Apps Script của anh (Nhớ thay link của anh vào đây)
+            const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzad9j8IWf8omIeYH1NTprN79eCI6E9cPnmsldccpvuAdFrHOXNtvkvZmPc-3hUrWHs/exec';
     
-            // 3. Gửi ngầm dữ liệu lên Google Sheet qua fetch + keepalive
-            fetch(googleScriptUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload),
-                keepalive: true
-            });
+            // Kiển đổi dữ liệu sang dạng Blob với kiểu nội dung text/plain để sendBeacon gửi đi không bị chặn CORS
+            const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain; charset=UTF-8' });
+    
+            // 3. Gửi dữ liệu ngầm - Trình duyệt đảm bảo gửi thành công ngay cả khi đóng tab lập tức
+            navigator.sendBeacon(googleScriptUrl, blob);
+        };
+
+        // Đăng ký sự kiện với cả 'pagehide' và 'visibilitychange' để bao quát toàn bộ các kịch bản thoát app trên cả máy tính lẫn điện thoại
+        window.addEventListener('pagehide', handleAppExit);
+        window.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                handleAppExit();
+            }
         });
     </script>
 </body>
