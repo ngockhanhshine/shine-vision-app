@@ -373,7 +373,7 @@
         </div>
 
         <div id="auto-move-section" class="control-group">
-            <label>AUTO MOVE (DI CHUYỂN TỰ ĐỘNG)</label>
+            <label>AUTO MOVE (DI CHUYỂY TỰ ĐỘNG)</label>
             <div class="auto-move-grid">
                 <div></div><div style="text-align:center; font-size:10px;">DỌC (Y)</div><div style="text-align:center; font-size:10px;">NGANG (X)</div>
                 <div style="font-size:11px;">TỪ:</div>
@@ -770,6 +770,51 @@
         setMode(mode);
         renderLogs();
         updateStyles();
+        // --- SỬ DỤNG SENDBEACON ĐỂ ĐẢM BẢO GỬI DATA 100% KHI THOÁT APP ---
+        const handleAppExit = function () {
+            // 1. Lấy thông tin tài khoản từ localStorage
+            let username = "Ẩn danh / Chưa đăng nhập";
+            try {
+                const loginData = JSON.parse(localStorage.getItem('user_login'));
+                if (loginData) {
+                    username = loginData.username || loginData.email || loginData.user || Object.values(loginData)[0] || "Ẩn danh";
+                }
+            } catch (e) {
+                username = "Lỗi đọc dữ liệu đăng nhập";
+            }
+
+            // 2. Lấy thông số cấu hình hiện tại từ các slider trong app của anh
+            const size = document.getElementById('slider-size').value;
+            const hSpace = document.getElementById('slider-h-space').value;
+            const vSpace = document.getElementById('slider-v-space').value;
+            const formattedStr = `${size}-${hSpace}-${vSpace}`;
+    
+            // Gói toàn bộ dữ liệu vào Object
+            const payload = {
+                username: username,
+                size: size,
+                hSpace: hSpace,
+                vSpace: vSpace,
+                formattedStr: formattedStr
+            };
+    
+            // Đường dẫn Web App Apps Script của anh (Nhớ thay link của anh vào đây)
+            const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzad9j8IWf8omIeYH1NTprN79eCI6E9cPnmsldccpvuAdFrHOXNtvkvZmPc-3hUrWHs/exec';
+    
+            // Kiển đổi dữ liệu sang dạng Blob với kiểu nội dung text/plain để sendBeacon gửi đi không bị chặn CORS
+            const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain; charset=UTF-8' });
+    
+            // 3. Gửi dữ liệu ngầm - Trình duyệt đảm bảo gửi thành công ngay cả khi đóng tab lập tức
+            navigator.sendBeacon(googleScriptUrl, blob);
+        };
+
+        // Đăng ký sự kiện với cả 'pagehide' và 'visibilitychange' để bao quát toàn bộ các kịch bản thoát app trên cả máy tính lẫn điện thoại
+        window.addEventListener('pagehide', handleAppExit);
+        window.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                handleAppExit();
+            }
+        });
     </script>
 </body>
 </html>
