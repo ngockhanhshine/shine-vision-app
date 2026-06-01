@@ -208,6 +208,25 @@
             text-align: center;
             font-size: 12px;
         }
+
+        /* Style biến text hiển thị chỉ số thành ô nhập số mini */
+        .inline-num-input {
+            width: 55px;
+            border: none;
+            border-bottom: 1px dashed #007bff;
+            background: transparent;
+            font-weight: bold;
+            font-size: 12px;
+            color: #007bff;
+            text-align: center;
+            padding: 0;
+            margin: 0 2px;
+            outline: none;
+        }
+        .inline-num-input:focus {
+            border-bottom: 1px solid #0056b3;
+            background: #f0f7ff;
+        }
         
         .demo-box { color: white; text-align: center; padding: 8px; font-weight: bold; border-radius: 6px; margin-top: 5px; font-size: 12px; text-transform: uppercase; }
         
@@ -347,7 +366,7 @@
         </div>
 
         <div class="control-group">
-            <label>KÍCH THƯỚC (SIZE): <span id="val-size">120</span>px</label>
+            <label>KÍCH THƯỚC (SIZE): <input type="number" id="val-size" class="inline-num-input" min="50" max="400">px</label>
             <div class="slider-row">
                 <div class="step-btn" onclick="stepSlider('slider-size', -5)">-</div>
                 <input type="range" id="slider-size" min="50" max="400" value="120">
@@ -357,13 +376,13 @@
 
         <div id="spacing-controls">
             <div class="control-group">
-                <label>KHOẢNG CÁCH NGANG: <span id="val-h-space">150</span>px</label>
+                <label>KHOẢNG CÁCH NGANG: <input type="number" id="val-h-space" class="inline-num-input" min="-800" max="800">px</label>
                 <div class="slider-row">
                     <div class="step-btn" onclick="stepSlider('slider-h-space', -2)">-</div>
                     <input type="range" id="slider-h-space" min="-800" max="800" value="150">
                     <div class="step-btn" onclick="stepSlider('slider-h-space', 2)">+</div>
                 </div>
-                <label>KHOẢNG CÁCH DỌC: <span id="val-v-space">0</span>px</label>
+                <label>KHOẢNG CÁCH DỌC: <input type="number" id="val-v-space" class="inline-num-input" min="-400" max="400">px</label>
                 <div class="slider-row">
                     <div class="step-btn" onclick="stepSlider('slider-v-space', -2)">-</div>
                     <input type="range" id="slider-v-space" min="-400" max="400" value="0">
@@ -392,7 +411,6 @@
 
         <button class="swap-btn" onclick="swapColors()">Đổi màu nhanh</button>
 
-        <!-- PHẦN MÀU TRÁI - ĐÃ THÊM INPUT SỐ -->
         <div class="control-group">
             <label id="label-l">MÀU HÌNH TRÁI</label>
             <div class="slider-row">
@@ -413,7 +431,6 @@
             <div class="demo-box" id="demo-l">Màu hiện tại</div>
         </div>
 
-        <!-- PHẦN MÀU PHẢI - ĐÃ THÊM INPUT SỐ -->
         <div class="control-group" id="color-right-group">
             <label>MÀU HÌNH PHẢI</label>
             <div class="slider-row">
@@ -524,6 +541,37 @@
             });
         });
 
+        // ĐỒNG BỘ KHI GÕ TRỰC TIẾP VÀO Ô HIỂN THỊ CHỈ SỐ (Size, H-space, V-space)
+        const inlineInputs = document.querySelectorAll('.inline-num-input');
+        inlineInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const sliderId = e.target.id.replace('val-', 'slider-');
+                const sliderEl = document.getElementById(sliderId);
+                
+                let val = parseInt(e.target.value);
+                const min = parseInt(sliderEl.min);
+                const max = parseInt(sliderEl.max);
+
+                if (isNaN(val)) return; // Cho phép người dùng tạm xóa để gõ tiếp
+                if (val < min) val = min;
+                if (val > max) val = max;
+                
+                sliderEl.value = val;
+                updateStyles(false); // Cập nhật style nhưng không ghi đè lại giá trị input đang gõ
+            });
+
+            // Khi tiêu điểm ra ngoài (blur), chuẩn hóa nếu rỗng hoặc sai lệch
+            input.addEventListener('blur', (e) => {
+                const sliderId = e.target.id.replace('val-', 'slider-');
+                const sliderEl = document.getElementById(sliderId);
+                let val = parseInt(e.target.value);
+                if (isNaN(val)) {
+                    e.target.value = sliderEl.value;
+                }
+                updateStyles();
+            });
+        });
+
         window.addEventListener('contextmenu', e => e.preventDefault());
 
         window.addEventListener('keydown', e => {
@@ -551,12 +599,12 @@
 
         let touchStartX = 0;
         document.addEventListener('touchstart', e => {
-            if (isTouchingSlider || e.target.closest('.m-btn')) return;
+            if (isTouchingSlider || e.target.closest('.m-btn') || e.target.closest('.inline-num-input')) return;
             touchStartX = e.changedTouches[0].screenX;
         }, {passive: true});
 
         document.addEventListener('touchend', e => {
-            if (isTouchingSlider || e.target.closest('.m-btn')) return;
+            if (isTouchingSlider || e.target.closest('.m-btn') || e.target.closest('.inline-num-input')) return;
             let diff = touchStartX - e.changedTouches[0].screenX;
             if (Math.abs(diff) > 60) {
                 if (diff < 0) document.body.classList.add('training-mode');
@@ -697,11 +745,24 @@
             }
         }
 
-        function updateStyles() {
+        function updateStyles(updateInputs = true) {
             const size = parseInt(document.getElementById('slider-size').value);
             const hSpace = parseInt(document.getElementById('slider-h-space').value);
             const vSpace = parseInt(document.getElementById('slider-v-space').value);
             
+            // Cập nhật giá trị vào các ô số hiển thị tại tiêu đề nếu được cho phép
+            if (updateInputs) {
+                if (document.activeElement !== document.getElementById('val-size')) {
+                    document.getElementById('val-size').value = size;
+                }
+                if (document.activeElement !== document.getElementById('val-h-space')) {
+                    document.getElementById('val-h-space').value = hSpace;
+                }
+                if (document.activeElement !== document.getElementById('val-v-space')) {
+                    document.getElementById('val-v-space').value = vSpace;
+                }
+            }
+
             // Lấy giá trị màu
             const rL = document.getElementById('r-l').value;
             const gL = document.getElementById('g-l').value;
@@ -721,9 +782,6 @@
             const colorL = `rgb(${rL}, ${gL}, ${bL})`;
             const colorR = `rgb(${rR}, ${gR}, ${bR})`;
 
-            document.getElementById('val-size').innerText = size;
-            document.getElementById('val-h-space').innerText = hSpace;
-            document.getElementById('val-v-space').innerText = vSpace;
             document.getElementById('val-auto-speed').innerText = document.getElementById('auto-speed').value;
             
             document.getElementById('demo-l').style.backgroundColor = colorL;
