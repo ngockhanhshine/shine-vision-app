@@ -199,9 +199,9 @@
             touch-action: pan-y; 
         }
 
-        /* Thêm style cho ô input số RGB */
-        .rgb-num {
-            width: 45px;
+        /* Style cho ô input số RGB và Ô nhập thông số */
+        .rgb-num, .param-num {
+            width: 50px;
             padding: 4px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -352,6 +352,7 @@
                 <div class="step-btn" onclick="stepSlider('slider-size', -5)">-</div>
                 <input type="range" id="slider-size" min="50" max="400" value="120">
                 <div class="step-btn" onclick="stepSlider('slider-size', 5)">+</div>
+                <input type="number" id="num-size" class="param-num" min="50" max="400" value="120">
             </div>
         </div>
 
@@ -362,12 +363,14 @@
                     <div class="step-btn" onclick="stepSlider('slider-h-space', -2)">-</div>
                     <input type="range" id="slider-h-space" min="-800" max="800" value="150">
                     <div class="step-btn" onclick="stepSlider('slider-h-space', 2)">+</div>
+                    <input type="number" id="num-h-space" class="param-num" min="-800" max="800" value="150">
                 </div>
                 <label>KHOẢNG CÁCH DỌC: <span id="val-v-space">0</span>px</label>
                 <div class="slider-row">
                     <div class="step-btn" onclick="stepSlider('slider-v-space', -2)">-</div>
                     <input type="range" id="slider-v-space" min="-400" max="400" value="0">
                     <div class="step-btn" onclick="stepSlider('slider-v-space', 2)">+</div>
+                    <input type="number" id="num-v-space" class="param-num" min="-400" max="400" value="0">
                 </div>
             </div>
         </div>
@@ -392,7 +395,6 @@
 
         <button class="swap-btn" onclick="swapColors()">Đổi màu nhanh</button>
 
-        <!-- PHẦN MÀU TRÁI - ĐÃ THÊM INPUT SỐ -->
         <div class="control-group">
             <label id="label-l">MÀU HÌNH TRÁI</label>
             <div class="slider-row">
@@ -413,7 +415,6 @@
             <div class="demo-box" id="demo-l">Màu hiện tại</div>
         </div>
 
-        <!-- PHẦN MÀU PHẢI - ĐÃ THÊM INPUT SỐ -->
         <div class="control-group" id="color-right-group">
             <label>MÀU HÌNH PHẢI</label>
             <div class="slider-row">
@@ -517,9 +518,29 @@
                 if (val > 255) val = 255;
                 e.target.value = val;
                 
-                // Tìm slider tương ứng để đồng bộ
                 const sliderId = e.target.id.replace('num-', '');
                 document.getElementById(sliderId).value = val;
+                updateStyles();
+            });
+        });
+
+        // ĐỒNG BỘ CHO 3 Ô NHẬP SỐ MỚI (Size, H-space, V-space)
+        const paramInputs = document.querySelectorAll('.param-num');
+        paramInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const sliderId = e.target.id.replace('num-', 'slider-');
+                const sliderEl = document.getElementById(sliderId);
+                
+                let val = parseInt(e.target.value);
+                const min = parseInt(sliderEl.min);
+                const max = parseInt(sliderEl.max);
+
+                if (isNaN(val)) val = min;
+                if (val < min) val = min;
+                if (val > max) val = max;
+                
+                e.target.value = val;
+                sliderEl.value = val;
                 updateStyles();
             });
         });
@@ -689,7 +710,7 @@
                 document.getElementById('x-to').value = s.xTo || 200;
                 document.getElementById('y-to').value = s.yTo || 100;
                 document.getElementById('r-l').value = s.colorL.r;
-                document.getElementById('g-l').value = s.colorL.g;
+                document.getElementById('g-l').value = s.colorL.b; // Giữ nguyên ánh xạ cũ
                 document.getElementById('b-l').value = s.colorL.b;
                 document.getElementById('r-r').value = s.colorR.r;
                 document.getElementById('g-r').value = s.colorR.g;
@@ -702,6 +723,11 @@
             const hSpace = parseInt(document.getElementById('slider-h-space').value);
             const vSpace = parseInt(document.getElementById('slider-v-space').value);
             
+            // Đồng bộ ngược từ Slider sang các ô nhập số mới
+            document.getElementById('num-size').value = size;
+            document.getElementById('num-h-space').value = hSpace;
+            document.getElementById('num-v-space').value = vSpace;
+
             // Lấy giá trị màu
             const rL = document.getElementById('r-l').value;
             const gL = document.getElementById('g-l').value;
@@ -710,7 +736,7 @@
             const gR = document.getElementById('g-r').value;
             const bR = document.getElementById('b-r').value;
 
-            // Đồng bộ sang ô input số
+            // Đồng bộ sang ô input số màu
             document.getElementById('num-r-l').value = rL;
             document.getElementById('num-g-l').value = gL;
             document.getElementById('num-b-l').value = bL;
@@ -770,9 +796,9 @@
         setMode(mode);
         renderLogs();
         updateStyles();
-        // --- SỬ DỤNG SENDBEACON ĐỂ ĐẢM BẢO GỬI DATA 100% KHI THOÁT APP ---
+
+        // --- SENDBEACON ĐỒNG BỘ DỮ LIỆU KHI THOÁT ---
         const handleAppExit = function () {
-            // 1. Lấy thông tin tài khoản từ localStorage
             let username = "Ẩn danh / Chưa đăng nhập";
             try {
                 const loginData = JSON.parse(localStorage.getItem('user_login'));
@@ -783,13 +809,11 @@
                 username = "Lỗi đọc dữ liệu đăng nhập";
             }
 
-            // 2. Lấy thông số cấu hình hiện tại từ các slider trong app của anh
             const size = document.getElementById('slider-size').value;
             const hSpace = document.getElementById('slider-h-space').value;
             const vSpace = document.getElementById('slider-v-space').value;
             const formattedStr = `${size}-${hSpace}-${vSpace}`;
     
-            // Gói toàn bộ dữ liệu vào Object
             const payload = {
                 username: username,
                 size: size,
@@ -798,17 +822,11 @@
                 formattedStr: formattedStr
             };
     
-            // Đường dẫn Web App Apps Script của anh (Nhớ thay link của anh vào đây)
             const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzad9j8IWf8omIeYH1NTprN79eCI6E9cPnmsldccpvuAdFrHOXNtvkvZmPc-3hUrWHs/exec';
-    
-            // Kiển đổi dữ liệu sang dạng Blob với kiểu nội dung text/plain để sendBeacon gửi đi không bị chặn CORS
             const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain; charset=UTF-8' });
-    
-            // 3. Gửi dữ liệu ngầm - Trình duyệt đảm bảo gửi thành công ngay cả khi đóng tab lập tức
             navigator.sendBeacon(googleScriptUrl, blob);
         };
 
-        // Đăng ký sự kiện với cả 'pagehide' và 'visibilitychange' để bao quát toàn bộ các kịch bản thoát app trên cả máy tính lẫn điện thoại
         window.addEventListener('pagehide', handleAppExit);
         window.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'hidden') {
