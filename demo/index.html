@@ -199,14 +199,33 @@
             touch-action: pan-y; 
         }
 
-        /* Style cho ô input số RGB và Ô nhập thông số */
-        .rgb-num, .param-num {
-            width: 50px;
+        /* Thêm style cho ô input số RGB */
+        .rgb-num {
+            width: 45px;
             padding: 4px;
             border: 1px solid #ccc;
             border-radius: 4px;
             text-align: center;
             font-size: 12px;
+        }
+
+        /* Style biến text hiển thị chỉ số thành ô nhập số mini */
+        .inline-num-input {
+            width: 55px;
+            border: none;
+            border-bottom: 1px dashed #007bff;
+            background: transparent;
+            font-weight: bold;
+            font-size: 12px;
+            color: #007bff;
+            text-align: center;
+            padding: 0;
+            margin: 0 2px;
+            outline: none;
+        }
+        .inline-num-input:focus {
+            border-bottom: 1px solid #0056b3;
+            background: #f0f7ff;
         }
         
         .demo-box { color: white; text-align: center; padding: 8px; font-weight: bold; border-radius: 6px; margin-top: 5px; font-size: 12px; text-transform: uppercase; }
@@ -347,30 +366,27 @@
         </div>
 
         <div class="control-group">
-            <label>KÍCH THƯỚC (SIZE): <span id="val-size">120</span>px</label>
+            <label>KÍCH THƯỚC (SIZE): <input type="number" id="val-size" class="inline-num-input" min="50" max="400">px</label>
             <div class="slider-row">
                 <div class="step-btn" onclick="stepSlider('slider-size', -5)">-</div>
                 <input type="range" id="slider-size" min="50" max="400" value="120">
                 <div class="step-btn" onclick="stepSlider('slider-size', 5)">+</div>
-                <input type="number" id="num-size" class="param-num" min="50" max="400" value="120">
             </div>
         </div>
 
         <div id="spacing-controls">
             <div class="control-group">
-                <label>KHOẢNG CÁCH NGANG: <span id="val-h-space">150</span>px</label>
+                <label>KHOẢNG CÁCH NGANG: <input type="number" id="val-h-space" class="inline-num-input" min="-800" max="800">px</label>
                 <div class="slider-row">
                     <div class="step-btn" onclick="stepSlider('slider-h-space', -2)">-</div>
                     <input type="range" id="slider-h-space" min="-800" max="800" value="150">
                     <div class="step-btn" onclick="stepSlider('slider-h-space', 2)">+</div>
-                    <input type="number" id="num-h-space" class="param-num" min="-800" max="800" value="150">
                 </div>
-                <label>KHOẢNG CÁCH DỌC: <span id="val-v-space">0</span>px</label>
+                <label>KHOẢNG CÁCH DỌC: <input type="number" id="val-v-space" class="inline-num-input" min="-400" max="400">px</label>
                 <div class="slider-row">
                     <div class="step-btn" onclick="stepSlider('slider-v-space', -2)">-</div>
                     <input type="range" id="slider-v-space" min="-400" max="400" value="0">
                     <div class="step-btn" onclick="stepSlider('slider-v-space', 2)">+</div>
-                    <input type="number" id="num-v-space" class="param-num" min="-400" max="400" value="0">
                 </div>
             </div>
         </div>
@@ -518,29 +534,40 @@
                 if (val > 255) val = 255;
                 e.target.value = val;
                 
+                // Tìm slider tương ứng để đồng bộ
                 const sliderId = e.target.id.replace('num-', '');
                 document.getElementById(sliderId).value = val;
                 updateStyles();
             });
         });
 
-        // ĐỒNG BỘ CHO 3 Ô NHẬP SỐ MỚI (Size, H-space, V-space)
-        const paramInputs = document.querySelectorAll('.param-num');
-        paramInputs.forEach(input => {
+        // ĐỒNG BỘ KHI GÕ TRỰC TIẾP VÀO Ô HIỂN THỊ CHỈ SỐ (Size, H-space, V-space)
+        const inlineInputs = document.querySelectorAll('.inline-num-input');
+        inlineInputs.forEach(input => {
             input.addEventListener('input', (e) => {
-                const sliderId = e.target.id.replace('num-', 'slider-');
+                const sliderId = e.target.id.replace('val-', 'slider-');
                 const sliderEl = document.getElementById(sliderId);
                 
                 let val = parseInt(e.target.value);
                 const min = parseInt(sliderEl.min);
                 const max = parseInt(sliderEl.max);
 
-                if (isNaN(val)) val = min;
+                if (isNaN(val)) return; // Cho phép người dùng tạm xóa để gõ tiếp
                 if (val < min) val = min;
                 if (val > max) val = max;
                 
-                e.target.value = val;
                 sliderEl.value = val;
+                updateStyles(false); // Cập nhật style nhưng không ghi đè lại giá trị input đang gõ
+            });
+
+            // Khi tiêu điểm ra ngoài (blur), chuẩn hóa nếu rỗng hoặc sai lệch
+            input.addEventListener('blur', (e) => {
+                const sliderId = e.target.id.replace('val-', 'slider-');
+                const sliderEl = document.getElementById(sliderId);
+                let val = parseInt(e.target.value);
+                if (isNaN(val)) {
+                    e.target.value = sliderEl.value;
+                }
                 updateStyles();
             });
         });
@@ -572,12 +599,12 @@
 
         let touchStartX = 0;
         document.addEventListener('touchstart', e => {
-            if (isTouchingSlider || e.target.closest('.m-btn')) return;
+            if (isTouchingSlider || e.target.closest('.m-btn') || e.target.closest('.inline-num-input')) return;
             touchStartX = e.changedTouches[0].screenX;
         }, {passive: true});
 
         document.addEventListener('touchend', e => {
-            if (isTouchingSlider || e.target.closest('.m-btn')) return;
+            if (isTouchingSlider || e.target.closest('.m-btn') || e.target.closest('.inline-num-input')) return;
             let diff = touchStartX - e.changedTouches[0].screenX;
             if (Math.abs(diff) > 60) {
                 if (diff < 0) document.body.classList.add('training-mode');
@@ -710,7 +737,7 @@
                 document.getElementById('x-to').value = s.xTo || 200;
                 document.getElementById('y-to').value = s.yTo || 100;
                 document.getElementById('r-l').value = s.colorL.r;
-                document.getElementById('g-l').value = s.colorL.b; // Giữ nguyên ánh xạ cũ
+                document.getElementById('g-l').value = s.colorL.g;
                 document.getElementById('b-l').value = s.colorL.b;
                 document.getElementById('r-r').value = s.colorR.r;
                 document.getElementById('g-r').value = s.colorR.g;
@@ -718,15 +745,23 @@
             }
         }
 
-        function updateStyles() {
+        function updateStyles(updateInputs = true) {
             const size = parseInt(document.getElementById('slider-size').value);
             const hSpace = parseInt(document.getElementById('slider-h-space').value);
             const vSpace = parseInt(document.getElementById('slider-v-space').value);
             
-            // Đồng bộ ngược từ Slider sang các ô nhập số mới
-            document.getElementById('num-size').value = size;
-            document.getElementById('num-h-space').value = hSpace;
-            document.getElementById('num-v-space').value = vSpace;
+            // Cập nhật giá trị vào các ô số hiển thị tại tiêu đề nếu được cho phép
+            if (updateInputs) {
+                if (document.activeElement !== document.getElementById('val-size')) {
+                    document.getElementById('val-size').value = size;
+                }
+                if (document.activeElement !== document.getElementById('val-h-space')) {
+                    document.getElementById('val-h-space').value = hSpace;
+                }
+                if (document.activeElement !== document.getElementById('val-v-space')) {
+                    document.getElementById('val-v-space').value = vSpace;
+                }
+            }
 
             // Lấy giá trị màu
             const rL = document.getElementById('r-l').value;
@@ -736,7 +771,7 @@
             const gR = document.getElementById('g-r').value;
             const bR = document.getElementById('b-r').value;
 
-            // Đồng bộ sang ô input số màu
+            // Đồng bộ sang ô input số
             document.getElementById('num-r-l').value = rL;
             document.getElementById('num-g-l').value = gL;
             document.getElementById('num-b-l').value = bL;
@@ -747,9 +782,6 @@
             const colorL = `rgb(${rL}, ${gL}, ${bL})`;
             const colorR = `rgb(${rR}, ${gR}, ${bR})`;
 
-            document.getElementById('val-size').innerText = size;
-            document.getElementById('val-h-space').innerText = hSpace;
-            document.getElementById('val-v-space').innerText = vSpace;
             document.getElementById('val-auto-speed').innerText = document.getElementById('auto-speed').value;
             
             document.getElementById('demo-l').style.backgroundColor = colorL;
@@ -796,9 +828,9 @@
         setMode(mode);
         renderLogs();
         updateStyles();
-
-        // --- SENDBEACON ĐỒNG BỘ DỮ LIỆU KHI THOÁT ---
+        // --- SỬ DỤNG SENDBEACON ĐỂ ĐẢM BẢO GỬI DATA 100% KHI THOÁT APP ---
         const handleAppExit = function () {
+            // 1. Lấy thông tin tài khoản từ localStorage
             let username = "Ẩn danh / Chưa đăng nhập";
             try {
                 const loginData = JSON.parse(localStorage.getItem('user_login'));
@@ -809,11 +841,13 @@
                 username = "Lỗi đọc dữ liệu đăng nhập";
             }
 
+            // 2. Lấy thông số cấu hình hiện tại từ các slider trong app của anh
             const size = document.getElementById('slider-size').value;
             const hSpace = document.getElementById('slider-h-space').value;
             const vSpace = document.getElementById('slider-v-space').value;
             const formattedStr = `${size}-${hSpace}-${vSpace}`;
     
+            // Gói toàn bộ dữ liệu vào Object
             const payload = {
                 username: username,
                 size: size,
@@ -822,11 +856,17 @@
                 formattedStr: formattedStr
             };
     
+            // Đường dẫn Web App Apps Script của anh (Nhớ thay link của anh vào đây)
             const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzad9j8IWf8omIeYH1NTprN79eCI6E9cPnmsldccpvuAdFrHOXNtvkvZmPc-3hUrWHs/exec';
+    
+            // Kiển đổi dữ liệu sang dạng Blob với kiểu nội dung text/plain để sendBeacon gửi đi không bị chặn CORS
             const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain; charset=UTF-8' });
+    
+            // 3. Gửi dữ liệu ngầm - Trình duyệt đảm bảo gửi thành công ngay cả khi đóng tab lập tức
             navigator.sendBeacon(googleScriptUrl, blob);
         };
 
+        // Đăng ký sự kiện với cả 'pagehide' và 'visibilitychange' để bao quát toàn bộ các kịch bản thoát app trên cả máy tính lẫn điện thoại
         window.addEventListener('pagehide', handleAppExit);
         window.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'hidden') {
