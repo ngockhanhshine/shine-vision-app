@@ -60,7 +60,7 @@
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="pause-overlay">ỨNG DỤNG ĐANG TẠM DỪNG</div>
+    <div id="pause-overlay">ỨNG DẪA ĐANG TẠM DỪNG</div>
 
     <div id="main-app-content">
         <div id="instruction-overlay">
@@ -160,7 +160,6 @@
 
         // --- TỰ ĐỘNG LOGOUT IM LẶNG KHI TRANG CHÍNH LOGOUT ---
         window.addEventListener('storage', function(e) {
-            // Nếu dữ liệu đăng nhập bị xóa hoặc thay đổi từ tab khác
             if (e.key === 'user_login' && !e.newValue) {
                 window.location.replace('../index.html');
                 document.body.innerHTML = "";
@@ -175,7 +174,6 @@
                 window.location.href = '../index.html';
             } else {
                 document.getElementById('main-app-content').style.display = 'flex';
-                // Lấy tên tài khoản (Ưu tiên lấy username, nếu không có thì dùng email hoặc trường định danh tương đương)
                 currentUserAccount = loginData.username || loginData.email || loginData.user || "Thành viên";
             }
         })();
@@ -265,7 +263,6 @@
             displayLogs();
         }
 
-        // Hàm hỗ trợ đồng bộ Slider và Ô nhập số
         function syncInputs(id, value) {
             const slider = document.getElementById(id);
             const input = document.getElementById(id + '_val');
@@ -290,7 +287,6 @@
             document.getElementById('demo2').style.backgroundColor = `rgb(${colorCyan.r},${colorCyan.g},${colorCyan.b})`;
         }
 
-        // Lắng nghe sự kiện cho cả Slider và Ô số
         ['r1', 'g1', 'b1', 'r2', 'g2', 'b2'].forEach(id => {
             const slider = document.getElementById(id);
             const input = document.getElementById(id + '_val');
@@ -332,13 +328,14 @@
         function stopGameAndReturn() {
             if (gameState !== 'PLAYING') return;
             const duration = Math.floor((Date.now() - gameStartTime) / 1000);
-            if (duration > 2) saveLog(score, correctCount, wrongCount, duration, timeLimit);
+            if (duration > 2) saveLog(score, correctCount, wrongCount, duration, timeLimit, false);
             gameState = 'MENU';
             uiLayer.style.display = 'flex';
             displayLogs();
         }
 
-        function saveLog(sc, cr, wr, dur, diff) {
+        // --- TỰ ĐỘNG LƯU KHI THOÁT ĐỘT NGỘT ---
+        function saveLog(sc, cr, wr, dur, diff, isUnloading = false) {
             let logs = JSON.parse(localStorage.getItem('rg_dot_logs') || '[]');
             const now = new Date();
             const dateStr = `${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')}`;
@@ -355,34 +352,48 @@
             if (logs.length > 50) logs.pop();
             localStorage.setItem('rg_dot_logs', JSON.stringify(logs));
 
-            // Đồng bộ trực tiếp lên Google Sheet qua Apps Script API của anh
-            sendToGoogleSheet(currentUserAccount, textLog);
+            // Đồng bộ lên Google Sheet
+            sendToGoogleSheet(currentUserAccount, textLog, isUnloading);
         }
 
-        function sendToGoogleSheet(account, logContent) {
-            // URL Web App Google Apps Script của anh
+        function sendToGoogleSheet(account, logContent, isUnloading = false) {
             const scriptUrl = "https://script.google.com/macros/s/AKfycbwNxCayYBB4ndoo9chaRnpT5qp4NnEBwmQdIJ5dNPpMZM0inOv4xKsGVvxoBcefTaXz3g/exec"; 
     
-            // Đóng gói dữ liệu thành một Object JSON sạch
             const payload = {
                 taiKhoan: account,
                 nhatKy: logContent,
                 rgb: `Đỏ(${colorRed.r},${colorRed.g},${colorRed.b}) - Xanh(${colorCyan.r},${colorCyan.g},${colorCyan.b})` 
-                // Em gom luôn cả mã màu RGB hiện tại học viên đang chỉnh gửi lên theo đúng 3 cột anh cần nhé!
             };
 
-            // Gửi bằng phương thức POST chuẩn JSON
-            fetch(scriptUrl, {
+            // Sử dụng fetch đồng bộ (keepalive: true) nếu trang web đang bị đóng (unload)
+            const fetchOptions = {
                 method: "POST",
-                mode: "no-cors", // Giữ nguyên no-cors để tránh lỗi bảo mật chéo của Google
+                mode: "no-cors",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(payload) // Chuyển object thành chuỗi JSON gửi đi
-            })
+                body: JSON.stringify(payload)
+            };
+
+            if (isUnloading) {
+                fetchOptions.keepalive = true; // Ép trình duyệt phải chạy ngầm lệnh này kể cả khi tab đã đóng
+            }
+
+            fetch(scriptUrl, fetchOptions)
             .then(() => console.log("Đồng bộ dữ liệu thành công!"))
             .catch(err => console.error("Lỗi đồng bộ Google Sheet: ", err));
         }
+
+        // Lắng nghe sự kiện người dùng thoát đột ngột (F5, tắt tab, tắt trình duyệt)
+        window.addEventListener('beforeunload', function (e) {
+            if (gameState === 'PLAYING') {
+                const duration = Math.floor((Date.now() - gameStartTime) / 1000);
+                // Chỉ lưu nếu học viên đã tập được trên 2 giây
+                if (duration > 2) {
+                    saveLog(score, correctCount, wrongCount, duration, timeLimit, true);
+                }
+            }
+        });
 
         function displayLogs() {
             const logs = JSON.parse(localStorage.getItem('rg_dot_logs') || '[]');
