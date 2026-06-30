@@ -191,8 +191,23 @@
         pauseOverlay.style.display = 'none';
         container.appendChild(pauseOverlay);
 
-        window.addEventListener('beforeunload', () => {
-            if (typeof gameState !== 'undefined' && gameState === 'PLAYING') saveLog();
+    // --- XỬ LÝ LƯU NHẬT KÝ KHI THOÁT ĐỘT NGỘT (CHỐNG TRÙNG LẶP TUYỆT ĐỐI) ---
+        function handleUnexpectedExit() {
+            if (typeof gameState !== 'undefined' && gameState === 'PLAYING') {
+                gameState = 'MENU'; // Khóa trạng thái lập tức để chặn các sự kiện chạy song song
+                saveLog();
+                score = 0; // Đưa điểm về 0 để chắc chắn không lưu thêm ở bất cứ sự kiện nào sau đó
+            }
+        }
+
+        window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                handleUnexpectedExit();
+            }
+        });
+
+        window.addEventListener('pagehide', () => {
+            handleUnexpectedExit();
         });
 
     // --- QUẢN LÝ PAUSE (Sửa lỗi trùng lặp loop và mất sự kiện) ---
@@ -213,7 +228,6 @@
             
                 if (gameState === 'PLAYING') {
                     if (currentAudio) currentAudio.play();
-                    // Không gọi lại requestAnimationFrame ở đây nữa, vòng lặp cũ tự chạy tiếp khi bẻ cờ isPaused
                 }
             }
         });
@@ -262,7 +276,6 @@
         }
 
         function sendToGoogleSheet(account, logData, rgbData) {
-            // Sửa lỗi điều kiện chặn: Chỉ chặn khi SCRIPT_URL rỗng hoặc chưa được cấu hình đúng
             if (!SCRIPT_URL || SCRIPT_URL === "" || SCRIPT_URL.includes("YOUR_SCRIPT_URL_HERE")) return;
         
             const urlWithParams = `${SCRIPT_URL}?account=${encodeURIComponent(account)}&logData=${encodeURIComponent(logData)}&rgbData=${encodeURIComponent(rgbData)}&_t=${Date.now()}`;
@@ -270,7 +283,8 @@
             fetch(urlWithParams, { 
                 method: 'GET', 
                 mode: 'no-cors',
-                cache: 'no-store'
+                cache: 'no-store',
+                keepalive: true // Giúp tiến trình gửi dữ liệu mạng chạy ngầm tiếp tục dù tab bị đóng hoàn toàn
             })
             .then(() => console.log("Đã đồng bộ Google Sheet thành công!"))
             .catch(err => console.error("Lỗi khi đồng bộ Google Sheet: ", err));
@@ -286,8 +300,11 @@
 
         function exitToMenu() {
             if (currentAudio) currentAudio.pause();
-            saveLog();
-            gameState = 'MENU';
+            if (gameState === 'PLAYING') {
+                gameState = 'MENU'; // Khóa trạng thái trước để đồng bộ bảo mật
+                saveLog();
+            }
+            score = 0; // Đưa điểm về 0 để an toàn khi ở menu chính
             document.getElementById('ui-layer').style.display = 'flex';
             document.getElementById('back-to-menu').style.display = 'none';
         }
@@ -369,7 +386,7 @@
             list.innerHTML = '';
             SONGS.forEach((song, i) => {
                 const div = document.createElement('div'); div.className = `song-item ${i === selectedSongIdx ? 'selected' : ''}`;
-                div.innerHTML = (i === selectedSongIdx ? "▶ " : "　") + song.name;
+                div.innerHTML = (i === selectedSongIdx ? "▶ " : " ") + song.name;
                 div.onclick = () => { selectedSongIdx = i; document.getElementById('audio-upload').value = ""; renderSongList(); };
                 list.appendChild(div);
             });
@@ -402,7 +419,6 @@
         function gameLoop() {
             if (gameState !== 'PLAYING' || !ctx) return; 
         
-            // Nếu đang pause thì vẫn giữ vòng lặp mượt để render overlay nhưng không update logic game
             if (!isPaused) {
                 let currentTime = (performance.now() - startTime) / 1000;
                 ctx.fillStyle = "#F5F5F5"; ctx.fillRect(0, 0, WIDTH, HEIGHT);
