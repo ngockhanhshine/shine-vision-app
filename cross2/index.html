@@ -266,7 +266,6 @@
             <div class="slider-row"><span class="rgb-label">G</span><input type="range" id="g-r" min="0" max="255" value="200"></div>
             <div class="slider-row"><span class="rgb-label">B</span><input type="range" id="b-r" min="0" max="255" value="0"></div>
             <div class="demo-box" id="demo-r">Màu hiện tại</div>
-            <!-- Phần góc xoay mới thêm -->
             <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee;">
                 <label>GÓC XOAY (PHÍM 1, 2): <span id="val-rotation">0</span>°</label>
             </div>
@@ -280,6 +279,90 @@
 
     <script src="auth.js"></script>
     <script>
+        // --- LOGIC KIỂM TRA ĐĂNG NHẬP ---
+        const LOGIN_KEY = 'user_login';
+        const LOGIN_PAGE_URL = '../index.html';
+        let currentUsername = "Unknown User"; // Biến lưu tên học viên để gửi đi
+
+        function checkAppAuth() {
+            try {
+                const loginDataStr = localStorage.getItem(LOGIN_KEY);
+                const currentTime = new Date().getTime();
+                const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+                if (!loginDataStr) {
+                    window.location.href = LOGIN_PAGE_URL;
+                    return false;
+                }
+
+                const loginData = JSON.parse(loginDataStr);
+                if (!loginData || !loginData.loginTime || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
+                    localStorage.removeItem(LOGIN_KEY);
+                    window.location.href = LOGIN_PAGE_URL;
+                    return false;
+                }
+                
+                // Lấy tên username từ dữ liệu đăng nhập nếu có
+                if (loginData.username) {
+                    currentUsername = loginData.username;
+                }
+                return true;
+            } catch (e) {
+                localStorage.removeItem(LOGIN_KEY);
+                window.location.href = LOGIN_PAGE_URL;
+                return false;
+            }
+        }
+
+        // Thực thi kiểm tra ngay lập tức để chặn giao diện trước khi render phần còn lại
+        checkAppAuth();
+
+        // Lắng nghe sự kiện nếu người dùng bấm đăng xuất hoặc bị xoá session từ một tab khác
+        window.addEventListener('storage', (e) => {
+            if (e.key === LOGIN_KEY) {
+                checkAppAuth();
+            }
+        });
+
+        // --- TÍNH NĂNG TỰ ĐỘNG LƯU DỮ LIỆU KHI THOÁT APP LÊN GOOGLE SHEET ---
+        function sendConfigToGoogleSheet() {
+            // Định dạng thời gian theo kiểu: dd/mm/yy - hh/mm/ss
+            const now = new Date();
+            const dateStr = String(now.getDate()).padStart(2, '0') + '/' +
+                            String(now.getMonth() + 1).padStart(2, '0') + '/' +
+                            String(now.getFullYear()).slice(-2);
+            const timeStr = String(now.getHours()).padStart(2, '0') + '/' +
+                            String(now.getMinutes()).padStart(2, '0') + '/' +
+                            String(now.getSeconds()).padStart(2, '0');
+            const formattedTime = `${dateStr} - ${timeStr}`;
+
+            // Lấy thông số hiện tại từ các input sliders và góc xoay
+            const size = document.getElementById('slider-size').value;
+            const hSpace = document.getElementById('slider-h-space').value;
+            const vSpace = document.getElementById('slider-v-space').value;
+            const statsStr = `${size} - ${hSpace} - ${vSpace} - ${rotationR}`;
+
+            // Gói dữ liệu gửi đi (Đồng bộ cấu trúc payload xử lý trên Apps Script của anh)
+            const payload = {
+                action: "saveConfig", // Nhãn hành động để file Script của anh phân biệt
+                username: currentUsername,
+                timestamp: formattedTime,
+                configDetails: statsStr
+            };
+
+            // URL script kết nối Google Sheet của anh (Lấy từ file auth.js)
+            const scriptURL = 'https://script.google.com/macros/s/AKfycby3YNV5okekqtqb2oFWZWHZ-EzGWru2aBR6OeQahysbFJ39-rN-F0u34cUpJxQPcGeW/exec';
+
+            // Dùng sendBeacon đảm bảo truyền thông tin thành công kể cả khi tab bị đóng lập tức
+            const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain' });
+            navigator.sendBeacon(scriptURL, blob);
+        }
+
+        // Kích hoạt khi tắt tab, đóng trình duyệt hoặc điều hướng rời khỏi trang
+        window.addEventListener('pagehide', sendConfigToGoogleSheet);
+        window.addEventListener('beforeunload', sendConfigToGoogleSheet);
+        // ----------------------------------------------------------------
+
         let mode = 2;
         let rotationR = 0; // Biến lưu góc xoay hình phải
         let isRecording = false;
@@ -287,6 +370,9 @@
         let trainingLogs = [];
 
         window.onload = function() {
+            // Kiểm tra lại lần nữa khi window nạp toàn bộ tài nguyên xong
+            if (!checkAppAuth()) return;
+
             try {
                 const savedLogs = localStorage.getItem('trainingLogs');
                 trainingLogs = savedLogs ? JSON.parse(savedLogs) : [];
