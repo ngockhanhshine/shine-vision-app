@@ -283,10 +283,14 @@
                     <img src="assets/rtext.png" alt="Random Text">
                     <div class="app-title">Thẻ chữ Ngẫu nhiên</div>
                 </a>
-                <!-- App mới thêm ở đây -->
-                <a href="shiftchart/index.html" class="app-card">
+                <a href="chart/index.html" class="app-card">
                     <img src="assets/shiftchart.png" alt="Shift Chart">
                     <div class="app-title">Tập với bảng chữ</div>
+                </a>
+                <!-- App Trò chơi Mê Cung -->
+                <a href="mecung/index.html" class="app-card">
+                    <img src="assets/mecung.png" alt="Trò chơi Mê Cung">
+                    <div class="app-title">Trò chơi Mê Cung</div>
                 </a>
             </div>
 
@@ -312,67 +316,6 @@
     </div>
 
     <script>
-
-        // 1. DÁN ĐƯỜNG LINK ANH VỪA COPY VÀO GIỮA DẤU NHÁY KÉP DƯỚI ĐÂY
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8dyQRnQn2HCXUbZgMn_bgiotX79I4591ylKt6DyyfmRMLqdx9orVU9GM6RS6k97Nqew/exec";
-    
-        // Mật mã bảo mật chặn spam (đã khớp cấu hình với Apps Script ngầm)
-        const SECRET_TOKEN = "ShineVision_Secure_2026_@Khnh"; 
-
-        // 2. HÀM TỰ ĐỘNG GHI LOG ĐĂNG NHẬP
-        async function ghiLogDangNhapBaoMat(taiKhoanHocVien) {
-            let ip = "Không rõ";
-            let thietBi = "Không rõ";
-
-            // Tự động lấy IP của học viên qua API ẩn danh công cộng
-            try {
-                let response = await fetch('https://api.ipify.org?format=json');
-                let data = await response.json();
-                ip = data.ip;
-            } catch (e) { 
-                console.log("Không lấy được IP"); 
-            }
-
-            // Tự động phân tích thiết bị học viên đang dùng để tập
-            try {
-                const ua = navigator.userAgent;
-                if (/mobile/i.test(ua)) {
-                    thietBi = "Điện thoại / Máy tính bảng";
-                } else if (/Macintosh|Mac OS X/i.test(ua)) {
-                    thietBi = "Máy tính Mac";
-                } else if (/Windows/i.test(ua)) {
-                    thietBi = "Máy tính Windows";
-                } else {
-                    thietBi = "Thiết bị khác (PC/Linux)";
-                }
-            } catch (e) { 
-                console.log("Không lấy được thông tin thiết bị"); 
-            }
-
-            // Đóng gói dữ liệu kèm mã bảo mật gửi lên Google Sheet
-            const payload = {
-                token: SECRET_TOKEN,       // Mật mã xác thực đầu vào
-                target: "DangNhap",        // Tên sheet mục tiêu (sẽ ghi vào trang Lịch sử đăng nhập)
-                rowData: [ip, taiKhoanHocVien, thietBi] // Mảng dữ liệu tương ứng các cột
-            };
-
-            // Bắn dữ liệu chạy ngầm lên Google Sheet
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors", 
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(() => {
-                console.log("🔒 Hệ thống bảo mật đã ghi nhận đăng nhập thành công cho: " + taiKhoanHocVien);
-            })
-            .catch(err => {
-                console.error("Lỗi gửi log đăng nhập:", err);
-            });
-        }
-
         // --- CHỐNG MỞ CONSOLE TỐI ƯU CHO IPHONE/SAFARI ---
         (function() {
             const check = function() {
@@ -432,21 +375,16 @@
             document.getElementById('login-section').style.display = 'block';
         }
 
-        // ĐOẠN CODE MỚI ĐÃ TÍCH HỢP GHI NHẬT KÝ BẢO MẬT
         async function startLogin() {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
-    
+            
             if (!user || !pass) return;
-
-            // 🚀 CHẠY LUÔN TẠI ĐÂY: Vừa ấn nút là lập tức bắn log lên Sheet luôn
-            ghiLogDangNhapBaoMat(user);
 
             document.getElementById('login-btn').style.display = 'none';
             document.getElementById('loading-text').style.display = 'block';
 
             try {
-                // Sau đó mới gọi file auth.js để kiểm tra đăng nhập và chuyển trang
                 const success = await handleLogin(user, pass);
                 if (!success) {
                     document.getElementById('login-btn').style.display = 'block';
