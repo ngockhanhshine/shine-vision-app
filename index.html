@@ -283,11 +283,10 @@
                     <img src="assets/rtext.png" alt="Random Text">
                     <div class="app-title">Thẻ chữ Ngẫu nhiên</div>
                 </a>
-                <a href="chart/index.html" class="app-card">
+                <a href="shiftchart/index.html" class="app-card">
                     <img src="assets/shiftchart.png" alt="Shift Chart">
                     <div class="app-title">Tập với bảng chữ</div>
                 </a>
-                <!-- App Trò chơi Mê Cung -->
                 <a href="mecung/index.html" class="app-card">
                     <img src="assets/mecung.png" alt="Trò chơi Mê Cung">
                     <div class="app-title">Trò chơi Mê Cung</div>
@@ -316,7 +315,8 @@
     </div>
 
     <script>
-        // 1. 	LINK GG SHEET
+
+        // 1. DÁN ĐƯỜNG LINK ANH VỪA COPY VÀO GIỮA DẤU NHÁY KÉP DƯỚI ĐÂY
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8dyQRnQn2HCXUbZgMn_bgiotX79I4591ylKt6DyyfmRMLqdx9orVU9GM6RS6k97Nqew/exec";
     
         // Mật mã bảo mật chặn spam (đã khớp cấu hình với Apps Script ngầm)
@@ -375,6 +375,7 @@
                 console.error("Lỗi gửi log đăng nhập:", err);
             });
         }
+
         // --- CHỐNG MỞ CONSOLE TỐI ƯU CHO IPHONE/SAFARI ---
         (function() {
             const check = function() {
@@ -434,16 +435,21 @@
             document.getElementById('login-section').style.display = 'block';
         }
 
+        // ĐOẠN CODE MỚI ĐÃ TÍCH HỢP GHI NHẬT KÝ BẢO MẬT
         async function startLogin() {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
-            
+    
             if (!user || !pass) return;
+
+            // 🚀 CHẠY LUÔN TẠI ĐÂY: Vừa ấn nút là lập tức bắn log lên Sheet luôn
+            ghiLogDangNhapBaoMat(user);
 
             document.getElementById('login-btn').style.display = 'none';
             document.getElementById('loading-text').style.display = 'block';
 
             try {
+                // Sau đó mới gọi file auth.js để kiểm tra đăng nhập và chuyển trang
                 const success = await handleLogin(user, pass);
                 if (!success) {
                     document.getElementById('login-btn').style.display = 'block';
