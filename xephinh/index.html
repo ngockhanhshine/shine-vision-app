@@ -985,13 +985,35 @@
         const r2 = parseInt(emptyTile.dataset.currentRow);
         const c2 = parseInt(emptyTile.dataset.currentCol);
 
-        const isAdjacent = (Math.abs(r1 - r2) + Math.abs(c1 - c2)) === 1;
-
-        if (isAdjacent) {
+        // Kiểm tra xem ô được click có nằm cùng hàng hoặc cùng cột với ô trống không
+        if (r1 === r2 || c1 === c2) {
             startTimer();
 
-            updateTileCSSPosition(tile, r2, c2);
-            updateTileCSSPosition(emptyTile, r1, c1);
+            // 1. Nếu cùng hàng: di chuyển các ô theo chiều ngang
+            if (r1 === r2) {
+                const step = c1 < c2 ? 1 : -1;
+                for (let c = c2; c !== c1; c -= step) {
+                    const prevC = c - step;
+                    const movingTile = tiles.find(t => parseInt(t.dataset.currentRow) === r1 && parseInt(t.dataset.currentCol) === prevC);
+                    const currentEmpty = tiles.find(t => parseInt(t.dataset.currentRow) === r1 && parseInt(t.dataset.currentCol) === c);
+                
+                    updateTileCSSPosition(movingTile, r1, c);
+                    updateTileCSSPosition(currentEmpty, r1, prevC);
+                }
+            } 
+            // 2. Nếu cùng cột: di chuyển các ô theo chiều dọc
+            else if (c1 === c2) {
+                const step = r1 < r2 ? 1 : -1;
+                for (let r = r2; r !== r1; r -= step) {
+                    const prevR = r - step;
+                    const movingTile = tiles.find(t => parseInt(t.dataset.currentRow) === prevR && parseInt(t.dataset.currentCol) === c1);
+                    const currentEmpty = tiles.find(t => parseInt(t.dataset.currentRow) === r && parseInt(t.dataset.currentCol) === c1);
+                
+                    updateTileCSSPosition(movingTile, r, c1);
+                    updateTileCSSPosition(currentEmpty, prevR, c1);
+                }
+            }
+
             checkWin();
         }
     }
