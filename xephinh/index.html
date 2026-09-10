@@ -1000,37 +1000,50 @@
         winMessage.style.display = 'none';
         resetTimer();
 
-        // Số bước xáo trộn ngẫu nhiên
-        const totalMoves = rows * cols * 20;
-
-        for (let i = 0; i < totalMoves; i++) {
-            // Tìm ô trống hiện tại
-            const emptyTile = tiles.find(t => t.classList.contains('empty'));
-            const er = parseInt(emptyTile.dataset.currentRow);
-            const ec = parseInt(emptyTile.dataset.currentCol);
-
-            // Tìm các ô kề cận có thể trượt vào ô trống
-            const neighbors = tiles.filter(t => {
-                const r = parseInt(t.dataset.currentRow);
-                const c = parseInt(t.dataset.currentCol);
-                return (Math.abs(r - er) + Math.abs(c - ec)) === 1;
-            });
-
-            // Chọn ngẫu nhiên 1 ô kề cận để trượt
-            const randomTile = neighbors[Math.floor(Math.random() * neighbors.length)];
-            const nr = parseInt(randomTile.dataset.currentRow);
-            const nc = parseInt(randomTile.dataset.currentCol);
-
-            // Tắt animation trong lúc xáo trộn để không bị giật
-            randomTile.style.transition = 'none';
-            emptyTile.style.transition = 'none';
-
-            // Hoán đổi vị trí
-            updateTileCSSPosition(randomTile, er, ec);
-            updateTileCSSPosition(emptyTile, nr, nc);
+        // Tạo mảng mô phỏng vị trí lưới [row, col] cho từng ô
+        let grid = [];
+        for (let r = 0; r < rows; r++) {
+            grid[r] = [];
+            for (let c = 0; c < cols; c++) {
+                const tile = tiles.find(t => parseInt(t.dataset.correctRow) === r && parseInt(t.dataset.correctCol) === c);
+                grid[r][c] = tile;
+            }
         }
 
-        // Bật lại animation sau khi xáo trộn xong
+        let er = rows - 1;
+        let ec = cols - 1;
+        const totalMoves = rows * cols * 30;
+
+        // Tắt transition để chuẩn bị xáo trộn
+        tiles.forEach(t => t.style.transition = 'none');
+
+        // Xáo trộn hợp lệ trên mảng dữ liệu
+        for (let i = 0; i < totalMoves; i++) {
+            const neighbors = [];
+            if (er > 0) neighbors.push({ r: er - 1, c: ec });
+            if (er < rows - 1) neighbors.push({ r: er + 1, c: ec });
+            if (ec > 0) neighbors.push({ r: er, c: ec - 1 });
+            if (ec < cols - 1) neighbors.push({ r: er, c: ec + 1 });
+
+            const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+        
+            // Tráo đổi vị trí trong mảng
+            grid[er][ec] = grid[next.r][next.c];
+            grid[next.r][next.c] = tiles.find(t => t.classList.contains('empty'));
+
+            er = next.r;
+            ec = next.c;
+        }
+
+        // Cập nhật lại vị trí CSS và dataset chuẩn xác cho toàn bộ ô
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const tile = grid[r][c];
+                updateTileCSSPosition(tile, r, c);
+            }
+        }
+
+        // Bật lại transition sau khi cập nhật xong DOM
         setTimeout(() => {
             tiles.forEach(t => t.style.transition = 'left 0.15s ease, top 0.15s ease');
         }, 50);
