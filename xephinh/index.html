@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Game Xếp Hình Trượt Professional - Shine Vision App</title>
+
+    <!-- 0. KIỂM TRA ĐĂNG NHẬP NGAY LẬP TỨC TRƯỚC KHI TẢI BẤT KỲ SCRIPT NÀO KHÁC -->
+    <script>
+        (function immediateAuthCheck() {
+            const loginData = JSON.parse(localStorage.getItem('user_login'));
+            if (!loginData) {
+                if (window.stop) window.stop(); 
+                window.location.replace('../index.html');
+            }
+        })();
+    </script>
+
+    <!-- Nhúng auth.js để kiểm tra đăng nhập & bảo mật -->
+    <script src="../auth.js"></script>
+    <!-- Nạp file readme.js chứa thông tin hướng dẫn -->
+    <script src="readme.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: manipulation;
+        }
+
+        body {
+            background-color: #1e1e24;
+            color: #fff;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        /* KHỐI NỘI DUNG CHÍNH (ẨN MẶC ĐỊNH CHO ĐẾN KHI AUTH THÀNH CÔNG) */
+        #main-app-content {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+            color: #4dabf7;
+            text-align: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        /* --- BỘ ĐẾM THỜI GIAN CHƠI (GÓC TRÊN BÊN PHẢI) --- */
+        #timer-display {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #ff4d4d;
+            font-size: 16px;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid #ff4d4d;
+            z-index: 150;
+            user-select: none;
+        }
+
+        /* --- MENU CHỌN GAME --- */
+        #menu-screen {
+            background: #2b2d42;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            max-width: 900px;
+            width: 95%;
+            overflow-y: auto;
+            max-height: calc(100vh - 80px);
+        }
+
+        .menu-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #a5d8ff;
+            margin-bottom: 15px;
+        }
+
+        .image-gallery-horizontal {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .image-gallery-horizontal::-webkit-scrollbar {
+            height: 10px;
+        }
+        .image-gallery-horizontal::-webkit-scrollbar-track {
+            background: #1e1e24;
+            border-radius: 5px;
+        }
+        .image-gallery-horizontal::-webkit-scrollbar-thumb {
+            background: #4dabf7;
+            border-radius: 5px;
+        }
+
+        .image-card {
+            flex: 0 0 280px;
+            background: #1e1e24;
+            border: 3px solid #4a4e69;
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .image-card:hover {
+            transform: translateY(-4px);
+            border-color: #74c0fc;
+        }
+
+        .image-card.selected {
+            border-color: #38d9a9;
+            background: #22223b;
+            box-shadow: 0 0 14px rgba(56, 217, 169, 0.5);
+        }
+
+        .image-card img, .image-card .custom-icon {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #2b2d42;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .image-card .card-info {
+            font-size: 16px;
+            color: #e9ecef;
+            font-weight: bold;
+        }
+
+        .image-card .card-meta {
+            font-size: 14px;
+            color: #fab005;
+            margin-top: 4px;
+        }
+
+        #custom-options {
+            display: none;
+            background: #22223b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px dashed #4dabf7;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #a5d8ff;
+        }
+
+        input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #4a4e69;
+            background: #1e1e24;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .grid-inputs {
+            display: flex;
+            gap: 15px;
+        }
+
+        .input-item {
+            flex: 1;
+        }
+
+        .input-item label {
+            font-size: 13px;
+            color: #fab005;
+            margin-bottom: 4px;
+        }
+
+        .btn-start {
+            width: 100%;
+            padding: 14px;
+            background: #38d9a9;
+            color: #121212;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-start:hover {
+            background: #20c997;
+        }
+
+        /* --- GIAO DIỆN TRÒ CHƠI --- */
+        #game-screen {
+            display: none;
+            width: 100%;
+            height: calc(100vh - 55px);
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        .game-header {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            width: 100%;
+            max-width: 800px;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            background: #2b2d42;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+
+        .btn-action {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #4dabf7;
+            color: #fff;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-back {
+            background: #ff6b6b;
+        }
+
+        /* CÔNG TẮC GẠT GỢI Ý MỜ */
+        .toggle-hint-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #a5d8ff;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #4a4e69;
+            transition: .3s;
+            border-radius: 22px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #38d9a9;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        .workspace-wrapper {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .workspace {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+        }
+
+        #puzzle-container {
+            position: relative;
+            background-color: #121212;
+            border: 4px solid #4dabf7;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            touch-action: none;
+        }
+
+        .tile {
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: left 0.15s ease, top 0.15s ease;
+            user-select: none;
+        }
+
+        .tile-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.65);
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-bottom-right-radius: 4px;
+            pointer-events: none;
+            display: block;
+        }
+
+        .hide-labels .tile-label {
+            display: none !important;
+        }
+
+        .tile.empty {
+            background: #1e1e24 !important;
+            border: none;
+            cursor: default;
+        }
+
+        .tile.empty .tile-label {
+            display: none !important;
+        }
+
+        /* POPUP XEM ẢNH MẪU & README OVERLAY */
+        #preview-modal, #readme-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .modal-content {
+            position: relative;
+            background: #2b2d42;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #4dabf7;
+            max-width: 90vw;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        #preview-modal img {
+            max-width: 80vw;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid #fff;
+        }
+
+        #readme-content {
+            color: #e9ecef;
+            font-size: 15px;
+            line-height: 1.6;
+            width: 100%;
+            max-width: 700px;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+
+        .btn-close-modal {
+            margin-top: 15px;
+            padding: 10px 24px;
+            background: #ff6b6b;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #win-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(18, 18, 18, 0.95);
+            padding: 20px 30px;
+            border: 3px solid #51cf66;
+            border-radius: 12px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #51cf66;
+            text-align: center;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(81, 207, 102, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .image-card {
+                flex: 0 0 200px;
+            }
+            .image-card img, .image-card .custom-icon {
+                height: 140px;
+            }
+            .game-header {
+                padding: 6px 10px;
+                gap: 6px;
+            }
+            .btn-action {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            .toggle-hint-wrapper {
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="main-app-content">
+        <!-- ĐỒNG HỒ ĐẾM GIÂY PHÍA TRÊN BÊN PHẢI -->
+        <div id="timer-display">⏱️ 00:00</div>
+
+        <h1>XẾP HÌNH TRƯỢT SỐ HÓA</h1>
+
+        <!-- 1. MENU CHỌN GAME -->
+        <div id="menu-screen">
+            <div class="menu-title">Chọn hình ảnh & Độ khó:</div>
+            
+            <div class="image-gallery-horizontal" id="gallery">
+                <div class="image-card selected" data-type="preset" data-src="image/anh1.jpg" data-rows="3" data-cols="3">
+                    <img src="image/anh1.jpg" alt="Ảnh 1" onerror="this.src='https://picsum.photos/280/200?random=1'">
+                    <div class="card-info">Ảnh 1 (3x3)</div>
+                    <div class="card-meta">⭐⭐</div>
+                </div>
+                <div class="image-card" data-type="preset" data-src="image/anh2.jpg" data-rows="4" data-cols="4">
+                    <img src="image/anh2.jpg" alt="Ảnh 2" onerror="this.src='https://picsum.photos/280/200?random=2'">
+                    <div class="card-info">Ảnh 2 (4x4)</div>
+                    <div class="card-meta">⭐⭐⭐</div>
+                </div>
+                <div class="image-card" data-type="preset" data-src="image/anh3.jpg" data-rows="5" data-cols="5">
+                    <img src="image/anh3.jpg" alt="Ảnh 3" onerror="this.src='https://picsum.photos/280/200?random=3'">
+                    <div class="card-info">Ảnh 3 (5x5)</div>
+                    <div class="card-meta">⭐⭐⭐⭐</div>
+                </div>
+                <div class="image-card" data-type="preset" data-src="image/anh4.jpg" data-rows="5" data-cols="7">
+                    <img src="image/anh4.jpg" alt="Ảnh 4" onerror="this.src='https://picsum.photos/280/200?random=4'">
+                    <div class="card-info">Ảnh 4 (5x7)</div>
+                    <div class="card-meta">⭐⭐⭐⭐⭐</div>
+                </div>
+                <div class="image-card" data-type="preset" data-src="image/anh5.jpg" data-rows="5" data-cols="7">
+                    <img src="image/anh5.jpg" alt="Ảnh 5" onerror="this.src='https://picsum.photos/280/200?random=5'">
+                    <div class="card-info">Ảnh 5 (5x7)</div>
+                    <div class="card-meta">⭐⭐⭐⭐⭐</div>
+                </div>
+                <div class="image-card" data-type="custom" id="card-custom">
+                    <div class="custom-icon">🛠️</div>
+                    <div class="card-info">Tự chọn</div>
+                    <div class="card-meta">Tùy chỉnh</div>
+                </div>
+            </div>
+
+            <div id="custom-options">
+                <div class="form-group">
+                    <label for="custom-file">Tải ảnh từ máy tính / điện thoại:</label>
+                    <input type="file" id="custom-file" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label>Số lượng ô lưới:</label>
+                    <div class="grid-inputs">
+                        <div class="input-item">
+                            <label for="custom-rows">Hàng (Chiều dọc):</label>
+                            <input type="number" id="custom-rows" min="2" max="10" value="5" placeholder="Số hàng">
+                        </div>
+                        <div class="input-item">
+                            <label for="custom-cols">Cột (Chiều ngang):</label>
+                            <input type="number" id="custom-cols" min="2" max="10" value="7" placeholder="Số cột">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-start" id="btn-start-game">BẮT ĐẦU CHƠI 🚀</button>
+        </div>
+
+        <!-- 2. GIAO DIỆN BÀN CHƠI GAME -->
+        <div id="game-screen">
+            <div class="game-header">
+                <button class="btn-action btn-back" id="btn-menu">⬅ Menu</button>
+                
+                <div class="toggle-hint-wrapper">
+                    <span>Gợi ý</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-hint" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <button class="btn-action" id="btn-show-preview">📷 Xem Ảnh Mẫu</button>
+                <button class="btn-action" id="btn-shuffle">🔀 Xáo Trộn</button>
+            </div>
+
+            <div class="workspace-wrapper" id="workspace-wrapper">
+                <div class="workspace" id="workspace">
+                    <div id="puzzle-container"></div>
+                </div>
+            </div>
+
+            <div id="win-message">🎉 CHÚC MỪNG!<br>BẠN ĐÃ HOÀN THÀNH BỨC HÌNH!</div>
+        </div>
+
+        <!-- POPUP XEM ẢNH MẪU -->
+        <div id="preview-modal">
+            <div class="modal-content">
+                <img id="modal-preview-img" src="" alt="Ảnh Mẫu">
+                <button class="btn-close-modal" id="btn-close-preview">Đóng</button>
+            </div>
+        </div>
+
+        <!-- OVERLAY HƯỚNG DẪN TỪ FILE README.JS -->
+        <div id="readme-modal">
+            <div class="modal-content">
+                <h2 style="color: #4dabf7; margin-bottom: 15px; width: 100%; text-align: center;">📖 HƯỚNG DẪN SỬ DỤNG APP</h2>
+                <div id="readme-content"></div>
+                <button class="btn-close-modal" id="btn-close-readme">Tôi Đã Hiểu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // 1. URL GOOGLE APPS SCRIPT ĐÃ TÍCH HỢP
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyuFViMNPhOFPlCwuCN0YLP6yEbyOtugJ7ezDIwzjBo54HXR8adr9cpGgwQcFR_Ri9yKw/exec";
+
+    // 2. KIỂM TRA BẢO MẬT DOMAIN
+    (function checkDomain() {
+        const allowedDomain = "shinevisionapp.com";
+        const hostname = window.location.hostname.toLowerCase();
+        const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "" || window.location.protocol === "file:";
+        
+        if (!isLocal && !hostname.endsWith(allowedDomain)) {
+            console.warn("Tên miền không được ủy quyền.");
+        }
+    })();
+
+    // 3. HIỂN THỊ GIAO DIỆN NẾU AUTH THÀNH CÔNG VÀ LẮNG NGHE ĐĂNG XUẤT TUẦN TỰ
+    let currentUsername = "Khách";
+    (function initAppAuth() {
+        const loginData = JSON.parse(localStorage.getItem('user_login'));
+        
+        if (!loginData) {
+            document.body.innerHTML = "";
+            window.location.replace('../index.html');
+            return;
+        } 
+        
+        document.getElementById('main-app-content').style.display = 'flex';
+        currentUsername = loginData.username || loginData.email || loginData.phone || "Ẩn danh";
+
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'user_login' && !e.newValue) {
+                document.body.innerHTML = "";
+                window.location.replace('../index.html');
+            }
+        });
+    })();
+
+    // 4. KHAI BÁO BIẾN CÔNG CỤ GAME XẾP HÌNH
+    const ROWS_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+
+    const menuScreen = document.getElementById('menu-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const cards = document.querySelectorAll('.image-card');
+    const customOptions = document.getElementById('custom-options');
+    const customFile = document.getElementById('custom-file');
+    const customRowsInput = document.getElementById('custom-rows');
+    const customColsInput = document.getElementById('custom-cols');
+    const btnStart = document.getElementById('btn-start-game');
+    const btnMenu = document.getElementById('btn-menu');
+    const btnShuffle = document.getElementById('btn-shuffle');
+    const btnShowPreview = document.getElementById('btn-show-preview');
+    const btnClosePreview = document.getElementById('btn-close-preview');
+    const previewModal = document.getElementById('preview-modal');
+    const modalPreviewImg = document.getElementById('modal-preview-img');
+    const toggleHint = document.getElementById('toggle-hint');
+    
+    const container = document.getElementById('puzzle-container');
+    const winMessage = document.getElementById('win-message');
+    const workspace = document.getElementById('workspace');
+    const workspaceWrapper = document.getElementById('workspace-wrapper');
+
+    const readmeModal = document.getElementById('readme-modal');
+    const readmeContent = document.getElementById('readme-content');
+    const btnCloseReadme = document.getElementById('btn-close-readme');
+    const timerDisplay = document.getElementById('timer-display');
+
+    let selectedCard = document.querySelector('.image-card.selected');
+    let rows = 3;
+    let cols = 3;
+    let imgUrl = '';
+    let tiles = [];
+    let tileWidth = 80;
+    let tileHeight = 80;
+    let currentScale = 1;
+
+    // Biến cho tính năng đếm giờ
+    let timerInterval = null;
+    let secondsElapsed = 0;
+    let isTimerStarted = false;
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        secondsElapsed = 0;
+        isTimerStarted = false;
+        timerDisplay.innerText = "⏱️ 00:00";
+    }
+
+    function startTimer() {
+        if (isTimerStarted) return;
+        isTimerStarted = true;
+        secondsElapsed = 0;
+        timerInterval = setInterval(() => {
+            secondsElapsed++;
+            const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+            const secs = String(secondsElapsed % 60).padStart(2, '0');
+            timerDisplay.innerText = `⏱️ ${mins}:${secs}`;
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+        isTimerStarted = false;
+    }
+
+    // 5. HÀM TẠO DẤU THỜI GIAN THEO ĐỊNH DẠNG DD/MM/YY - hh/mm
+    function getFormattedTimestamp() {
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yy = String(now.getFullYear()).slice(-2);
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        return `${dd}/${mm}/${yy} - ${hh}/${min}`;
+    }
+
+    // 6. HÀM TỰ ĐỘNG GỬI KẾT QUẢ VỀ GOOGLE SHEET
+    function sendResultToGoogleSheet(timePlayedText) {
+        if (!GOOGLE_SHEET_WEB_APP_URL) return;
+
+        const payload = {
+            username: currentUsername,
+            timestamp: getFormattedTimestamp(),
+            result: `${rows}x${cols} - ${timePlayedText}`
+        };
+
+        fetch(GOOGLE_SHEET_WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+            },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            console.log("Đã gửi kết quả lên Google Sheet thành công!");
+        }).catch(err => {
+            console.error("Lỗi gửi kết quả:", err);
+        });
+    }
+
+    // XỬ LÝ HIỂN THỊ OVERLAY README
+    function showReadmeOverlay() {
+        let contentText = "";
+        if (typeof README_TEXT !== 'undefined') {
+            contentText = README_TEXT;
+        } else if (typeof README_DATA !== 'undefined') {
+            contentText = typeof README_DATA === 'string' ? README_DATA : JSON.stringify(README_DATA, null, 2);
+        } else {
+            contentText = "HƯỚNG DẪN SỬ DỤNG GAME XẾP HÌNH TRƯỢT:\n\n1. Sử dụng chuột/Cảm ứng để di chuyển các ô vuông gần ô trống.\n2. Sử dụng các phím mũi tên (Up, Down, Left, Right) trên bàn phím để trượt các ô.\n3. Nhấn '📷 Xem Ảnh Mẫu' để xem bức ảnh hoàn chỉnh.\n4. Bật/tắt công tắc 'Gợi ý' để ẩn/hiển thị ký hiệu ô.";
+        }
+        readmeContent.textContent = contentText;
+        readmeModal.style.display = 'flex';
+    }
+
+    btnCloseReadme.addEventListener('click', () => {
+        readmeModal.style.display = 'none';
+    });
+
+    readmeModal.addEventListener('click', (e) => {
+        if (e.target === readmeModal) {
+            readmeModal.style.display = 'none';
+        }
+    });
+
+    // CHẶN DEVTOOLS, LƯU TRANG (CTRL+S) VÀ CÁC THAO TÁC TRÊN WIN & MAC (CHO PHÉP F5/CTRL+R RELOAD)
+    window.addEventListener('keydown', (e) => {
+        const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+        const isShift = e.shiftKey;
+        const isAlt = e.altKey;
+        const key = e.key.toUpperCase();
+
+        const isDevTools = key === 'F12' ||
+            (isCmdOrCtrl && isShift && (key === 'I' || key === 'J' || key === 'C')) ||
+            (isCmdOrCtrl && isAlt && (key === 'I' || key === 'J' || key === 'C' || key === 'U')) ||
+            (isCmdOrCtrl && key === 'U');
+    
+        const isSaveOrPageAction = isCmdOrCtrl && (key === 'S' || key === 'P' || key === 'A');
+
+        if (isDevTools || isSaveOrPageAction) {
+            e.preventDefault();
+            e.stopPropagation();
+            showReadmeOverlay();
+            return false;
+        }
+
+        if (gameScreen.style.display !== 'flex') return;
+        if (previewModal.style.display === 'flex' || readmeModal.style.display === 'flex') return;
+
+        const emptyTile = tiles.find(t => t.classList.contains('empty'));
+        if (!emptyTile) return;
+
+        const er = parseInt(emptyTile.dataset.currentRow);
+        const ec = parseInt(emptyTile.dataset.currentCol);
+
+        let targetRow = er;
+        let targetCol = ec;
+
+        if (e.key === 'ArrowUp') {
+            targetRow = er + 1;
+        } else if (e.key === 'ArrowDown') {
+            targetRow = er - 1;
+        } else if (e.key === 'ArrowLeft') {
+            targetCol = ec + 1;
+        } else if (e.key === 'ArrowRight') {
+            targetCol = ec - 1;
+        } else {
+            return;
+        }
+
+        e.preventDefault();
+
+        const targetTile = tiles.find(t => 
+            parseInt(t.dataset.currentRow) === targetRow && 
+            parseInt(t.dataset.currentCol) === targetCol
+        );
+
+        if (targetTile) {
+            onTileClick(targetTile);
+        }
+    }, true);
+
+    cards.forEach(card => {
+        card.addEventListener('click', () => {
+            cards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedCard = card;
+
+            if (card.dataset.type === 'custom') {
+                customOptions.style.display = 'block';
+            } else {
+                customOptions.style.display = 'none';
+            }
+        });
+    });
+
+    btnStart.addEventListener('click', () => {
+        const type = selectedCard.dataset.type;
+
+        if (type === 'custom') {
+            const file = customFile.files[0];
+            if (!file) {
+                alert('Vui lòng chọn 1 tệp ảnh từ thiết bị của bạn!');
+                return;
+            }
+            imgUrl = URL.createObjectURL(file);
+            rows = parseInt(customRowsInput.value) || 5;
+            cols = parseInt(customColsInput.value) || 7;
+        } else {
+            imgUrl = selectedCard.dataset.src;
+            rows = parseInt(selectedCard.dataset.rows);
+            cols = parseInt(selectedCard.dataset.cols);
+        }
+
+        menuScreen.style.display = 'none';
+        gameScreen.style.display = 'flex';
+        modalPreviewImg.src = imgUrl;
+
+        setupGame();
+    });
+
+    btnMenu.addEventListener('click', () => {
+        stopTimer();
+        resetTimer();
+        gameScreen.style.display = 'none';
+        menuScreen.style.display = 'block';
+    });
+
+    btnShowPreview.addEventListener('click', () => {
+        previewModal.style.display = 'flex';
+    });
+
+    btnClosePreview.addEventListener('click', () => {
+        previewModal.style.display = 'none';
+    });
+
+    previewModal.addEventListener('click', (e) => {
+        if (e.target === previewModal) {
+            previewModal.style.display = 'none';
+        }
+    });
+
+    toggleHint.addEventListener('change', () => {
+        if (toggleHint.checked) {
+            container.classList.remove('hide-labels');
+        } else {
+            container.classList.add('hide-labels');
+        }
+    });
+
+    window.addEventListener('resize', autoScaleWorkspace);
+
+    function setupGame() {
+        winMessage.style.display = 'none';
+        container.innerHTML = '';
+        tiles = [];
+        resetTimer();
+
+        if (toggleHint.checked) {
+            container.classList.remove('hide-labels');
+        } else {
+            container.classList.add('hide-labels');
+        }
+
+        tileWidth = 80;
+        tileHeight = 80;
+
+        const containerWidth = tileWidth * cols;
+        const containerHeight = tileHeight * rows;
+
+        container.style.width = `${containerWidth}px`;
+        container.style.height = `${containerHeight}px`;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const isLast = (r === rows - 1 && c === cols - 1);
+                
+                const tile = document.createElement('div');
+                tile.className = 'tile' + (isLast ? ' empty' : '');
+                
+                tile.dataset.correctRow = r;
+                tile.dataset.correctCol = c;
+                tile.dataset.currentRow = r;
+                tile.dataset.currentCol = c;
+
+                const labelText = `${ROWS_LABELS[r] || (r+1)}${c + 1}`;
+                
+                if (!isLast) {
+                    tile.style.backgroundImage = `url('${imgUrl}')`;
+                    tile.style.backgroundSize = `${containerWidth}px ${containerHeight}px`;
+                    tile.style.backgroundPosition = `-${c * tileWidth}px -${r * tileHeight}px`;
+                    
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = 'tile-label';
+                    labelDiv.innerText = labelText;
+                    tile.appendChild(labelDiv);
+                }
+
+                tile.style.width = `${tileWidth}px`;
+                tile.style.height = `${tileHeight}px`;
+
+                updateTileCSSPosition(tile, r, c);
+                
+                tile.addEventListener('click', () => onTileClick(tile));
+                
+                container.appendChild(tile);
+                tiles.push(tile);
+            }
+        }
+
+        shuffleTiles();
+        autoScaleWorkspace();
+    }
+
+    function autoScaleWorkspace() {
+        if (gameScreen.style.display !== 'flex') return;
+
+        const wrapperWidth = workspaceWrapper.clientWidth;
+        const wrapperHeight = workspaceWrapper.clientHeight;
+
+        const puzzleWidth = container.clientWidth;
+        const puzzleHeight = container.clientHeight;
+
+        if (puzzleWidth === 0 || puzzleHeight === 0) return;
+
+        const scaleX = (wrapperWidth - 30) / puzzleWidth;
+        const scaleY = (wrapperHeight - 30) / puzzleHeight;
+
+        currentScale = Math.min(scaleX, scaleY);
+
+        workspace.style.transform = `scale(${currentScale})`;
+    }
+
+    function updateTileCSSPosition(tile, r, c) {
+        tile.style.top = `${r * tileHeight}px`;
+        tile.style.left = `${c * tileWidth}px`;
+        tile.dataset.currentRow = r;
+        tile.dataset.currentCol = c;
+    }
+
+    function onTileClick(tile) {
+        if (tile.classList.contains('empty')) return;
+
+        const emptyTile = tiles.find(t => t.classList.contains('empty'));
+        const r1 = parseInt(tile.dataset.currentRow);
+        const c1 = parseInt(tile.dataset.currentCol);
+        const r2 = parseInt(emptyTile.dataset.currentRow);
+        const c2 = parseInt(emptyTile.dataset.currentCol);
+
+        const isAdjacent = (Math.abs(r1 - r2) + Math.abs(c1 - c2)) === 1;
+
+        if (isAdjacent) {
+            startTimer();
+
+            updateTileCSSPosition(tile, r2, c2);
+            updateTileCSSPosition(emptyTile, r1, c1);
+            checkWin();
+        }
+    }
+
+    function shuffleTiles() {
+        winMessage.style.display = 'none';
+        resetTimer();
+
+        const totalMoves = rows * cols * 15;
+
+        for (let i = 0; i < totalMoves; i++) {
+            const emptyTile = tiles.find(t => t.classList.contains('empty'));
+            const er = parseInt(emptyTile.dataset.currentRow);
+            const ec = parseInt(emptyTile.dataset.currentCol);
+
+            const neighbors = tiles.filter(t => {
+                const r = parseInt(t.dataset.currentRow);
+                const c = parseInt(t.dataset.currentCol);
+                return (Math.abs(r - er) + Math.abs(c - ec)) === 1;
+            });
+
+            const randomTile = neighbors[Math.floor(Math.random() * neighbors.length)];
+            const nr = parseInt(randomTile.dataset.currentRow);
+            const nc = parseInt(randomTile.dataset.currentCol);
+
+            randomTile.style.transition = 'none';
+            emptyTile.style.transition = 'none';
+
+            updateTileCSSPosition(randomTile, er, ec);
+            updateTileCSSPosition(emptyTile, nr, nc);
+        }
+
+        setTimeout(() => {
+            tiles.forEach(t => t.style.transition = 'left 0.15s ease, top 0.15s ease');
+        }, 50);
+    }
+
+    btnShuffle.addEventListener('click', shuffleTiles);
+
+    // 7. CẬP NHẬT HÀM CHECKWIN ĐỂ BÁO CÁO KẾT QUẢ KHI THẮNG
+    function checkWin() {
+        const isWin = tiles.every(tile => {
+            return tile.dataset.correctRow === tile.dataset.currentRow &&
+                   tile.dataset.correctCol === tile.dataset.currentCol;
+        });
+
+        if (isWin) {
+            stopTimer();
+            winMessage.style.display = 'block';
+
+            const timePlayedText = timerDisplay.innerText.replace("⏱️ ", "").trim();
+            sendResultToGoogleSheet(timePlayedText);
+        }
+    }
+    </script>
+</body>
+</html>
