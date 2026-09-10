@@ -1000,30 +1000,37 @@
         winMessage.style.display = 'none';
         resetTimer();
 
-        const totalMoves = rows * cols * 15;
+        // Số bước xáo trộn ngẫu nhiên
+        const totalMoves = rows * cols * 20;
 
         for (let i = 0; i < totalMoves; i++) {
+            // Tìm ô trống hiện tại
             const emptyTile = tiles.find(t => t.classList.contains('empty'));
             const er = parseInt(emptyTile.dataset.currentRow);
             const ec = parseInt(emptyTile.dataset.currentCol);
 
+            // Tìm các ô kề cận có thể trượt vào ô trống
             const neighbors = tiles.filter(t => {
                 const r = parseInt(t.dataset.currentRow);
                 const c = parseInt(t.dataset.currentCol);
                 return (Math.abs(r - er) + Math.abs(c - ec)) === 1;
             });
 
+            // Chọn ngẫu nhiên 1 ô kề cận để trượt
             const randomTile = neighbors[Math.floor(Math.random() * neighbors.length)];
             const nr = parseInt(randomTile.dataset.currentRow);
             const nc = parseInt(randomTile.dataset.currentCol);
 
+            // Tắt animation trong lúc xáo trộn để không bị giật
             randomTile.style.transition = 'none';
             emptyTile.style.transition = 'none';
 
+            // Hoán đổi vị trí
             updateTileCSSPosition(randomTile, er, ec);
             updateTileCSSPosition(emptyTile, nr, nc);
         }
 
+        // Bật lại animation sau khi xáo trộn xong
         setTimeout(() => {
             tiles.forEach(t => t.style.transition = 'left 0.15s ease, top 0.15s ease');
         }, 50);
