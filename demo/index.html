@@ -2,877 +2,1135 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Circle Cross Training - Shine Vision App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Game Xếp Hình Trượt Professional - Shine Vision App</title>
+
+    <!-- 0. KIỂM TRA ĐĂNG NHẬP NGAY LẬP TỨC TRƯỚC KHI TẢI BẤT KỲ SCRIPT NÀO KHÁC -->
+    <script>
+        (function immediateAuthCheck() {
+            const loginData = JSON.parse(localStorage.getItem('user_login'));
+            if (!loginData) {
+                if (window.stop) window.stop(); 
+                window.location.replace('../index.html');
+            }
+        })();
+    </script>
+
+    <!-- Nhúng auth.js để kiểm tra đăng nhập & bảo mật -->
+    <script src="../auth.js"></script>
+    <!-- Nạp file readme.js chứa thông tin hướng dẫn -->
+    <script src="readme.js"></script>
+
     <style>
-        :root {
-            --bg-color: rgb(245, 245, 245);
-            --panel-bg: #ffffff;
-            --mobile-btn-bg: rgba(128, 128, 128, 0.4);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: manipulation;
         }
 
         body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            display: flex;
+            background-color: #1e1e24;
+            color: #fff;
             height: 100vh;
-            background-color: var(--bg-color);
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 10px;
             overflow: hidden;
-            user-select: none;
-            touch-action: none;
-            position: fixed; 
+        }
+
+        /* KHỐI NỘI DUNG CHÍNH (ẨN MẶC ĐỊNH CHO ĐẾN KHI AUTH THÀNH CÔNG) */
+        #main-app-content {
+            display: none;
             width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
         }
 
-        #controls {
-            width: 380px;
-            background: var(--panel-bg);
-            padding: 20px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            overflow-y: auto;
-            z-index: 10;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        h1 {
+            margin-bottom: 8px;
+            color: #4dabf7;
+            text-align: center;
+            font-size: 22px;
             flex-shrink: 0;
-            box-sizing: border-box;
         }
 
-        #game-stage {
+        /* --- BỘ ĐẾM THỜI GIAN CHƠI (GÓC TRÊN BÊN PHẢI) --- */
+        #timer-display {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #ff4d4d;
+            font-size: 16px;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid #ff4d4d;
+            z-index: 150;
+            user-select: none;
+        }
+
+        /* --- MENU CHỌN GAME --- */
+        #menu-screen {
+            background: #2b2d42;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            max-width: 900px;
+            width: 95%;
+            overflow-y: auto;
+            max-height: calc(100vh - 80px);
+        }
+
+        .menu-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #a5d8ff;
+            margin-bottom: 15px;
+        }
+
+        .image-gallery-horizontal {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .image-gallery-horizontal::-webkit-scrollbar {
+            height: 10px;
+        }
+        .image-gallery-horizontal::-webkit-scrollbar-track {
+            background: #1e1e24;
+            border-radius: 5px;
+        }
+        .image-gallery-horizontal::-webkit-scrollbar-thumb {
+            background: #4dabf7;
+            border-radius: 5px;
+        }
+
+        .image-card {
+            flex: 0 0 280px;
+            background: #1e1e24;
+            border: 3px solid #4a4e69;
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .image-card:hover {
+            transform: translateY(-4px);
+            border-color: #74c0fc;
+        }
+
+        .image-card.selected {
+            border-color: #38d9a9;
+            background: #22223b;
+            box-shadow: 0 0 14px rgba(56, 217, 169, 0.5);
+        }
+
+        .image-card img, .image-card .custom-icon {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #2b2d42;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .image-card .card-info {
+            font-size: 16px;
+            color: #e9ecef;
+            font-weight: bold;
+        }
+
+        .image-card .card-meta {
+            font-size: 14px;
+            color: #fab005;
+            margin-top: 4px;
+        }
+
+        #custom-options {
+            display: none;
+            background: #22223b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px dashed #4dabf7;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #a5d8ff;
+        }
+
+        input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #4a4e69;
+            background: #1e1e24;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .grid-inputs {
+            display: flex;
+            gap: 15px;
+        }
+
+        .input-item {
+            flex: 1;
+        }
+
+        .input-item label {
+            font-size: 13px;
+            color: #fab005;
+            margin-bottom: 4px;
+        }
+
+        .btn-start {
+            width: 100%;
+            padding: 14px;
+            background: #38d9a9;
+            color: #121212;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-start:hover {
+            background: #20c997;
+        }
+
+        /* --- GIAO DIỆN TRÒ CHƠI --- */
+        #game-screen {
+            display: none;
+            width: 100%;
+            height: calc(100vh - 55px);
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        .game-header {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            width: 100%;
+            max-width: 850px;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            background: #2b2d42;
+            padding: 8px 16px;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #4dabf7;
+            color: #fff;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-back {
+            background: #ff6b6b;
+        }
+
+        /* CÔNG TẮC GẠT GỢI Ý MỜ */
+        .toggle-hint-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #a5d8ff;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #4a4e69;
+            transition: .3s;
+            border-radius: 22px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #38d9a9;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        .workspace-wrapper {
+            position: relative;
+            width: 100%;
             flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
+        }
+
+        .workspace {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+        }
+
+        #puzzle-container {
             position: relative;
+            background-color: #121212;
+            border: 4px solid #4dabf7;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            touch-action: none;
+        }
+
+        .tile {
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.4);
             cursor: pointer;
-            background-color: var(--bg-color);
-            width: 100%;
-            height: 100%;
-            isolation: isolate; 
-            z-index: 1;
+            transition: left 0.15s ease, top 0.15s ease;
+            user-select: none;
         }
 
-        /* Nút điều khiển Mobile */
-        .mobile-nav-group {
+        .tile-label {
             position: absolute;
-            bottom: 40px;
-            display: none; 
-            flex-direction: column;
-            gap: 15px;
-            z-index: 150;
-        }
-
-        .mobile-nav-group.left { left: 20px; }
-        .mobile-nav-group.right { right: 20px; flex-direction: row; }
-
-        .m-btn {
-            width: 60px;
-            height: 60px;
-            background: var(--mobile-btn-bg);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 24px;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.65);
+            color: #fff;
+            font-size: 11px;
             font-weight: bold;
-            border: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .m-btn:active { background: rgba(128, 128, 128, 0.8); }
-
-        #rec-indicator {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            display: none;
-            align-items: center;
-            gap: 8px;
-            font-weight: bold;
-            color: #ff0000;
-            font-size: 18px;
-            z-index: 100;
-        }
-
-        .shape-container {
-            position: absolute;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            top: 50%;
-            left: 50%;
+            padding: 2px 4px;
+            border-bottom-right-radius: 4px;
             pointer-events: none;
-            mix-blend-mode: multiply; 
-            transform-style: preserve-3d;
-            -webkit-transform-style: preserve-3d;
-            will-change: transform;
-            z-index: 2;
+            display: block;
         }
 
-        .dot {
-            width: 12px;
-            height: 12px;
-            background-color: #ff0000;
-            border-radius: 50%;
-            animation: blink 1s infinite;
+        .hide-labels .tile-label {
+            display: none !important;
         }
 
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
+        .tile.empty {
+            background: #1e1e24 !important;
+            border: none;
+            cursor: default;
         }
 
-        .circle-outer, .circle-inner {
-            border-style: solid;
-            border-radius: 50%;
-            display: flex;
+        .tile.empty .tile-label {
+            display: none !important;
+        }
+
+        /* POPUP XEM ẢNH MẪU & README OVERLAY */
+        #preview-modal, #readme-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 200;
             justify-content: center;
             align-items: center;
-            box-sizing: border-box;
-            position: absolute;
-            -webkit-print-color-adjust: exact;
+            flex-direction: column;
         }
 
-        .cross {
-            position: absolute;
+        .modal-content {
+            position: relative;
+            background: #2b2d42;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #4dabf7;
+            max-width: 90vw;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        #preview-modal img {
+            max-width: 80vw;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid #fff;
+        }
+
+        #readme-content {
+            color: #e9ecef;
+            font-size: 15px;
+            line-height: 1.6;
+            width: 100%;
+            max-width: 700px;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+
+        .btn-close-modal {
+            margin-top: 15px;
+            padding: 10px 24px;
+            background: #ff6b6b;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
             font-weight: bold;
-            line-height: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #win-message {
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            -webkit-print-color-adjust: exact;
+            background: rgba(18, 18, 18, 0.95);
+            padding: 20px 30px;
+            border: 3px solid #51cf66;
+            border-radius: 12px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #51cf66;
+            text-align: center;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(81, 207, 102, 0.5);
         }
 
         @media (max-width: 768px) {
-            #controls {
-                position: absolute;
-                left: 0;
-                top: 0;
-                height: 100%;
-                width: 100%;
-                transform: translateX(0);
+            .image-card {
+                flex: 0 0 200px;
             }
-            #game-stage {
-                position: absolute;
-                left: 0;
-                top: 0;
-                transform: translateX(-100%);
+            .image-card img, .image-card .custom-icon {
+                height: 140px;
             }
-            body.training-mode #controls { transform: translateX(100%); }
-            body.training-mode #game-stage { transform: translateX(0); }
-            .mobile-nav-group { display: flex; }
-        }
-
-        .control-group {
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            padding: 12px;
-            border-radius: 8px;
-            background: #fff;
-        }
-
-        h3 { margin-top: 0; font-size: 16px; text-transform: uppercase; text-align: center; margin-bottom: 15px; }
-
-        .mode-selector { display: flex; gap: 10px; margin-bottom: 15px; }
-        .mode-btn {
-            flex: 1; padding: 10px; border: 2px solid #ccc; background: white;
-            cursor: pointer; border-radius: 5px; text-align: center; font-weight: bold; font-size: 14px;
-        }
-        .mode-btn.active { border-color: #007bff; background: #e7f1ff; color: #007bff; }
-
-        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #444; }
-        .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .rgb-label { font-size: 12px; font-weight: bold; width: 15px; color: #666; }
-        
-        .step-btn {
-            width: 36px; height: 36px; border: 1px solid #ccc; background: #f8f8f8;
-            cursor: pointer; border-radius: 4px; font-weight: bold; display: flex;
-            justify-content: center; align-items: center; flex-shrink: 0;
-            font-size: 18px;
-        }
-
-        input[type="range"] { 
-            flex: 1; 
-            cursor: pointer; 
-            height: 25px; 
-            touch-action: pan-y; 
-        }
-
-        /* Thêm style cho ô input số RGB */
-        .rgb-num {
-            width: 45px;
-            padding: 4px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            text-align: center;
-            font-size: 12px;
-        }
-
-        /* Style biến text hiển thị chỉ số thành ô nhập số mini */
-        .inline-num-input {
-            width: 55px;
-            border: none;
-            border-bottom: 1px dashed #007bff;
-            background: transparent;
-            font-weight: bold;
-            font-size: 12px;
-            color: #007bff;
-            text-align: center;
-            padding: 0;
-            margin: 0 2px;
-            outline: none;
-        }
-        .inline-num-input:focus {
-            border-bottom: 1px solid #0056b3;
-            background: #f0f7ff;
-        }
-        
-        .demo-box { color: white; text-align: center; padding: 8px; font-weight: bold; border-radius: 6px; margin-top: 5px; font-size: 12px; text-transform: uppercase; }
-        
-        .swap-btn {
-            width: 100%;
-            padding: 10px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-        }
-        .swap-btn:active { background: #0056b3; }
-
-        .auto-move-grid {
-            display: grid;
-            grid-template-columns: 40px 1fr 1fr;
-            gap: 8px;
-            align-items: center;
-            margin-top: 10px;
-        }
-        .auto-move-grid input {
-            width: 100%;
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            text-align: center;
-        }
-        .auto-btn {
-            width: 100%;
-            padding: 12px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 12px;
-            text-transform: uppercase;
-        }
-        .auto-btn.active { background: #dc3545; }
-
-        #log-container { margin-top: 10px; max-height: 150px; overflow-y: auto; border-top: 1px solid #eee; padding-top: 10px; }
-        .log-item { font-size: 13px; padding: 6px 0; border-bottom: 1px dashed #eee; color: #555; }
-        .clear-log { font-size: 11px; color: #007bff; cursor: pointer; text-decoration: underline; float: right; }
-        
-        .swipe-hint {
-            position: fixed;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 10px;
-            color: #bbb;
-            pointer-events: none;
-        }
-
-        #readme-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        #readme-content {
-            background: white;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            padding: 30px;
-            border-radius: 15px;
-            position: relative;
-            overflow-y: auto;
-            line-height: 1.6;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.3);
-        }
-        .close-readme {
-            position: absolute;
-            top: 15px; right: 15px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #666;
+            .game-header {
+                padding: 6px 10px;
+                gap: 6px;
+            }
+            .btn-action {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            .toggle-hint-wrapper {
+                font-size: 11px;
+            }
         }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="readme-modal">
-        <div id="readme-content">
-            <span class="close-readme" onclick="closeReadme()">&times;</span>
-            <div id="readme-text-container"></div>
+    <div id="main-app-content">
+        <!-- ĐỒNG HỒ ĐẾM GIÂY PHÍA TRÊN BÊN PHẢI -->
+        <div id="timer-display">⏱️ 00:00</div>
+
+        <h1>XẾP HÌNH TRƯỢT SỐ HÓA</h1>
+
+        <!-- 1. MENU CHỌN GAME -->
+        <div id="menu-screen">
+            <div class="menu-title">Chọn hình ảnh & Độ khó:</div>
+            
+            <div class="image-gallery-horizontal" id="gallery">
+                <div class="image-card selected" data-type="preset" data-src="image/anh1.jpg" data-rows="3" data-cols="3">
+                    <img src="image/anh1.jpg" alt="Ảnh 1" onerror="this.src='https://picsum.photos/280/200?random=1'">
+                    <div class="card-info">Ảnh 1 (3x3)</div>
+                    <div class="card-meta">⭐⭐</div>
+                </div>
+                <div class="image-card" data-type="preset" data-src="image/anh2.jpg" data-rows="4" data-cols="4">
+                    <img src="image/anh2.jpg" alt="Ảnh 2" onerror="this.src='https://picsum.photos/280/200?random=2'">
+                    <div class="card-info">Ảnh 2 (4x4)</div>
+                    <div class="card-meta">⭐⭐⭐</div>
+                </div>
+                <div class="image-card" data-type="preset" data-src="image/anh3.jpg" data-rows="5" data-cols="5">
+                    <img src="image/anh3.jpg" alt="Ảnh 3" onerror="this.src='https://picsum.photos/280/200?random=3'">
+                    <div class="card-info">Ảnh 3 (5x5)</div>
+                    <div class="card-meta">⭐⭐⭐⭐</div>
+                </div>
+                <div class="image-card" data-type="preset" data-src="image/anh4.jpg" data-rows="5" data-cols="7">
+                    <img src="image/anh4.jpg" alt="Ảnh 4" onerror="this.src='https://picsum.photos/280/200?random=4'">
+                    <div class="card-info">Ảnh 4 (5x7)</div>
+                    <div class="card-meta">⭐⭐⭐⭐⭐</div>
+                </div>
+                <div class="image-card" data-type="preset" data-src="image/anh5.jpg" data-rows="5" data-cols="7">
+                    <img src="image/anh5.jpg" alt="Ảnh 5" onerror="this.src='https://picsum.photos/280/200?random=5'">
+                    <div class="card-info">Ảnh 5 (5x7)</div>
+                    <div class="card-meta">⭐⭐⭐⭐⭐</div>
+                </div>
+                <div class="image-card" data-type="custom" id="card-custom">
+                    <div class="custom-icon">🛠️</div>
+                    <div class="card-info">Tự chọn</div>
+                    <div class="card-meta">Tùy chỉnh</div>
+                </div>
+            </div>
+
+            <div id="custom-options">
+                <div class="form-group">
+                    <label for="custom-file">Tải ảnh từ máy tính / điện thoại:</label>
+                    <input type="file" id="custom-file" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label>Số lượng ô lưới:</label>
+                    <div class="grid-inputs">
+                        <div class="input-item">
+                            <label for="custom-rows">Hàng (Chiều dọc):</label>
+                            <input type="number" id="custom-rows" min="2" max="10" value="5" placeholder="Số hàng">
+                        </div>
+                        <div class="input-item">
+                            <label for="custom-cols">Cột (Chiều ngang):</label>
+                            <input type="number" id="custom-cols" min="2" max="10" value="7" placeholder="Số cột">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-start" id="btn-start-game">BẮT ĐẦU CHƠI 🚀</button>
+        </div>
+
+        <!-- 2. GIAO DIỆN BÀN CHƠI GAME -->
+        <div id="game-screen">
+            <div class="game-header">
+                <button class="btn-action btn-back" id="btn-menu">⬅ Menu</button>
+                
+                <div class="toggle-hint-wrapper">
+                    <span>Gợi ý</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-hint">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <!-- NÚT TOÀN MÀN HÌNH MỚI BỔ SUNG -->
+                <button class="btn-action" id="btn-fullscreen" style="background: #fab005; color: #121212;">🖥️ Toàn Màn Hình</button>
+
+                <button class="btn-action" id="btn-show-preview">📷 Xem Ảnh Mẫu</button>
+                <button class="btn-action" id="btn-shuffle">🔀 Xáo Trộn</button>
+            </div>
+
+            <div class="workspace-wrapper" id="workspace-wrapper">
+                <div class="workspace" id="workspace">
+                    <div id="puzzle-container"></div>
+                </div>
+            </div>
+
+            <div id="win-message">🎉 CHÚC MỪNG!<br>BẠN ĐÃ HOÀN THÀNH BỨC HÌNH!</div>
+        </div>
+
+        <!-- POPUP XEM ẢNH MẪU -->
+        <div id="preview-modal">
+            <div class="modal-content">
+                <img id="modal-preview-img" src="" alt="Ảnh Mẫu">
+                <button class="btn-close-modal" id="btn-close-preview">Đóng</button>
+            </div>
+        </div>
+
+        <!-- OVERLAY HƯỚNG DẪN TỪ FILE README.JS -->
+        <div id="readme-modal">
+            <div class="modal-content">
+                <h2 style="color: #4dabf7; margin-bottom: 15px; width: 100%; text-align: center;">📖 HƯỚNG DẪN SỬ DỤNG APP</h2>
+                <div id="readme-content"></div>
+                <button class="btn-close-modal" id="btn-close-readme">Tôi Đã Hiểu</button>
+            </div>
         </div>
     </div>
-
-    <div id="game-stage" onclick="handleStageClick()">
-        <div class="mobile-nav-group left">
-            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-v-space', 2)">▲</button>
-            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-v-space', -2)">▼</button>
-        </div>
-        <div class="mobile-nav-group right">
-            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-h-space', -2)">◀</button>
-            <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-h-space', 2)">▶</button>
-        </div>
-
-        <div id="rec-indicator">
-            <div class="dot"></div>
-            <span>REC <span id="timer-display">0.0</span>s</span>
-        </div>
-
-        <div id="container-left" class="shape-container">
-            <div class="circle-outer" id="outer-l">
-                <div class="circle-inner" id="inner-l">
-                    <div class="cross" id="cross-l">+</div>
-                </div>
-            </div>
-        </div>
-
-        <div id="container-right" class="shape-container">
-            <div class="circle-outer" id="outer-r">
-                <div class="circle-inner" id="inner-r">
-                    <div class="cross" id="cross-r">+</div>
-                </div>
-            </div>
-        </div>
-        <div class="swipe-hint">Vuốt phải để về cài đặt</div>
-    </div>
-
-    <div id="controls">
-        <h3>Cài đặt & Nhật ký</h3>
-        <div class="mode-selector">
-            <div class="mode-btn" id="btn-1" onclick="setMode(1)">1 Hình</div>
-            <div class="mode-btn" id="btn-2" onclick="setMode(2)">2 Hình</div>
-        </div>
-
-        <div class="control-group">
-            <label>KÍCH THƯỚC (SIZE): <input type="number" id="val-size" class="inline-num-input" min="50" max="400">px</label>
-            <div class="slider-row">
-                <div class="step-btn" onclick="stepSlider('slider-size', -5)">-</div>
-                <input type="range" id="slider-size" min="50" max="400" value="120">
-                <div class="step-btn" onclick="stepSlider('slider-size', 5)">+</div>
-            </div>
-        </div>
-
-        <div id="spacing-controls">
-            <div class="control-group">
-                <label>KHOẢNG CÁCH NGANG: <input type="number" id="val-h-space" class="inline-num-input" min="-800" max="800">px</label>
-                <div class="slider-row">
-                    <div class="step-btn" onclick="stepSlider('slider-h-space', -2)">-</div>
-                    <input type="range" id="slider-h-space" min="-800" max="800" value="150">
-                    <div class="step-btn" onclick="stepSlider('slider-h-space', 2)">+</div>
-                </div>
-                <label>KHOẢNG CÁCH DỌC: <input type="number" id="val-v-space" class="inline-num-input" min="-400" max="400">px</label>
-                <div class="slider-row">
-                    <div class="step-btn" onclick="stepSlider('slider-v-space', -2)">-</div>
-                    <input type="range" id="slider-v-space" min="-400" max="400" value="0">
-                    <div class="step-btn" onclick="stepSlider('slider-v-space', 2)">+</div>
-                </div>
-            </div>
-        </div>
-
-        <div id="auto-move-section" class="control-group">
-            <label>AUTO MOVE (DI CHUYỂY TỰ ĐỘNG)</label>
-            <div class="auto-move-grid">
-                <div></div><div style="text-align:center; font-size:10px;">DỌC (Y)</div><div style="text-align:center; font-size:10px;">NGANG (X)</div>
-                <div style="font-size:11px;">TỪ:</div>
-                <input type="number" id="y-from" value="0">
-                <input type="number" id="x-from" value="0">
-                <div style="font-size:11px;">ĐẾN:</div>
-                <input type="number" id="y-to" value="0">
-                <input type="number" id="x-to" value="200">
-            </div>
-            <div style="margin-top:10px;">
-                <label>TỐC ĐỘ (MS): <span id="val-auto-speed">2000</span> ms</label>
-                <input type="range" id="auto-speed" min="500" max="20000" value="2000" style="width:100%">
-            </div>
-            <button id="btn-auto" class="auto-btn" onclick="toggleAutoMove()">BẬT AUTO MOVE</button>
-        </div>
-
-        <button class="swap-btn" onclick="swapColors()">Đổi màu nhanh</button>
-
-        <div class="control-group">
-            <label id="label-l">MÀU HÌNH TRÁI</label>
-            <div class="slider-row">
-                <span class="rgb-label">R</span>
-                <input type="range" id="r-l" min="0" max="255" value="0">
-                <input type="number" id="num-r-l" class="rgb-num" min="0" max="255" value="0">
-            </div>
-            <div class="slider-row">
-                <span class="rgb-label">G</span>
-                <input type="range" id="g-l" min="0" max="255" value="255">
-                <input type="number" id="num-g-l" class="rgb-num" min="0" max="255" value="255">
-            </div>
-            <div class="slider-row">
-                <span class="rgb-label">B</span>
-                <input type="range" id="b-l" min="0" max="255" value="255">
-                <input type="number" id="num-b-l" class="rgb-num" min="0" max="255" value="255">
-            </div>
-            <div class="demo-box" id="demo-l">Màu hiện tại</div>
-        </div>
-
-        <div class="control-group" id="color-right-group">
-            <label>MÀU HÌNH PHẢI</label>
-            <div class="slider-row">
-                <span class="rgb-label">R</span>
-                <input type="range" id="r-r" min="0" max="255" value="255">
-                <input type="number" id="num-r-r" class="rgb-num" min="0" max="255" value="255">
-            </div>
-            <div class="slider-row">
-                <span class="rgb-label">G</span>
-                <input type="range" id="g-r" min="0" max="255" value="200">
-                <input type="number" id="num-g-r" class="rgb-num" min="0" max="255" value="200">
-            </div>
-            <div class="slider-row">
-                <span class="rgb-label">B</span>
-                <input type="range" id="b-r" min="0" max="255" value="0">
-                <input type="number" id="num-b-r" class="rgb-num" min="0" max="255" value="0">
-            </div>
-            <div class="demo-box" id="demo-r">Màu hiện tại</div>
-        </div>
-
-        <div class="control-group">
-            <label>NHẬT KÝ LUYỆN TẬP <span class="clear-log" onclick="clearLog()">Xóa hết</span></label>
-            <div id="log-container"></div>
-        </div>
-    </div>
-
-    <script src="readme.js"></script>
 
     <script>
-        // Kiểm tra tên miền chính chủ
-        (function() {
-            const allowedDomain = "shinevisionapp.com";
-            if (window.location.hostname !== allowedDomain && !window.location.hostname.endsWith("." + allowedDomain)) {
-                document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;color:red;text-align:center;'><h3>Cảnh báo: Ứng dụng bị khoá</h3></div>";
-                throw new Error("Unauthorized domain usage.");
+    // 1. URL GOOGLE APPS SCRIPT ĐÃ TÍCH HỢP
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyuFViMNPhOFPlCwuCN0YLP6yEbyOtugJ7ezDIwzjBo54HXR8adr9cpGgwQcFR_Ri9yKw/exec";
+
+    // 2. KIỂM TRA BẢO MẬT DOMAIN
+    (function checkDomain() {
+        const allowedDomain = "shinevisionapp.com";
+        const hostname = window.location.hostname.toLowerCase();
+        const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "" || window.location.protocol === "file:";
+        
+        if (!isLocal && !hostname.endsWith(allowedDomain)) {
+            console.warn("Tên miền không được ủy quyền.");
+        }
+    })();
+
+    // 3. HIỂN THỊ GIAO DIỆN NẾU AUTH THÀNH CÔNG VÀ LẮNG NGHE ĐĂNG XUẤT TUẦN TỰ
+    let currentUsername = "Khách";
+    (function initAppAuth() {
+        const loginData = JSON.parse(localStorage.getItem('user_login'));
+        
+        if (!loginData) {
+            document.body.innerHTML = "";
+            window.location.replace('../index.html');
+            return;
+        } 
+        
+        document.getElementById('main-app-content').style.display = 'flex';
+        currentUsername = loginData.username || loginData.email || loginData.phone || "Ẩn danh";
+
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'user_login' && !e.newValue) {
+                document.body.innerHTML = "";
+                window.location.replace('../index.html');
             }
-        })();
-
-        (function() {
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const check = function() {
-                const devtools = { open: false };
-                const element = new Image();
-                Object.defineProperty(element, 'id', { get: function() { devtools.open = true; terminateSession(); } });
-                function terminateSession() { localStorage.removeItem('user_login'); window.location.replace("about:blank"); document.body.innerHTML = ""; }
-                console.log(element); console.clear();
-                if (!isMobile) {
-                    const threshold = 160;
-                    if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) terminateSession();
-                }
-                if (devtools.open) terminateSession();
-            };
-            setInterval(function() {
-                const start = performance.now();
-                debugger;
-                if (performance.now() - start > 100) window.location.replace("about:blank");
-            }, 500);
-            setInterval(check, 1000);
-            window.addEventListener('resize', check);
-        })();
-
-        (function() {
-            function checkAccess() {
-                const loginData = JSON.parse(localStorage.getItem('user_login'));
-                const currentTime = new Date().getTime();
-                const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-                if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
-                    localStorage.removeItem('user_login');
-                    window.location.href = '../index.html';
-                }
-            }
-            checkAccess();
-            window.addEventListener('storage', (e) => { if (e.key === 'user_login' && e.newValue === null) window.location.href = '../index.html'; });
-            window.onfocus = () => checkAccess();
-        })();
-
-        // --- LOGIC GAME & ĐỒNG BỘ MÀU ---
-        let mode = 1;
-        let isRecording = false;
-        let startTime, timerInterval;
-        let trainingLogs = JSON.parse(localStorage.getItem('trainingLogs')) || [];
-        let isTouchingSlider = false;
-        let isAutoMoving = false;
-        let autoMoveInterval = null;
-        let movingToTarget = true;
-
-        const sliders = document.querySelectorAll('input[type="range"]');
-        sliders.forEach(slider => {
-            slider.addEventListener('touchstart', () => { isTouchingSlider = true; }, {passive: true});
-            slider.addEventListener('touchend', () => { isTouchingSlider = false; }, {passive: true});
-            slider.addEventListener('input', updateStyles);
         });
+    })();
 
-        // Lắng nghe sự kiện trên các ô input số RGB
-        const numInputs = document.querySelectorAll('.rgb-num');
-        numInputs.forEach(input => {
-            input.addEventListener('input', (e) => {
-                let val = parseInt(e.target.value);
-                if (isNaN(val)) val = 0;
-                if (val < 0) val = 0;
-                if (val > 255) val = 255;
-                e.target.value = val;
-                
-                // Tìm slider tương ứng để đồng bộ
-                const sliderId = e.target.id.replace('num-', '');
-                document.getElementById(sliderId).value = val;
-                updateStyles();
-            });
-        });
+    // 4. KHAI BÁO BIẾN CÔNG CỤ GAME XẾP HÌNH
+    const ROWS_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
-        // ĐỒNG BỘ KHI GÕ TRỰC TIẾP VÀO Ô HIỂN THỊ CHỈ SỐ (Size, H-space, V-space)
-        const inlineInputs = document.querySelectorAll('.inline-num-input');
-        inlineInputs.forEach(input => {
-            input.addEventListener('input', (e) => {
-                const sliderId = e.target.id.replace('val-', 'slider-');
-                const sliderEl = document.getElementById(sliderId);
-                
-                let val = parseInt(e.target.value);
-                const min = parseInt(sliderEl.min);
-                const max = parseInt(sliderEl.max);
-
-                if (isNaN(val)) return; // Cho phép người dùng tạm xóa để gõ tiếp
-                if (val < min) val = min;
-                if (val > max) val = max;
-                
-                sliderEl.value = val;
-                updateStyles(false); // Cập nhật style nhưng không ghi đè lại giá trị input đang gõ
-            });
-
-            // Khi tiêu điểm ra ngoài (blur), chuẩn hóa nếu rỗng hoặc sai lệch
-            input.addEventListener('blur', (e) => {
-                const sliderId = e.target.id.replace('val-', 'slider-');
-                const sliderEl = document.getElementById(sliderId);
-                let val = parseInt(e.target.value);
-                if (isNaN(val)) {
-                    e.target.value = sliderEl.value;
-                }
-                updateStyles();
-            });
-        });
-
-        window.addEventListener('contextmenu', e => e.preventDefault());
-
-        window.addEventListener('keydown', e => {
-            if (e.key === "F12" || (e.ctrlKey && e.key === "s")) { e.preventDefault(); openReadme(); }
-            if (e.key === "Escape") closeReadme();
-            if (e.key === "ArrowLeft") { e.preventDefault(); stepSlider('slider-h-space', -2); }
-            if (e.key === "ArrowRight") { e.preventDefault(); stepSlider('slider-h-space', 2); }
-            if (e.key === "ArrowUp") { e.preventDefault(); stepSlider('slider-v-space', 2); }
-            if (e.key === "ArrowDown") { e.preventDefault(); stepSlider('slider-v-space', -2); }
-        });
-
-        window.addEventListener('wheel', e => {
-            if (document.body.classList.contains('training-mode') || e.target.closest('#game-stage')) {
-                e.preventDefault();
-                stepSlider('slider-size', e.deltaY < 0 ? 5 : -5);
-            }
-        }, { passive: false });
-
-        function openReadme() {
-            const container = document.getElementById('readme-text-container');
-            container.innerHTML = (typeof readmeContent !== 'undefined') ? readmeContent : "<h2>Hướng dẫn</h2><p>Vui lòng kiểm tra file readme.js</p>";
-            document.getElementById('readme-modal').style.display = 'flex';
-        }
-        function closeReadme() { document.getElementById('readme-modal').style.display = 'none'; }
-
-        let touchStartX = 0;
-        document.addEventListener('touchstart', e => {
-            if (isTouchingSlider || e.target.closest('.m-btn') || e.target.closest('.inline-num-input')) return;
-            touchStartX = e.changedTouches[0].screenX;
-        }, {passive: true});
-
-        document.addEventListener('touchend', e => {
-            if (isTouchingSlider || e.target.closest('.m-btn') || e.target.closest('.inline-num-input')) return;
-            let diff = touchStartX - e.changedTouches[0].screenX;
-            if (Math.abs(diff) > 60) {
-                if (diff < 0) document.body.classList.add('training-mode');
-                else document.body.classList.remove('training-mode');
-            }
-        }, {passive: true});
-
-        function handleStageClick() {
-            if (!isRecording) {
-                isRecording = true; startTime = Date.now();
-                document.getElementById('rec-indicator').style.display = 'flex';
-                timerInterval = setInterval(() => {
-                    document.getElementById('timer-display').innerText = ((Date.now() - startTime) / 1000).toFixed(1);
-                }, 100);
-            } else {
-                isRecording = false; clearInterval(timerInterval);
-                const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-                document.getElementById('rec-indicator').style.display = 'none';
-                addLog(duration);
-            }
-        }
-
-        function addLog(seconds) {
-            const now = new Date();
-            const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-            trainingLogs.unshift({ date: dateStr, trial: trainingLogs.filter(log => log.date === dateStr).length + 1, time: seconds });
-            localStorage.setItem('trainingLogs', JSON.stringify(trainingLogs));
-            renderLogs();
-        }
-
-        function renderLogs() {
-            document.getElementById('log-container').innerHTML = trainingLogs.map(log => 
-                `<div class="log-item">${log.date} - Lần ${log.trial} - ${log.time} giây</div>`
-            ).join('');
-        }
-
-        function clearLog() {
-            if(confirm("Xóa toàn bộ nhật ký?")) { trainingLogs = []; localStorage.removeItem('trainingLogs'); renderLogs(); }
-        }
-
-        function stepSlider(id, step) {
-            const slider = document.getElementById(id);
-            slider.value = parseInt(slider.value) + step;
-            updateStyles();
-        }
-
-        function swapColors() {
-            const rL = document.getElementById('r-l'), gL = document.getElementById('g-l'), bL = document.getElementById('b-l');
-            const rR = document.getElementById('r-r'), gR = document.getElementById('g-r'), bR = document.getElementById('b-r');
-            const temp = { r: rL.value, g: gL.value, b: bL.value };
-            rL.value = rR.value; gL.value = gR.value; bL.value = bR.value;
-            rR.value = temp.r; gR.value = temp.g; bR.value = temp.b;
-            updateStyles();
-        }
-
-        function setMode(m) {
-            mode = m;
-            document.getElementById('btn-1').classList.toggle('active', m === 1);
-            document.getElementById('btn-2').classList.toggle('active', m === 2);
-            updateStyles();
-        }
-
-        function toggleAutoMove() {
-            isAutoMoving = !isAutoMoving;
-            const btn = document.getElementById('btn-auto');
-            if (isAutoMoving) {
-                btn.innerText = "DỪNG AUTO MOVE"; btn.classList.add('active');
-                startAutoMoveLoop();
-            } else {
-                btn.innerText = "BẬT AUTO MOVE"; btn.classList.remove('active');
-                stopAutoMoveLoop();
-            }
-            saveData();
-        }
-
-        function startAutoMoveLoop() {
-            if (autoMoveInterval) clearTimeout(autoMoveInterval);
-            const run = () => {
-                if (!isAutoMoving) return;
-                const speed = parseInt(document.getElementById('auto-speed').value);
-                document.querySelectorAll('.shape-container').forEach(el => {
-                    el.style.transition = `transform ${speed}ms linear`;
-                });
-                const xVal = movingToTarget ? document.getElementById('x-to').value : document.getElementById('x-from').value;
-                const yVal = movingToTarget ? document.getElementById('y-to').value : document.getElementById('y-from').value;
-                document.getElementById('slider-h-space').value = xVal;
-                document.getElementById('slider-v-space').value = yVal;
-                updateStyles();
-                movingToTarget = !movingToTarget;
-                autoMoveInterval = setTimeout(run, speed);
-            };
-            run();
-        }
-
-        function stopAutoMoveLoop() {
-            isAutoMoving = false;
-            if (autoMoveInterval) clearTimeout(autoMoveInterval);
-            autoMoveInterval = null;
-            document.querySelectorAll('.shape-container').forEach(el => el.style.transition = 'none');
-        }
-
-        function saveData() {
-            const settings = {
-                mode: mode,
-                size: document.getElementById('slider-size').value,
-                hSpace: document.getElementById('slider-h-space').value,
-                vSpace: document.getElementById('slider-v-space').value,
-                autoSpeed: document.getElementById('auto-speed').value,
-                xFrom: document.getElementById('x-from').value,
-                yFrom: document.getElementById('y-from').value,
-                xTo: document.getElementById('x-to').value,
-                yTo: document.getElementById('y-to').value,
-                colorL: { r: document.getElementById('r-l').value, g: document.getElementById('g-l').value, b: document.getElementById('b-l').value },
-                colorR: { r: document.getElementById('r-r').value, g: document.getElementById('g-r').value, b: document.getElementById('b-r').value }
-            };
-            localStorage.setItem('circleCrossSettings', JSON.stringify(settings));
-        }
-
-        function loadData() {
-            const saved = localStorage.getItem('circleCrossSettings');
-            if (saved) {
-                const s = JSON.parse(saved);
-                mode = s.mode;
-                document.getElementById('slider-size').value = s.size;
-                document.getElementById('slider-h-space').value = s.hSpace;
-                document.getElementById('slider-v-space').value = s.vSpace;
-                document.getElementById('auto-speed').value = s.autoSpeed || 2000;
-                document.getElementById('x-from').value = s.xFrom || 0;
-                document.getElementById('y-from').value = s.yFrom || 0;
-                document.getElementById('x-to').value = s.xTo || 200;
-                document.getElementById('y-to').value = s.yTo || 100;
-                document.getElementById('r-l').value = s.colorL.r;
-                document.getElementById('g-l').value = s.colorL.g;
-                document.getElementById('b-l').value = s.colorL.b;
-                document.getElementById('r-r').value = s.colorR.r;
-                document.getElementById('g-r').value = s.colorR.g;
-                document.getElementById('b-r').value = s.colorR.b;
-            }
-        }
-
-        function updateStyles(updateInputs = true) {
-            const size = parseInt(document.getElementById('slider-size').value);
-            const hSpace = parseInt(document.getElementById('slider-h-space').value);
-            const vSpace = parseInt(document.getElementById('slider-v-space').value);
-            
-            // Cập nhật giá trị vào các ô số hiển thị tại tiêu đề nếu được cho phép
-            if (updateInputs) {
-                if (document.activeElement !== document.getElementById('val-size')) {
-                    document.getElementById('val-size').value = size;
-                }
-                if (document.activeElement !== document.getElementById('val-h-space')) {
-                    document.getElementById('val-h-space').value = hSpace;
-                }
-                if (document.activeElement !== document.getElementById('val-v-space')) {
-                    document.getElementById('val-v-space').value = vSpace;
-                }
-            }
-
-            // Lấy giá trị màu
-            const rL = document.getElementById('r-l').value;
-            const gL = document.getElementById('g-l').value;
-            const bL = document.getElementById('b-l').value;
-            const rR = document.getElementById('r-r').value;
-            const gR = document.getElementById('g-r').value;
-            const bR = document.getElementById('b-r').value;
-
-            // Đồng bộ sang ô input số
-            document.getElementById('num-r-l').value = rL;
-            document.getElementById('num-g-l').value = gL;
-            document.getElementById('num-b-l').value = bL;
-            document.getElementById('num-r-r').value = rR;
-            document.getElementById('num-g-r').value = gR;
-            document.getElementById('num-b-r').value = bR;
-
-            const colorL = `rgb(${rL}, ${gL}, ${bL})`;
-            const colorR = `rgb(${rR}, ${gR}, ${bR})`;
-
-            document.getElementById('val-auto-speed').innerText = document.getElementById('auto-speed').value;
-            
-            document.getElementById('demo-l').style.backgroundColor = colorL;
-            document.getElementById('demo-r').style.backgroundColor = colorR;
-
-            const thickness = Math.max(2, Math.round(size * 0.06));
-            const configs = [
-                { outer: 'outer-l', inner: 'inner-l', cross: 'cross-l', color: colorL },
-                { outer: 'outer-r', inner: 'inner-r', cross: 'cross-r', color: colorR }
-            ];
-
-            configs.forEach(item => {
-                const outEl = document.getElementById(item.outer), inEl = document.getElementById(item.inner), crossEl = document.getElementById(item.cross);
-                if(outEl) {
-                    outEl.style.width = outEl.style.height = size + 'px';
-                    outEl.style.borderWidth = thickness + 'px';
-                    outEl.style.borderColor = item.color;
-                    inEl.style.width = inEl.style.height = Math.round(size * 0.55) + 'px';
-                    inEl.style.borderWidth = thickness + 'px';
-                    inEl.style.borderColor = item.color;
-                    crossEl.style.fontSize = Math.round(size * 0.4) + 'px';
-                    crossEl.style.color = item.color;
-                }
-            });
-
-            const leftCont = document.getElementById('container-left'), rightCont = document.getElementById('container-right');
-            if (mode === 1) {
-                rightCont.style.display = 'none'; leftCont.style.transform = 'translate(-50%, -50%)';
-                document.getElementById('spacing-controls').style.opacity = '0.3';
-                document.getElementById('spacing-controls').style.pointerEvents = 'none';
-                document.getElementById('color-right-group').style.display = 'none';
-            } else {
-                rightCont.style.display = 'flex';
-                leftCont.style.transform = `translate(calc(-50% - ${hSpace/2}px), calc(-50% - ${vSpace/2}px))`;
-                rightCont.style.transform = `translate(calc(-50% + ${hSpace/2}px), calc(-50% + ${vSpace/2}px))`;
-                document.getElementById('spacing-controls').style.opacity = '1';
-                document.getElementById('spacing-controls').style.pointerEvents = 'auto';
-                document.getElementById('color-right-group').style.display = 'block';
-            }
-            saveData();
-        }
-
-        loadData();
-        setMode(mode);
-        renderLogs();
-        updateStyles();
-        // --- SỬ DỤNG SENDBEACON ĐỂ ĐẢM BẢO GỬI DATA 100% KHI THOÁT APP ---
-        const handleAppExit = function () {
-            // 1. Lấy thông tin tài khoản từ localStorage
-            let username = "Ẩn danh / Chưa đăng nhập";
-            try {
-                const loginData = JSON.parse(localStorage.getItem('user_login'));
-                if (loginData) {
-                    username = loginData.username || loginData.email || loginData.user || Object.values(loginData)[0] || "Ẩn danh";
-                }
-            } catch (e) {
-                username = "Lỗi đọc dữ liệu đăng nhập";
-            }
-
-            // 2. Lấy thông số cấu hình hiện tại từ các slider trong app của anh
-            const size = document.getElementById('slider-size').value;
-            const hSpace = document.getElementById('slider-h-space').value;
-            const vSpace = document.getElementById('slider-v-space').value;
-            const formattedStr = `${size}-${hSpace}-${vSpace}`;
+    const menuScreen = document.getElementById('menu-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const cards = document.querySelectorAll('.image-card');
+    const customOptions = document.getElementById('custom-options');
+    const customFile = document.getElementById('custom-file');
+    const customRowsInput = document.getElementById('custom-rows');
+    const customColsInput = document.getElementById('custom-cols');
+    const btnStart = document.getElementById('btn-start-game');
+    const btnMenu = document.getElementById('btn-menu');
+    const btnShuffle = document.getElementById('btn-shuffle');
+    const btnShowPreview = document.getElementById('btn-show-preview');
+    const btnClosePreview = document.getElementById('btn-close-preview');
+    const previewModal = document.getElementById('preview-modal');
+    const modalPreviewImg = document.getElementById('modal-preview-img');
+    const toggleHint = document.getElementById('toggle-hint');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
     
-            // Gói toàn bộ dữ liệu vào Object
-            const payload = {
-                username: username,
-                size: size,
-                hSpace: hSpace,
-                vSpace: vSpace,
-                formattedStr: formattedStr
-            };
-    
-            // Đường dẫn Web App Apps Script của anh (Nhớ thay link của anh vào đây)
-            const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzad9j8IWf8omIeYH1NTprN79eCI6E9cPnmsldccpvuAdFrHOXNtvkvZmPc-3hUrWHs/exec';
-    
-            // Kiển đổi dữ liệu sang dạng Blob với kiểu nội dung text/plain để sendBeacon gửi đi không bị chặn CORS
-            const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain; charset=UTF-8' });
-    
-            // 3. Gửi dữ liệu ngầm - Trình duyệt đảm bảo gửi thành công ngay cả khi đóng tab lập tức
-            navigator.sendBeacon(googleScriptUrl, blob);
+    const container = document.getElementById('puzzle-container');
+    const winMessage = document.getElementById('win-message');
+    const workspace = document.getElementById('workspace');
+    const workspaceWrapper = document.getElementById('workspace-wrapper');
+
+    const readmeModal = document.getElementById('readme-modal');
+    const readmeContent = document.getElementById('readme-content');
+    const btnCloseReadme = document.getElementById('btn-close-readme');
+    const timerDisplay = document.getElementById('timer-display');
+
+    let selectedCard = document.querySelector('.image-card.selected');
+    let rows = 3;
+    let cols = 3;
+    let imgUrl = '';
+    let tiles = [];
+    let tileWidth = 80;
+    let tileHeight = 80;
+    let currentScale = 1;
+
+    // Biến cho tính năng đếm giờ
+    let timerInterval = null;
+    let secondsElapsed = 0;
+    let isTimerStarted = false;
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        secondsElapsed = 0;
+        isTimerStarted = false;
+        timerDisplay.innerText = "⏱️ 00:00";
+    }
+
+    function startTimer() {
+        if (isTimerStarted) return;
+        isTimerStarted = true;
+        secondsElapsed = 0;
+        timerInterval = setInterval(() => {
+            secondsElapsed++;
+            const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+            const secs = String(secondsElapsed % 60).padStart(2, '0');
+            timerDisplay.innerText = `⏱️ ${mins}:${secs}`;
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+        isTimerStarted = false;
+    }
+
+    // --- LOGIC XỬ LÝ NÚT TOÀN MÀN HÌNH (FULLSCREEN) ---
+    function toggleFullScreen() {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen().catch(err => console.log(err));
+            } else if (docEl.webkitRequestFullscreen) {
+                docEl.webkitRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
+    }
+
+    function updateFullscreenButtonText() {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            btnFullscreen.innerHTML = '🗗 Thu Nhỏ';
+        } else {
+            btnFullscreen.innerHTML = '🖥️ Toàn Màn Hình';
+        }
+    }
+
+    btnFullscreen.addEventListener('click', toggleFullScreen);
+
+    document.addEventListener('fullscreenchange', () => {
+        updateFullscreenButtonText();
+        setTimeout(autoScaleWorkspace, 100);
+    });
+
+    document.addEventListener('webkitfullscreenchange', () => {
+        updateFullscreenButtonText();
+        setTimeout(autoScaleWorkspace, 100);
+    });
+
+    // 5. HÀM TẠO DẤU THỜI GIAN THEO ĐỊNH DẠNG DD/MM/YY - hh/mm
+    function getFormattedTimestamp() {
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yy = String(now.getFullYear()).slice(-2);
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        return `${dd}/${mm}/${yy} - ${hh}/${min}`;
+    }
+
+    // 6. HÀM TỰ ĐỘNG GỬI KẾT QUẢ VỀ GOOGLE SHEET
+    function sendResultToGoogleSheet(timePlayedText) {
+        if (!GOOGLE_SHEET_WEB_APP_URL) return;
+
+        const payload = {
+            username: currentUsername,
+            timestamp: getFormattedTimestamp(),
+            result: `${rows}x${cols} - ${timePlayedText}`
         };
 
-        // Đăng ký sự kiện với cả 'pagehide' và 'visibilitychange' để bao quát toàn bộ các kịch bản thoát app trên cả máy tính lẫn điện thoại
-        window.addEventListener('pagehide', handleAppExit);
-        window.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'hidden') {
-                handleAppExit();
+        fetch(GOOGLE_SHEET_WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+            },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            console.log("Đã gửi kết quả lên Google Sheet thành công!");
+        }).catch(err => {
+            console.error("Lỗi gửi kết quả:", err);
+        });
+    }
+
+    // XỬ LÝ HIỂN THỊ OVERLAY README
+    function showReadmeOverlay() {
+        let contentText = "";
+        if (typeof README_TEXT !== 'undefined') {
+            contentText = README_TEXT;
+        } else if (typeof README_DATA !== 'undefined') {
+            contentText = typeof README_DATA === 'string' ? README_DATA : JSON.stringify(README_DATA, null, 2);
+        } else {
+            contentText = "HƯỚNG DẪN SỬ DỤNG GAME XẾP HÌNH TRƯỢT:\n\n1. Sử dụng chuột/Cảm ứng để di chuyển các ô vuông gần ô trống.\n2. Sử dụng các phím mũi tên (Up, Down, Left, Right) trên bàn phím để trượt các ô.\n3. Nhấn '📷 Xem Ảnh Mẫu' để xem bức ảnh hoàn chỉnh.\n4. Bật/tắt công tắc 'Gợi ý' để ẩn/hiển thị ký hiệu ô.";
+        }
+        readmeContent.textContent = contentText;
+        readmeModal.style.display = 'flex';
+    }
+
+    btnCloseReadme.addEventListener('click', () => {
+        readmeModal.style.display = 'none';
+    });
+
+    readmeModal.addEventListener('click', (e) => {
+        if (e.target === readmeModal) {
+            readmeModal.style.display = 'none';
+        }
+    });
+
+    // CHẶN DEVTOOLS, LƯU TRANG (CTRL+S) VÀ CÁC THAO TÁC TRÊN WIN & MAC (CHO PHÉP F5/CTRL+R RELOAD)
+    window.addEventListener('keydown', (e) => {
+        const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+        const isShift = e.shiftKey;
+        const isAlt = e.altKey;
+        const key = e.key.toUpperCase();
+
+        const isDevTools = key === 'F12' ||
+            (isCmdOrCtrl && isShift && (key === 'I' || key === 'J' || key === 'C')) ||
+            (isCmdOrCtrl && isAlt && (key === 'I' || key === 'J' || key === 'C' || key === 'U')) ||
+            (isCmdOrCtrl && key === 'U');
+    
+        const isSaveOrPageAction = isCmdOrCtrl && (key === 'S' || key === 'P' || key === 'A');
+
+        if (isDevTools || isSaveOrPageAction) {
+            e.preventDefault();
+            e.stopPropagation();
+            showReadmeOverlay();
+            return false;
+        }
+
+        if (gameScreen.style.display !== 'flex') return;
+        if (previewModal.style.display === 'flex' || readmeModal.style.display === 'flex') return;
+
+        const emptyTile = tiles.find(t => t.classList.contains('empty'));
+        if (!emptyTile) return;
+
+        const er = parseInt(emptyTile.dataset.currentRow);
+        const ec = parseInt(emptyTile.dataset.currentCol);
+
+        let targetRow = er;
+        let targetCol = ec;
+
+        if (e.key === 'ArrowUp') {
+            targetRow = er + 1;
+        } else if (e.key === 'ArrowDown') {
+            targetRow = er - 1;
+        } else if (e.key === 'ArrowLeft') {
+            targetCol = ec + 1;
+        } else if (e.key === 'ArrowRight') {
+            targetCol = ec - 1;
+        } else {
+            return;
+        }
+
+        e.preventDefault();
+
+        const targetTile = tiles.find(t => 
+            parseInt(t.dataset.currentRow) === targetRow && 
+            parseInt(t.dataset.currentCol) === targetCol
+        );
+
+        if (targetTile) {
+            onTileClick(targetTile);
+        }
+    }, true);
+
+    cards.forEach(card => {
+        card.addEventListener('click', () => {
+            cards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedCard = card;
+
+            if (card.dataset.type === 'custom') {
+                customOptions.style.display = 'block';
+            } else {
+                customOptions.style.display = 'none';
             }
         });
+    });
+
+    btnStart.addEventListener('click', () => {
+        const type = selectedCard.dataset.type;
+
+        if (type === 'custom') {
+            const file = customFile.files[0];
+            if (!file) {
+                alert('Vui lòng chọn 1 tệp ảnh từ thiết bị của bạn!');
+                return;
+            }
+            imgUrl = URL.createObjectURL(file);
+            rows = parseInt(customRowsInput.value) || 5;
+            cols = parseInt(customColsInput.value) || 7;
+        } else {
+            imgUrl = selectedCard.dataset.src;
+            rows = parseInt(selectedCard.dataset.rows);
+            cols = parseInt(selectedCard.dataset.cols);
+        }
+
+        menuScreen.style.display = 'none';
+        gameScreen.style.display = 'flex';
+        modalPreviewImg.src = imgUrl;
+
+        setupGame();
+    });
+
+    btnMenu.addEventListener('click', () => {
+        stopTimer();
+        resetTimer();
+        gameScreen.style.display = 'none';
+        menuScreen.style.display = 'block';
+    });
+
+    btnShowPreview.addEventListener('click', () => {
+        previewModal.style.display = 'flex';
+    });
+
+    btnClosePreview.addEventListener('click', () => {
+        previewModal.style.display = 'none';
+    });
+
+    previewModal.addEventListener('click', (e) => {
+        if (e.target === previewModal) {
+            previewModal.style.display = 'none';
+        }
+    });
+
+    toggleHint.addEventListener('change', () => {
+        if (toggleHint.checked) {
+            container.classList.remove('hide-labels');
+        } else {
+            container.classList.add('hide-labels');
+        }
+    });
+
+    window.addEventListener('resize', autoScaleWorkspace);
+
+    function setupGame() {
+        winMessage.style.display = 'none';
+        container.innerHTML = '';
+        tiles = [];
+        resetTimer();
+
+        if (toggleHint.checked) {
+            container.classList.remove('hide-labels');
+        } else {
+            container.classList.add('hide-labels');
+        }
+
+        tileWidth = 80;
+        tileHeight = 80;
+
+        const containerWidth = tileWidth * cols;
+        const containerHeight = tileHeight * rows;
+
+        container.style.width = `${containerWidth}px`;
+        container.style.height = `${containerHeight}px`;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const isLast = (r === rows - 1 && c === cols - 1);
+                
+                const tile = document.createElement('div');
+                tile.className = 'tile' + (isLast ? ' empty' : '');
+                
+                tile.dataset.correctRow = r;
+                tile.dataset.correctCol = c;
+                tile.dataset.currentRow = r;
+                tile.dataset.currentCol = c;
+
+                const labelText = `${ROWS_LABELS[r] || (r+1)}${c + 1}`;
+                
+                if (!isLast) {
+                    tile.style.backgroundImage = `url('${imgUrl}')`;
+                    tile.style.backgroundSize = `${containerWidth}px ${containerHeight}px`;
+                    tile.style.backgroundPosition = `-${c * tileWidth}px -${r * tileHeight}px`;
+                    
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = 'tile-label';
+                    labelDiv.innerText = labelText;
+                    tile.appendChild(labelDiv);
+                }
+
+                tile.style.width = `${tileWidth}px`;
+                tile.style.height = `${tileHeight}px`;
+
+                updateTileCSSPosition(tile, r, c);
+                
+                tile.addEventListener('click', () => onTileClick(tile));
+                
+                container.appendChild(tile);
+                tiles.push(tile);
+            }
+        }
+
+        shuffleTiles();
+        autoScaleWorkspace();
+    }
+
+    function autoScaleWorkspace() {
+        if (gameScreen.style.display !== 'flex') return;
+
+        const wrapperWidth = workspaceWrapper.clientWidth;
+        const wrapperHeight = workspaceWrapper.clientHeight;
+
+        const puzzleWidth = container.clientWidth;
+        const puzzleHeight = container.clientHeight;
+
+        if (puzzleWidth === 0 || puzzleHeight === 0) return;
+
+        const scaleX = (wrapperWidth - 30) / puzzleWidth;
+        const scaleY = (wrapperHeight - 30) / puzzleHeight;
+
+        currentScale = Math.min(scaleX, scaleY);
+
+        workspace.style.transform = `scale(${currentScale})`;
+    }
+
+    function updateTileCSSPosition(tile, r, c) {
+        tile.style.top = `${r * tileHeight}px`;
+        tile.style.left = `${c * tileWidth}px`;
+        tile.dataset.currentRow = r;
+        tile.dataset.currentCol = c;
+    }
+
+    function onTileClick(tile) {
+        if (tile.classList.contains('empty')) return;
+
+        const emptyTile = tiles.find(t => t.classList.contains('empty'));
+        const r1 = parseInt(tile.dataset.currentRow);
+        const c1 = parseInt(tile.dataset.currentCol);
+        const r2 = parseInt(emptyTile.dataset.currentRow);
+        const c2 = parseInt(emptyTile.dataset.currentCol);
+
+        // Kiểm tra xem ô được click có nằm cùng hàng hoặc cùng cột với ô trống không
+        if (r1 === r2 || c1 === c2) {
+            startTimer();
+
+            // 1. Nếu cùng hàng: di chuyển các ô theo chiều ngang
+            if (r1 === r2) {
+                const step = c1 < c2 ? 1 : -1;
+                for (let c = c2; c !== c1; c -= step) {
+                    const prevC = c - step;
+                    const movingTile = tiles.find(t => parseInt(t.dataset.currentRow) === r1 && parseInt(t.dataset.currentCol) === prevC);
+                    const currentEmpty = tiles.find(t => parseInt(t.dataset.currentRow) === r1 && parseInt(t.dataset.currentCol) === c);
+                
+                    updateTileCSSPosition(movingTile, r1, c);
+                    updateTileCSSPosition(currentEmpty, r1, prevC);
+                }
+            } 
+            // 2. Nếu cùng cột: di chuyển các ô theo chiều dọc
+            else if (c1 === c2) {
+                const step = r1 < r2 ? 1 : -1;
+                for (let r = r2; r !== r1; r -= step) {
+                    const prevR = r - step;
+                    const movingTile = tiles.find(t => parseInt(t.dataset.currentRow) === prevR && parseInt(t.dataset.currentCol) === c1);
+                    const currentEmpty = tiles.find(t => parseInt(t.dataset.currentRow) === r && parseInt(t.dataset.currentCol) === c1);
+                
+                    updateTileCSSPosition(movingTile, r, c1);
+                    updateTileCSSPosition(currentEmpty, prevR, c1);
+                }
+            }
+
+            checkWin();
+        }
+    }
+
+    function shuffleTiles() {
+        winMessage.style.display = 'none';
+        resetTimer();
+
+        // Tạo mảng mô phỏng vị trí lưới [row, col] cho từng ô
+        let grid = [];
+        for (let r = 0; r < rows; r++) {
+            grid[r] = [];
+            for (let c = 0; c < cols; c++) {
+                const tile = tiles.find(t => parseInt(t.dataset.correctRow) === r && parseInt(t.dataset.correctCol) === c);
+                grid[r][c] = tile;
+            }
+        }
+
+        let er = rows - 1;
+        let ec = cols - 1;
+        const totalMoves = rows * cols * 30;
+
+        // Tắt transition để chuẩn bị xáo trộn
+        tiles.forEach(t => t.style.transition = 'none');
+
+        // Xáo trộn hợp lệ trên mảng dữ liệu
+        for (let i = 0; i < totalMoves; i++) {
+            const neighbors = [];
+            if (er > 0) neighbors.push({ r: er - 1, c: ec });
+            if (er < rows - 1) neighbors.push({ r: er + 1, c: ec });
+            if (ec > 0) neighbors.push({ r: er, c: ec - 1 });
+            if (ec < cols - 1) neighbors.push({ r: er, c: ec + 1 });
+
+            const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+        
+            // Tráo đổi vị trí trong mảng
+            grid[er][ec] = grid[next.r][next.c];
+            grid[next.r][next.c] = tiles.find(t => t.classList.contains('empty'));
+
+            er = next.r;
+            ec = next.c;
+        }
+
+        // Cập nhật lại vị trí CSS và dataset chuẩn xác cho toàn bộ ô
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const tile = grid[r][c];
+                updateTileCSSPosition(tile, r, c);
+            }
+        }
+
+        // Bật lại transition sau khi cập nhật xong DOM
+        setTimeout(() => {
+            tiles.forEach(t => t.style.transition = 'left 0.15s ease, top 0.15s ease');
+        }, 50);
+    }
+
+    btnShuffle.addEventListener('click', shuffleTiles);
+
+    // 7. CẬP NHẬT HÀM CHECKWIN ĐỂ BÁO CÁO KẾT QUẢ KHI THẮNG
+    function checkWin() {
+        const isWin = tiles.every(tile => {
+            return tile.dataset.correctRow === tile.dataset.currentRow &&
+                   tile.dataset.correctCol === tile.dataset.currentCol;
+        });
+
+        if (isWin) {
+            stopTimer();
+            winMessage.style.display = 'block';
+
+            const timePlayedText = timerDisplay.innerText.replace("⏱️ ", "").trim();
+            sendResultToGoogleSheet(timePlayedText);
+        }
+    }
     </script>
 </body>
 </html>
