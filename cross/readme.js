@@ -9,6 +9,7 @@ const readmeContent = `
             <li><strong>Esc:</strong> Đóng bảng hướng dẫn.</li>
             <li><strong>Phím Lên / Xuống:</strong> Tăng / Giảm khoảng cách dọc.</li>
             <li><strong>Phím Trái / Phải:</strong> Giảm / Tăng khoảng cách ngang.</li>
+            <li><strong>Phím Backspace:</strong> Ẩn / Hiện cột cài đặt.</li>
         </ul>
 
         <h2 style="color: #007bff;">Thao tác:</h2>

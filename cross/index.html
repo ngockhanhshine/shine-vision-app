@@ -31,9 +31,62 @@
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             overflow-y: auto;
             z-index: 10;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             flex-shrink: 0;
             box-sizing: border-box;
+        }
+
+        /* Tối ưu ẩn panel trên desktop */
+        body.panel-collapsed #controls {
+            margin-right: -380px;
+        }
+
+        /* Nút ẩn/hiện cột cài đặt dành riêng cho Desktop */
+        #toggle-panel-btn {
+            position: absolute;
+            top: 50%;
+            right: 380px;
+            transform: translateY(-50%);
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.4);
+            color: #fff;
+            border: none;
+            width: 24px;
+            height: 50px;
+            border-radius: 8px 0 0 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s;
+        }
+        #toggle-panel-btn:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+        body.panel-collapsed #toggle-panel-btn {
+            right: 0;
+            border-radius: 8px 0 0 8px;
+        }
+
+        /* Thông số hiển thị góc phải bên dưới khi ẩn panel */
+        #stage-info-display {
+            position: absolute;
+            bottom: 12px;
+            right: 15px;
+            font-size: 12px;
+            color: #888888;
+            z-index: 90;
+            pointer-events: none;
+            display: none;
+            font-family: monospace, Arial, sans-serif;
+            background: rgba(245, 245, 245, 0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        body.panel-collapsed #stage-info-display {
+            display: block;
         }
 
         #game-stage {
@@ -152,6 +205,7 @@
                 height: 100%;
                 width: 100%;
                 transform: translateX(0);
+                margin-right: 0 !important;
             }
             #game-stage {
                 position: absolute;
@@ -162,6 +216,11 @@
             body.training-mode #controls { transform: translateX(100%); }
             body.training-mode #game-stage { transform: translateX(0); }
             .mobile-nav-group { display: flex; }
+
+            /* Ẩn nút toggle trên Mobile */
+            #toggle-panel-btn {
+                display: none !important;
+            }
         }
 
         .control-group {
@@ -325,6 +384,8 @@
         </div>
     </div>
 
+    <button id="toggle-panel-btn" onclick="togglePanel()" title="Ẩn/Hiện cài đặt (Backspace)">&#10095;</button>
+
     <div id="game-stage" onclick="handleStageClick()">
         <div class="mobile-nav-group left">
             <button class="m-btn" onclick="event.stopPropagation(); stepSlider('slider-v-space', 2)">▲</button>
@@ -355,6 +416,10 @@
                 </div>
             </div>
         </div>
+
+        <!-- Thông số hiển thị góc dưới phải khi ẩn cột -->
+        <div id="stage-info-display"></div>
+
         <div class="swipe-hint">Vuốt phải để về cài đặt</div>
     </div>
 
@@ -392,7 +457,7 @@
         </div>
 
         <div id="auto-move-section" class="control-group">
-            <label>AUTO MOVE (DI CHUYỂY TỰ ĐỘNG)</label>
+            <label>AUTO MOVE (DI CHUYỂN TỰ ĐỘNG)</label>
             <div class="auto-move-grid">
                 <div></div><div style="text-align:center; font-size:10px;">DỌC (Y)</div><div style="text-align:center; font-size:10px;">NGANG (X)</div>
                 <div style="font-size:11px;">TỪ:</div>
@@ -574,7 +639,26 @@
 
         window.addEventListener('contextmenu', e => e.preventDefault());
 
+        // Bật/tắt ẩn cột bằng hàm
+        function togglePanel() {
+            document.body.classList.toggle('panel-collapsed');
+            const btn = document.getElementById('toggle-panel-btn');
+            if (document.body.classList.contains('panel-collapsed')) {
+                btn.innerHTML = '&#10094;'; // Mũi tên chỉ trái <
+            } else {
+                btn.innerHTML = '&#10095;'; // Mũi tên chỉ phải >
+            }
+        }
+
         window.addEventListener('keydown', e => {
+            // Không thực hiện shortcut nếu người dùng đang nhập dữ liệu trong ô input
+            const isEditingInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+
+            if (e.key === "Backspace" && !isEditingInput) {
+                e.preventDefault();
+                togglePanel();
+            }
+
             if (e.key === "F12" || (e.ctrlKey && e.key === "s")) { e.preventDefault(); openReadme(); }
             if (e.key === "Escape") closeReadme();
             if (e.key === "ArrowLeft") { e.preventDefault(); stepSlider('slider-h-space', -2); }
@@ -750,6 +834,9 @@
             const hSpace = parseInt(document.getElementById('slider-h-space').value);
             const vSpace = parseInt(document.getElementById('slider-v-space').value);
             
+            // Cập nhật thẻ hiển thị thông số góc dưới phải khi ẩn cột
+            document.getElementById('stage-info-display').innerText = `${size} - ${hSpace} - ${vSpace}`;
+
             // Cập nhật giá trị vào các ô số hiển thị tại tiêu đề nếu được cho phép
             if (updateInputs) {
                 if (document.activeElement !== document.getElementById('val-size')) {
@@ -828,9 +915,9 @@
         setMode(mode);
         renderLogs();
         updateStyles();
+
         // --- SỬ DỤNG SENDBEACON ĐỂ ĐẢM BẢO GỬI DATA 100% KHI THOÁT APP ---
         const handleAppExit = function () {
-            // 1. Lấy thông tin tài khoản từ localStorage
             let username = "Ẩn danh / Chưa đăng nhập";
             try {
                 const loginData = JSON.parse(localStorage.getItem('user_login'));
@@ -841,13 +928,11 @@
                 username = "Lỗi đọc dữ liệu đăng nhập";
             }
 
-            // 2. Lấy thông số cấu hình hiện tại từ các slider trong app của anh
             const size = document.getElementById('slider-size').value;
             const hSpace = document.getElementById('slider-h-space').value;
             const vSpace = document.getElementById('slider-v-space').value;
             const formattedStr = `${size}-${hSpace}-${vSpace}`;
     
-            // Gói toàn bộ dữ liệu vào Object
             const payload = {
                 username: username,
                 size: size,
@@ -856,17 +941,11 @@
                 formattedStr: formattedStr
             };
     
-            // Đường dẫn Web App Apps Script của anh (Nhớ thay link của anh vào đây)
             const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzad9j8IWf8omIeYH1NTprN79eCI6E9cPnmsldccpvuAdFrHOXNtvkvZmPc-3hUrWHs/exec';
-    
-            // Kiển đổi dữ liệu sang dạng Blob với kiểu nội dung text/plain để sendBeacon gửi đi không bị chặn CORS
             const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain; charset=UTF-8' });
-    
-            // 3. Gửi dữ liệu ngầm - Trình duyệt đảm bảo gửi thành công ngay cả khi đóng tab lập tức
             navigator.sendBeacon(googleScriptUrl, blob);
         };
 
-        // Đăng ký sự kiện với cả 'pagehide' và 'visibilitychange' để bao quát toàn bộ các kịch bản thoát app trên cả máy tính lẫn điện thoại
         window.addEventListener('pagehide', handleAppExit);
         window.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'hidden') {
