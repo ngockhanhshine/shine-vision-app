@@ -9,6 +9,7 @@
     
     <script src="auth.js"></script>
     <script src="readme.js"></script>
+    <script src="notice.js"></script>
 
     <style>
         body {
@@ -64,6 +65,59 @@
             color: inherit;
         }
         .hidden-link:hover { color: #fff; }
+
+        /* KHU VỰC THÔNG TIN CHÚ Ý */
+        .notice-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            align-items: stretch;
+            text-align: left;
+        }
+
+        .notice-col-left, .notice-col-right {
+            flex: 1;
+        }
+
+        .notice-img {
+            width: 100%;
+            height: 100%;
+            min-height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+            display: block;
+        }
+
+        .notice-box {
+            border: 2px dashed #ffb703;
+            border-radius: 15px;
+            padding: 20px;
+            height: 100%;
+            box-sizing: border-box;
+            background: rgba(255, 183, 3, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .notice-date {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .notice-list {
+            margin: 0;
+            padding-left: 20px;
+            color: #ddd;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .notice-list li {
+            margin-bottom: 6px;
+        }
 
         #login-section {
             background: #111;
@@ -204,6 +258,7 @@
             .menu-grid { grid-template-columns: 1fr; }
             .results-grid { grid-template-columns: 1fr 1fr; }
             .app-card { max-width: 100%; }
+            .notice-container { flex-direction: column; }
         }
     </style>
 </head>
@@ -226,6 +281,18 @@
         </div>
 
         <div id="main-content" style="display:none;">
+            <!-- THÔNG TIN CHÚ Ý (Chỉ hiển thị khi đã đăng nhập) -->
+            <div class="notice-container">
+                <div class="notice-col-left">
+                    <img src="notice.png" alt="Ảnh Chú ý" class="notice-img">
+                </div>
+                <div class="notice-col-right">
+                    <div class="notice-box" id="notice-content">
+                        <!-- Nội dung thông báo tự động nạp từ notice.js -->
+                    </div>
+                </div>
+            </div>
+
             <div class="menu-grid">
                 <a href="piano/index.html" class="app-card">
                     <img src="assets/piano.jpg" alt="Piano">
