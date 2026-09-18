@@ -284,6 +284,7 @@
             height: auto;
             display: block;
             object-fit: cover;
+            cursor: pointer;
         }
 
         .why-section {
@@ -680,7 +681,46 @@
             margin-top: 10px;
         }
 
-        .landing-footer { background: #111; color: #fff; padding: 20px 5%; display: flex; justify-content: space-between; font-size: 12px; }
+        .landing-footer { 
+            background: #111; 
+            color: #fff; 
+            padding: 20px 5%; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 12px; 
+        }
+
+        .footer-brand-socials {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .footer-social-icons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-social-icons a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .footer-social-icons a:hover {
+            transform: scale(1.15);
+            opacity: 0.9;
+        }
+
+        .footer-social-icons img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            display: block;
+        }
 
         @media (max-width: 900px) {
             .grid-5col, .why-grid, .menu-grid, .grid-4col-feat, .grid-4col-diff { grid-template-columns: repeat(2, 1fr); }
@@ -716,7 +756,8 @@
 
             .form-card-container { padding: 25px 15px; }
             .form-card-title { font-size: 20px; }
-            .landing-footer { flex-direction: column; gap: 10px; text-align: center; }
+            .landing-footer { flex-direction: column; gap: 12px; text-align: center; }
+            .footer-brand-socials { flex-direction: column; gap: 8px; }
         }
     </style>
 </head>
@@ -736,7 +777,6 @@
                 <li><a href="#trangchu">Trang chủ</a></li>
                 <li><a href="#ungdung">Ứng dụng</a></li>
                 <li><a href="#noibat">Tính năng nổi bật</a></li>
-                <li><a href="#huongdan">Hướng dẫn</a></li>
                 <li><a href="#dangky">Đăng ký</a></li>
             </ul>
             
@@ -750,7 +790,9 @@
         <div id="loading-text" style="display:none; text-align: right; padding-right: 5%; color: var(--primary-color); font-weight: bold; margin-top: 5px;">Đang tải...</div>
 
         <section class="hero-banner-full" id="trangchu">
-            <img src="mainmenu/banner.png" alt="ShineVision App Banner" onerror="this.src='assets/piano.jpg'">
+            <a href="#dangky">
+                <img src="mainmenu/banner.png" alt="ShineVision App Banner" onerror="this.src='assets/piano.jpg'">
+            </a>
         </section>
 
         <section class="sec-wrap" id="ungdung">
@@ -1047,7 +1089,20 @@
         </section>
 
         <footer class="landing-footer">
-            <div>Khôi phục thị lực Shine - 0973370148</div>
+            <div class="footer-brand-socials">
+                <span>Khôi phục thị lực Shine</span>
+                <div class="footer-social-icons">
+                    <a href="https://www.tiktok.com/@khoiphucthilucshine" target="_blank" title="TikTok">
+                        <img src="tiktok.png" alt="TikTok">
+                    </a>
+                    <a href="https://www.youtube.com/@khoiphucthilucshine" target="_blank" title="YouTube">
+                        <img src="ytb.png" alt="YouTube">
+                    </a>
+                    <a href="https://www.facebook.com/makeyoureyesShine" target="_blank" title="Facebook Fanpage">
+                        <img src="facebook.png" alt="Facebook">
+                    </a>
+                </div>
+            </div>
             <div>Đơn vị Tiên phong trong lĩnh vực Đào Tạo Thị Giác 2 mắt</div>
         </footer>
     </div>
