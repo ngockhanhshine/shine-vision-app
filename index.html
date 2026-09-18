@@ -239,10 +239,12 @@
             font-size: 14px;
         }
 
+        /* KHUNG ĐĂNG NHẬP MẶC ĐỊNH (DESKTOP) */
         .login-bar-top {
             display: flex;
             align-items: center;
             gap: 8px;
+            box-sizing: border-box;
         }
 
         .login-bar-top input {
@@ -252,6 +254,7 @@
             font-size: 13px;
             outline: none;
             background: #fdfdfd;
+            box-sizing: border-box;
         }
 
         .login-bar-top button {
@@ -263,6 +266,8 @@
             font-weight: bold;
             cursor: pointer;
             font-size: 13px;
+            box-sizing: border-box;
+            white-space: nowrap;
         }
 
         .login-bar-top button:hover { background: var(--primary-dark); }
@@ -685,7 +690,7 @@
             .register-form-section { max-width: 100%; padding: 0 15px; }
         }
 
-        /* TỐI ƯU HIỂN THỊ 1 CỘT HOÀN TOÀN TRÊN ĐIỆN THOẠI (< 600px) */
+        /* TỐI ƯU HIỂN THỊ 1 CỘT VÀ Ô ĐĂNG NHẬP DỌC TRÊN ĐIỆN THOẠI (< 600px) */
         @media (max-width: 600px) {
             .grid-5col, .why-grid, .menu-grid, .grid-4col-feat, .grid-4col-diff, .results-grid { 
                 grid-template-columns: 1fr !important; 
@@ -693,6 +698,22 @@
             .notice-container { 
                 flex-direction: column; 
             }
+            
+            /* SẮP XẾP KHUNG ĐĂNG NHẬP TRÊN ĐIỆN THOẠI */
+            .login-bar-top {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                gap: 8px;
+            }
+            .login-bar-top input {
+                width: 100%;
+            }
+            .login-bar-top button {
+                width: auto;
+                align-self: flex-end; /* Nút Đăng nhập đẩy sang bên phải */
+            }
+
             .form-card-container { padding: 25px 15px; }
             .form-card-title { font-size: 20px; }
             .landing-footer { flex-direction: column; gap: 10px; text-align: center; }
