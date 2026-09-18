@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vision Training App - Shine Vision</title>
+    <title>ShineVision App - Hệ Thống Ứng Dụng Tập Nhược Thị</title>
     
     <link rel="icon" type="image/png" href="assets/favicon.png">
     
@@ -12,10 +12,13 @@
     <script src="notice.js"></script>
 
     <style>
-        body {
+        /* =========================================================
+           1. STYLES CHO GIAO DIỆN SAU KHI ĐĂNG NHẬP
+           ========================================================= */
+        body.logged-in-mode {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #000000;
-            color: #FFFFFF;
+            background-color: #000000 !important;
+            color: #FFFFFF !important;
             margin: 0;
             padding: 20px;
             display: flex;
@@ -35,6 +38,7 @@
             border-radius: 10px;
             font-size: 14px;
             transition: all 0.3s;
+            z-index: 9999;
         }
         #logout-btn:hover {
             background: #ff3b30;
@@ -47,11 +51,12 @@
             text-align: center;
         }
 
-        h1 {
+        h1.app-heading {
             font-size: 42px;
             font-weight: bold;
             margin-bottom: 5px;
             letter-spacing: 1px;
+            color: #ffffff;
         }
 
         .author {
@@ -66,7 +71,6 @@
         }
         .hidden-link:hover { color: #fff; }
 
-        /* KHU VỰC THÔNG TIN CHÚ Ý */
         .notice-container {
             display: flex;
             gap: 20px;
@@ -75,9 +79,7 @@
             text-align: left;
         }
 
-        .notice-col-left, .notice-col-right {
-            flex: 1;
-        }
+        .notice-col-left, .notice-col-right { flex: 1; }
 
         .notice-img {
             width: 100%;
@@ -98,63 +100,6 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-        }
-
-        .notice-date {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 12px;
-            color: #fff;
-        }
-
-        .notice-list {
-            margin: 0;
-            padding-left: 20px;
-            color: #ddd;
-            font-size: 15px;
-            line-height: 1.6;
-        }
-
-        .notice-list li {
-            margin-bottom: 6px;
-        }
-
-        #login-section {
-            background: #111;
-            padding: 40px 20px;
-            border-radius: 20px;
-            border: 1px solid #333;
-            max-width: 400px;
-            margin: 50px auto;
-        }
-        #login-section input {
-            width: 80%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            background: #222;
-            color: white;
-            font-size: 16px;
-        }
-        #login-section button {
-            width: 86%;
-            padding: 12px;
-            background: #007aff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        #login-section button:hover { background: #0056b3; }
-        
-        #loading-text {
-            display: none;
-            margin-top: 15px;
-            color: #007aff;
-            font-weight: bold;
         }
 
         .menu-grid {
@@ -206,13 +151,6 @@
         .red { color: #ff3b30; }
         .blue { color: #007aff; }
 
-        hr {
-            border: none;
-            border-top: 1px solid #444;
-            width: 50%;
-            margin: 30px auto;
-        }
-
         .results-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -229,7 +167,7 @@
             display: block;
         }
 
-        .footer {
+        .footer-old {
             font-size: 14px;
             line-height: 1.5;
             color: #bbb;
@@ -242,54 +180,867 @@
             color: #fff;
         }
 
-        .footer-link {
-            text-decoration: none;
-            color: #fff;
+
+        /* =========================================================
+           2. STYLES CHO GIAO DIỆN CHƯA ĐĂNG NHẬP (TRANG LANDING)
+           ========================================================= */
+        :root {
+            --primary-color: #0b8457;
+            --primary-dark: #065f3e;
+            --bg-light: #f4f8f6;
+            --text-main: #222222;
+            --text-muted: #666666;
+            --border-color: #e0e8e4;
         }
-        .footer-link:hover { text-decoration: underline; }
+
+        body.landing-mode {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: #ffffff !important;
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 5%;
+            background: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-landing {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .login-bar-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .login-bar-top input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            background: #fdfdfd;
+        }
+
+        .login-bar-top button {
+            padding: 8px 18px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .login-bar-top button:hover { background: var(--primary-dark); }
+
+        .hero-banner-full {
+            width: 100%;
+            overflow: hidden;
+            display: block;
+            line-height: 0;
+        }
+
+        .hero-banner-full img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+        }
+
+        .why-section {
+            background-color: #F0FBF2;
+            padding: 40px 5%;
+        }
+
+        .why-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .why-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0b8457;
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+
+        .why-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 25px 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            transition: transform 0.2s ease;
+        }
+
+        .why-card:hover { transform: translateY(-3px); }
+
+        .why-icon {
+            width: 55px;
+            height: 55px;
+            object-fit: contain;
+            margin-bottom: 15px;
+        }
+
+        .why-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: #111111;
+            line-height: 1.3;
+        }
+
+        .why-card p {
+            margin: 0;
+            font-size: 12px;
+            color: #666666;
+            line-height: 1.4;
+        }
+
+        .sec-wrap { padding: 50px 5%; max-width: 1200px; margin: 0 auto; }
+        .sec-head { font-size: 26px; font-weight: 700; margin-bottom: 20px; }
+
+        .grid-3col-intro {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr 0.8fr;
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        .grid-3col-intro .intro-text-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .grid-3col-intro img {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .grid-5col { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 15px; 
+        }
+
+        .check-item { list-style: none; padding: 0; }
+        .check-item li { position: relative; padding-left: 25px; margin-bottom: 8px; font-weight: 600; }
+        .check-item li::before { content: "✓"; position: absolute; left: 0; color: var(--primary-color); font-weight: bold; }
+
+        .app-box-col { 
+            border-radius: 12px; 
+            padding: 15px 12px; 
+            border: 1px solid rgba(0,0,0,0.05); 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-col-1 { background-color: #ECF8FE; }
+        .app-col-2 { background-color: #EFFCF1; }
+        .app-col-3 { background-color: #FEF3F2; }
+        .app-col-4 { background-color: #ECF8FE; }
+        .app-col-5 { background-color: #F7F2FE; }
+
+        .app-box-title { 
+            font-size: 15px; 
+            font-weight: bold; 
+            color: #111111; 
+            margin-bottom: 12px; 
+            border-bottom: 2px solid rgba(0,0,0,0.1); 
+            padding-bottom: 8px; 
+            text-align: center;
+        }
+
+        .app-card-mini { 
+            background: #ffffff; 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin-bottom: 10px; 
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04); 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-card-mini img.app-logo-icon {
+            height: 32px !important;
+            width: 32px !important;
+            object-fit: contain;
+            flex-shrink: 0;
+            border-radius: 4px;
+            display: block;
+        }
+
+        .app-card-info { flex-grow: 1; }
+        .app-card-mini h6 { margin: 0; font-size: 13px; font-weight: bold; color: #222; }
+        .app-card-mini p { margin: 2px 0 0 0; font-size: 11px; color: #666; line-height: 1.3; }
+
+        .highlights-section {
+            background-color: #ffffff;
+            padding: 50px 5%;
+        }
+
+        .highlights-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .highlights-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0b8457;
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .grid-4col-feat {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .feat-card-new {
+            background-color: #F0FBF2;
+            border-radius: 12px;
+            padding: 20px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            transition: transform 0.2s ease;
+        }
+
+        .feat-card-new:hover { transform: translateY(-3px); }
+
+        .feat-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .feat-icon-img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .feat-header h5 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 700;
+            color: #111111;
+            line-height: 1.35;
+        }
+
+        .feat-card-new p {
+            margin: 0;
+            font-size: 12.5px;
+            color: #444444;
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        .difference-section {
+            background-color: #F0FBF2;
+            padding: 50px 5%;
+        }
+
+        .diff-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .diff-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0b8457;
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .grid-4col-diff {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .diff-card {
+            background-color: #ffffff;
+            border-radius: 16px;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            transition: transform 0.2s ease;
+        }
+
+        .diff-card:hover { transform: translateY(-3px); }
+
+        .diff-icon {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            margin-bottom: 20px;
+        }
+
+        .diff-card h4 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: #111111;
+            line-height: 1.3;
+        }
+
+        .diff-card p {
+            margin: 0;
+            font-size: 13px;
+            color: #555555;
+            line-height: 1.5;
+        }
+
+        .diff-list {
+            list-style-type: disc;
+            padding-left: 20px;
+            margin: 0;
+            text-align: left;
+            font-size: 13px;
+            color: #555555;
+            line-height: 1.6;
+        }
+
+        .banner-cta-full {
+            width: 100%;
+            max-width: 75%;
+            margin: 0 auto;
+            overflow: hidden;
+            display: block;
+            line-height: 0;
+        }
+
+        .banner-cta-full img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+        }
+
+        /* =========================================================
+           STYLES SECTION FORM ĐĂNG KÝ MỚI
+           ========================================================= */
+        .register-form-section {
+            width: 100%;
+            max-width: 75%;
+            margin: 30px auto 50px auto;
+            box-sizing: border-box;
+        }
+
+        .form-card-container {
+            background: #ffffff;
+            border: 2px solid #0b8457;
+            border-radius: 16px;
+            padding: 35px 25px;
+            box-shadow: 0 4px 15px rgba(11, 132, 87, 0.1);
+            text-align: center;
+        }
+
+        .form-card-title {
+            color: #0b8457;
+            font-size: 24px;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .register-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus {
+            border-color: #0b8457;
+        }
+
+        .btn-submit-form {
+            background-color: #0b8457;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-submit-form:hover {
+            background-color: #065f3e;
+        }
+
+        /* THÔNG BÁO ĐĂNG KÝ THÀNH CÔNG */
+        .form-success-alert {
+            display: none;
+            background-color: #e8f5e9;
+            border: 1.5px solid #2e7d32;
+            color: #1b5e20;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 1.5;
+            margin-top: 10px;
+        }
+
+        .landing-footer { background: #111; color: #fff; padding: 20px 5%; display: flex; justify-content: space-between; font-size: 12px; }
 
         @media (max-width: 900px) {
-            .menu-grid { grid-template-columns: repeat(2, 1fr); }
+            .grid-5col, .why-grid, .menu-grid, .grid-4col-feat, .grid-4col-diff { grid-template-columns: repeat(2, 1fr); }
+            .grid-3col-intro { grid-template-columns: 1fr; }
+            .navbar { flex-direction: column; gap: 10px; }
+            .banner-cta-full { max-width: 100%; }
+            .register-form-section { max-width: 100%; padding: 0 15px; }
         }
 
         @media (max-width: 600px) {
-            h1 { font-size: 28px; }
-            #logout-btn { top: 10px; right: 10px; font-size: 12px; }
-            .menu-grid { grid-template-columns: 1fr; }
-            .results-grid { grid-template-columns: 1fr 1fr; }
-            .app-card { max-width: 100%; }
-            .notice-container { flex-direction: column; }
+            .grid-4col-feat, .grid-4col-diff { grid-template-columns: 1fr; }
+            .form-card-container { padding: 25px 15px; }
+            .form-card-title { font-size: 20px; }
         }
     </style>
 </head>
-<body>
+<body id="body-root">
 
     <a href="#" id="logout-btn" style="display:none;" onclick="logout()">Logout</a>
 
-    <div class="container">
-        <h1>Vision Training App</h1>
-        <div class="author">
-            Bởi <a href="https://shinevisioncenter.com" target="_blank" class="hidden-link">Khôi Phục Thị Lực Shine</a>
-        </div>
+    <!-- =========================================================
+         GIAO DIỆN CHƯA ĐĂNG NHẬP (TRANG LANDING)
+         ========================================================= -->
+    <div id="login-section" style="display:none;">
+        <nav class="navbar">
+            <a href="#" class="logo-landing">
+                👁️ ShineVision
+            </a>
+            <ul class="nav-links">
+                <li><a href="#trangchu">Trang chủ</a></li>
+                <li><a href="#ungdung">Ứng dụng</a></li>
+                <li><a href="#noibat">Tính năng nổi bật</a></li>
+                <li><a href="#huongdan">Hướng dẫn</a></li>
+                <li><a href="#dangky">Đăng ký</a></li>
+            </ul>
+            
+            <div class="login-bar-top">
+                <input type="text" id="username" placeholder="Tên học viên">
+                <input type="password" id="password" placeholder="Mật khẩu">
+                <button id="login-btn" onclick="startLogin()">Đăng nhập</button>
+            </div>
+        </nav>
+        
+        <div id="loading-text" style="display:none; text-align: right; padding-right: 5%; color: var(--primary-color); font-weight: bold; margin-top: 5px;">Đang tải...</div>
 
-        <div id="login-section" style="display:none;">
-            <p style="margin-bottom: 20px; color: #aaa;">Vui lòng đăng nhập để bắt đầu tập luyện</p>
-            <input type="text" id="username" placeholder="Tên học viên">
-            <input type="password" id="password" placeholder="Mật khẩu">
-            <button id="login-btn" onclick="startLogin()">ĐĂNG NHẬP</button>
-            <div id="loading-text">Đang tải...</div>
-        </div>
+        <section class="hero-banner-full" id="trangchu">
+            <img src="mainmenu/banner.png" alt="ShineVision App Banner" onerror="this.src='assets/piano.jpg'">
+        </section>
 
-        <div id="main-content" style="display:none;">
-            <!-- THÔNG TIN CHÚ Ý (Chỉ hiển thị khi đã đăng nhập) -->
+        <section class="sec-wrap" id="ungdung">
+            <div class="grid-3col-intro">
+                <div class="intro-text-col">
+                    <h3 class="sec-head" style="margin-top: 0; color: var(--primary-color);">ShineVision App là gì?</h3>
+                    <p style="color: #555; margin-top: 0;">ShineVision App là hệ thống phần mềm được phát triển nhằm hỗ trợ quá trình tập luyện thị giác cho:</p>
+                    <ul class="check-item">
+                        <li>Nhược thị</li>
+                        <li>Lác trong, lác ngoài</li>
+                        <li>Ức chế / Giảm khả năng phối hợp hai mắt</li>
+                        <li>Một số rối loạn chức năng thị giác khác</li>
+                    </ul>
+                    <p style="color: #666; font-size: 13px; margin-top: 10px; margin-bottom: 0;">Các bài tập được thiết kế dựa trên nguyên lý của Vision Therapy, kết hợp yếu tố tương tác và trò chơi để tăng hứng thú khi luyện tập.</p>
+                </div>
+                
+                <div>
+                    <img src="mainmenu/em-be-tap-phan-mem-nhuoc-thi.png" alt="Em bé tập phần mềm nhược thị" onerror="this.src='assets/1.jpg'">
+                </div>
+
+                <div>
+                    <img src="mainmenu/doi-tuong-su-dung-phan-mem-nhuoc-thi.png" alt="Đối tượng sử dụng phần mềm nhược thị" onerror="this.src='assets/2.jpg'">
+                </div>
+            </div>
+        </section>
+
+        <section class="why-section">
+            <div class="why-container">
+                <h3 class="why-title">Tại sao nên tập bằng ứng dụng?</h3>
+                <div class="why-grid">
+                    <div class="why-card">
+                        <img src="mainmenu/phan-mem-nhuoc-thi-tap-moi-luc-moi-noi.png" alt="Tăng tính đều đặn" class="why-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z\'/></svg>'">
+                        <h4>Tăng tính đều đặn</h4>
+                        <p>Có thể tập mọi lúc, mọi nơi.</p>
+                    </div>
+
+                    <div class="why-card">
+                        <img src="mainmenu/theo-doi-tien-do-tap-qua-phan-mem-nhuoc-thi.png" alt="Theo dõi tiến độ" class="why-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z\'/></svg>'">
+                        <h4>Theo dõi tiến độ</h4>
+                        <p>Ghi nhận kết quả và thời gian tập.</p>
+                    </div>
+
+                    <div class="why-card">
+                        <img src="mainmenu/phan-mem-nhuoc-thi-tang-hung-thu-khi-tap.png" alt="Tăng hứng thú" class="why-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 1c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 8 18.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z\'/></svg>'">
+                        <h4>Tăng hứng thú</h4>
+                        <p>Học viên dễ duy trì hơn so với bài tập truyền thống.</p>
+                    </div>
+
+                    <div class="why-card">
+                        <img src="mainmenu/phan-mem-nhuoc-thi-co-the-tap-tai-nha.png" alt="Tập tại nhà" class="why-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z\'/></svg>'">
+                        <h4>Tập tại nhà</h4>
+                        <p>Giảm thời gian di chuyển.</p>
+                    </div>
+
+                    <div class="why-card">
+                        <img src="mainmenu/tap-phan-mem-nhuoc-thi-cung-chuyen-gia.png" alt="Kết hợp cùng huấn luyện viên" class="why-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'">
+                        <h4>Kết hợp cùng huấn luyện viên</h4>
+                        <p>Được điều chỉnh bài tập theo từng giai đoạn.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="sec-wrap">
+            <h3 class="sec-head" style="text-align: center;">Hệ thống ứng dụng hiện có</h3>
+            <div class="grid-5col">
+                <div class="app-box-col app-col-1">
+                    <div class="app-box-title">Đánh giá thị lực</div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/c.png" alt="Landolt C" class="app-logo-icon" onerror="this.src='assets/snellen.jpg'">
+                        <div class="app-card-info">
+                            <h6>Landolt C Test</h6>
+                            <p>Đo thị lực bằng vòng hở Landolt C.</p>
+                        </div>
+                    </div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/sloan.png" alt="Sloan" class="app-logo-icon" onerror="this.src='assets/snellen.jpg'">
+                        <div class="app-card-info">
+                            <h6>Sloan Letter Test</h6>
+                            <p>Kiểm tra thị lực bằng bảng chữ cái.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="app-box-col app-col-2">
+                    <div class="app-box-title">Nhóm tập nhược thị</div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/gabor.png" alt="Gabor" class="app-logo-icon" onerror="this.src='assets/gabor.jpeg'">
+                        <div class="app-card-info">
+                            <h6>Gabor Training</h6>
+                            <p>Kích thích khả năng nhận biết tương phản.</p>
+                        </div>
+                    </div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/crowd.png" alt="Crowd" class="app-logo-icon" onerror="this.src='assets/crowd.png'">
+                        <div class="app-card-info">
+                            <h6>Crowd Training</h6>
+                            <p>Luyện phân biệt chi tiết trong nhiều vật cản.</p>
+                        </div>
+                    </div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/piano.png" alt="Piano" class="app-logo-icon" onerror="this.src='assets/piano.jpg'">
+                        <div class="app-card-info">
+                            <h6>Anaglyph Piano</h6>
+                            <p>Tăng cường hoạt động mắt nhược.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="app-box-col app-col-3">
+                    <div class="app-box-title">Nhóm giảm ức chế</div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/rgdot.png" alt="Red Green Dot" class="app-logo-icon" onerror="this.src='assets/dot.jpg'">
+                        <div class="app-card-info">
+                            <h6>Red Green Dot</h6>
+                            <p>Tăng khả năng nhận biết hình ảnh hai mắt.</p>
+                        </div>
+                    </div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/reading.png" alt="Reading" class="app-logo-icon" onerror="this.src='assets/reading.jpg'">
+                        <div class="app-card-info">
+                            <h6>Reading Training</h6>
+                            <p>Luyện đọc hai mắt.</p>
+                        </div>
+                    </div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/finger.png" alt="Finger Dance" class="app-logo-icon" onerror="this.src='assets/finger.png'">
+                        <div class="app-card-info">
+                            <h6>Anaglyph Finger Dance</h6>
+                            <p>Giảm hiện tượng ức chế.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="app-box-col app-col-4">
+                    <div class="app-box-title">Nhóm hợp thị (Fusion)</div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/brock.png" alt="Brockstring" class="app-logo-icon" onerror="this.src='assets/brock.png'">
+                        <div class="app-card-info">
+                            <h6>Anaglyph Brock String</h6>
+                            <p>Luyện hội tụ và phối hợp hai mắt.</p>
+                        </div>
+                    </div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/cross.png" alt="Circle Cross" class="app-logo-icon" onerror="this.src='assets/cross.png'">
+                        <div class="app-card-info">
+                            <h6>Circle Cross Training</h6>
+                            <p>Phát triển khả năng hợp thị.</p>
+                        </div>
+                    </div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/tetris.png" alt="Tetris" class="app-logo-icon" onerror="this.src='assets/tetris.png'">
+                        <div class="app-card-info">
+                            <h6>Anaglyph Tetris</h6>
+                            <p>Luyện phối hợp hai mắt qua trò chơi.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="app-box-col app-col-5">
+                    <div class="app-box-title">Nhóm vận động mắt</div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/saccade.png" alt="Saccade" class="app-logo-icon" onerror="this.src='assets/schulte.png'">
+                        <div class="app-card-info">
+                            <h6>Saccade Training</h6>
+                            <p>Luyện chuyển động mắt nhanh.</p>
+                        </div>
+                    </div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/pursuit.png" alt="Pursuit" class="app-logo-icon" onerror="this.src='assets/schulte.png'">
+                        <div class="app-card-info">
+                            <h6>Pursuit Training</h6>
+                            <p>Luyện bám đuổi mục tiêu.</p>
+                        </div>
+                    </div>
+                    <div class="app-card-mini">
+                        <img src="mainmenu/tracking.png" alt="Eye Tracking" class="app-logo-icon" onerror="this.src='assets/schulte.png'">
+                        <div class="app-card-info">
+                            <h6>Eye Tracking</h6>
+                            <p>Theo dõi chuyển động nhãn cầu.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="highlights-section" id="noibat">
+            <div class="highlights-container">
+                <h3 class="highlights-title">4 điểm nổi bật của hệ thống ShineVision App</h3>
+                <div class="grid-4col-feat">
+                    <div class="feat-card-new">
+                        <div class="feat-header">
+                            <img src="mainmenu/module1.png" alt="Module 1" class="feat-icon-img" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 1c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S18.5 8 18.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z\'/></svg>'">
+                            <h5>Module 1: Thiết kế dạng Game (Gamification)</h5>
+                        </div>
+                        <p>Chuyển hóa các bài tập khô khan thành trò chơi tương tác cuốn hút, tạo cảm hứng luyện tập đều đặn.</p>
+                    </div>
+
+                    <div class="feat-card-new">
+                        <div class="feat-header">
+                            <img src="mainmenu/module2.png" alt="Module 2" class="feat-icon-img" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z\'/></svg>'">
+                            <h5>Module 2: Kết hợp âm nhạc (Audio-Visual Stimulation)</h5>
+                        </div>
+                        <p>Tích hợp giai điệu và nhịp điệu âm nhạc sinh động, giúp tăng tập trung, kích thích phản xạ thần kinh và thư giãn.</p>
+                    </div>
+
+                    <div class="feat-card-new">
+                        <div class="feat-header">
+                            <img src="mainmenu/module3.png" alt="Module 3" class="feat-icon-img" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.2 19.57 10.55 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-3.5 6c.83 0 1.5.67 1.5 1.5S9.33 12 8.5 12 7 11.33 7 10.5 7.67 9 8.5 9zm3.5 7.5c-1.93 0-3.5-1.57-3.5-3.5h7c0 1.93-1.57 3.5-3.5 3.5zm3.5-4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z\'/></svg>'">
+                            <h5>Module 3: Phối hợp màu sắc (Color & Dichoptic Training)</h5>
+                        </div>
+                        <p>Sử dụng hệ màu sắc, bộ lọc và độ tương phản chuyên biệt giúp kích thích mắt yếu, buộc hai mắt phải đồng thời phối hợp.</p>
+                    </div>
+
+                    <div class="feat-card-new">
+                        <div class="feat-header">
+                            <img src="mainmenu/module4.png" alt="Module 4" class="feat-icon-img" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z\'/></svg>'">
+                            <h5>Module 4: Tùy chỉnh độ khó (Adaptive Difficulty)</h5>
+                        </div>
+                        <p>Tự động điều chỉnh kích thước, tốc độ và độ phức tạp của bài tập, phù hợp với từng cá nhân.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="difference-section">
+            <div class="diff-container">
+                <h3 class="diff-title">Điểm khác biệt của ShineVision</h3>
+                <div class="grid-4col-diff">
+                    <div class="diff-card">
+                        <img src="mainmenu/ca-nhan-hoa-giao-trinh-nhuoc-thi.png" alt="Cá nhân hóa lộ trình" class="diff-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'">
+                        <h4>Cá nhân hóa lộ trình</h4>
+                        <p>Mỗi học viên có chương trình tập phù hợp với tình trạng thị giác.</p>
+                    </div>
+
+                    <div class="diff-card">
+                        <img src="mainmenu/phan-mem-nhuoc-thi-online.png" alt="Hệ thống online" class="diff-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z\'/></svg>'">
+                        <h4>Hệ thống online</h4>
+                        <p>Tập luyện tại nhà với sự đồng hành của huấn luyện viên.</p>
+                    </div>
+
+                    <div class="diff-card">
+                        <img src="mainmenu/tap-nhuoc-thi-da-nen-tang.png" alt="Đa nền tảng" class="diff-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M4 6h16v10H4z\'/></svg>'">
+                        <h4>Đa nền tảng</h4>
+                        <ul class="diff-list">
+                            <li>Điện thoại</li>
+                            <li>Máy tính</li>
+                            <li>iPad</li>
+                        </ul>
+                    </div>
+
+                    <div class="diff-card">
+                        <img src="mainmenu/cap-nhat-lien-tuc.png" alt="Liên tục phát triển" class="diff-icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%230b8457\'><path d=\'M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z\'/></svg>'">
+                        <h4>Liên tục phát triển</h4>
+                        <p>ShineVision liên tục nghiên cứu và cập nhật thêm các ứng dụng tập nhược thị mới.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BANNER CTA -->
+        <section class="banner-cta-full">
+            <img src="mainmenu/dang-ky-phan-mem-tap-nhuoc-thi-tai-nha.png" alt="Đăng ký phần mềm tập nhược thị tại nhà" onerror="this.src='mainmenu/banner.png'">
+        </section>
+
+        <!-- SECTION FORM ĐĂNG KÝ TẬP THỬ -->
+        <section class="register-form-section" id="dangky">
+            <div class="form-card-container">
+                <h3 class="form-card-title">Đăng ký để được Tập thử Miễn Phí</h3>
+                
+                <form id="trialRegisterForm" class="register-form" onsubmit="submitFormWeb(event)">
+                    <div class="form-group">
+                        <label for="fullname">Họ và tên *</label>
+                        <input type="text" id="fullname" placeholder="Nhập họ và tên của bạn" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Số điện thoại *</label>
+                        <input type="tel" id="phone" placeholder="Nhập số điện thoại (Zalo)" pattern="[0-9]{9,11}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" placeholder="Nhập địa chỉ email" required>
+                    </div>
+                    
+                    <button type="submit" id="submit-btn-text" class="btn-submit-form">ĐĂNG KÝ TẬP THỬ MIỄN PHÍ</button>
+                </form>
+
+                <div id="registerSuccessAlert" class="form-success-alert">
+                    🎉 Đã đăng ký thành công!<br>Xin vui lòng để ý điện thoại/Zalo, chuyên viên ShineVision sẽ liên hệ hỗ trợ bạn ngay.
+                </div>
+            </div>
+        </section>
+
+        <footer class="landing-footer">
+            <div>Khôi phục thị lực Shine - 0973370148</div>
+            <div>Đơn vị Tiên phong trong lĩnh vực Đào Tạo Thị Giác 2 mắt</div>
+        </footer>
+    </div>
+
+
+    <!-- =========================================================
+         GIAO DIỆN SAU KHI ĐĂNG NHẬP
+         ========================================================= -->
+    <div id="main-content" style="display:none;">
+        <div class="container">
+            <h1 class="app-heading">Vision Training App</h1>
+            <div class="author">
+                Bởi <a href="https://shinevisioncenter.com" target="_blank" class="hidden-link">Khôi Phục Thị Lực Shine</a>
+            </div>
+
             <div class="notice-container">
                 <div class="notice-col-left">
                     <img src="notice.png" alt="Ảnh Chú ý" class="notice-img">
                 </div>
                 <div class="notice-col-right">
-                    <div class="notice-box" id="notice-content">
-                        <!-- Nội dung thông báo tự động nạp từ notice.js -->
-                    </div>
+                    <div class="notice-box" id="notice-content"></div>
                 </div>
             </div>
 
@@ -364,11 +1115,11 @@
                 </a>
             </div>
 
-            <hr>
+            <hr style="border: none; border-top: 1px solid #444; width: 50%; margin: 30px auto;">
 
-            <div class="footer">
+            <div class="footer-old">
                 <div class="brand-name">
-                    <a href="https://shinevisioncenter.com" target="_blank" class="footer-link">Khôi phục thị lực Shine</a> – 0973370148
+                    <a href="https://shinevisioncenter.com" target="_blank" class="hidden-link">Khôi phục thị lực Shine</a> – 0973370148
                 </div>
                 <p>Đơn vị Tiên phong trong lĩnh vực Đào Tạo Thị Giác 2 mắt</p>
                 <p>Với hơn 11 năm kinh nghiệm Nghiên cứu và Phát triển, chúng tôi tự hào vì đã giúp đỡ được hàng nghìn Học Viên sở hữu một đôi mắt Khoẻ Đẹp</p>
@@ -385,20 +1136,76 @@
         </div>
     </div>
 
-    <script>
 
-        // 1. DÁN ĐƯỜNG LINK ANH VỪA COPY VÀO GIỮA DẤU NHÁY KÉP DƯỚI ĐÂY
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8dyQRnQn2HCXUbZgMn_bgiotX79I4591ylKt6DyyfmRMLqdx9orVU9GM6RS6k97Nqew/exec";
-    
-        // Mật mã bảo mật chặn spam (đã khớp cấu hình với Apps Script ngầm)
+    <!-- =========================================================
+         3. JAVASCRIPT LOGIC & BẢO MẬT
+         ========================================================= -->
+    <script>
+        // 1. LINK SCRIPT FORM ĐĂNG KÝ TẬP THỬ (Gửi về Sheet "Khách hàng mới")
+        const FORM_REGISTER_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9URMNePDNt3pGEAHkpt4xjBfxkRc3wUaiF9vZdsuw4j2KPmMNaeCbZ899Pt03L-Kb/exec";
+
+        // 2. LINK SCRIPT LOG ĐĂNG NHẬP CỦA ANH (Gửi về Sheet "Log Dang Nhap")
+        const LOGIN_LOG_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8dyQRnQn2HCXUbZgMn_bgiotX79I4591ylKt6DyyfmRMLqdx9orVU9GM6RS6k97Nqew/exec";
         const SECRET_TOKEN = "ShineVision_Secure_2026_@Khnh"; 
 
-        // 2. HÀM TỰ ĐỘNG GHI LOG ĐĂNG NHẬP
+        // HÀM XỬ LÝ ĐẨY DỮ LIỆU FORM TẬP THỬ VỀ SHEET MỚI
+        function submitFormWeb(event) {
+            event.preventDefault();
+
+            const submitBtn = document.getElementById('submit-btn-text');
+            const successAlert = document.getElementById('registerSuccessAlert');
+            const form = document.getElementById('trialRegisterForm');
+
+            // Lấy thông tin đầu vào
+            const fullname = document.getElementById('fullname').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const email = document.getElementById('email').value.trim();
+
+            // Định dạng ngày DD/MM/YYYY
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const yyyy = today.getFullYear();
+            const formattedDate = `${dd}/${mm}/${yyyy}`;
+
+            // Lấy nguyên vẹn URL đăng ký (gồm cả đuôi ?ref=...)
+            const currentFullUrl = window.location.href;
+
+            submitBtn.innerText = "Đang gửi đăng ký...";
+            submitBtn.disabled = true;
+
+            const payload = {
+                target: "FormWeb",
+                timestamp: formattedDate,
+                fullname: fullname,
+                phone: phone,
+                email: email,
+                pageUrl: currentFullUrl
+            };
+
+            // Dùng Content-Type: text/plain để tránh dính lỗi CORS Preflight
+            fetch(FORM_REGISTER_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                form.style.display = "none";
+                successAlert.style.display = "block";
+            })
+            .catch(err => {
+                console.error("Lỗi gửi dữ liệu form:", err);
+                form.style.display = "none";
+                successAlert.style.display = "block";
+            });
+        }
+
+        // HÀM TỰ ĐỘNG GHI LOG ĐĂNG NHẬP VỀ SHEET CŨ CỦA ANH
         async function ghiLogDangNhapBaoMat(taiKhoanHocVien) {
             let ip = "Không rõ";
             let thietBi = "Không rõ";
 
-            // Tự động lấy IP của học viên qua API ẩn danh công cộng
             try {
                 let response = await fetch('https://api.ipify.org?format=json');
                 let data = await response.json();
@@ -407,7 +1214,6 @@
                 console.log("Không lấy được IP"); 
             }
 
-            // Tự động phân tích thiết bị học viên đang dùng để tập
             try {
                 const ua = navigator.userAgent;
                 if (/mobile/i.test(ua)) {
@@ -423,31 +1229,27 @@
                 console.log("Không lấy được thông tin thiết bị"); 
             }
 
-            // Đóng gói dữ liệu kèm mã bảo mật gửi lên Google Sheet
             const payload = {
-                token: SECRET_TOKEN,       // Mật mã xác thực đầu vào
-                target: "DangNhap",        // Tên sheet mục tiêu (sẽ ghi vào trang Lịch sử đăng nhập)
-                rowData: [ip, taiKhoanHocVien, thietBi] // Mảng dữ liệu tương ứng các cột
+                token: SECRET_TOKEN,
+                target: "DangNhap",
+                rowData: [ip, taiKhoanHocVien, thietBi]
             };
 
-            // Bắn dữ liệu chạy ngầm lên Google Sheet
-            fetch(GOOGLE_SCRIPT_URL, {
+            fetch(LOGIN_LOG_SCRIPT_URL, {
                 method: "POST",
                 mode: "no-cors", 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify(payload)
             })
             .then(() => {
-                console.log("🔒 Hệ thống bảo mật đã ghi nhận đăng nhập thành công cho: " + taiKhoanHocVien);
+                console.log("🔒 Hệ thống bảo mật đã ghi nhận đăng nhập cho: " + taiKhoanHocVien);
             })
             .catch(err => {
                 console.error("Lỗi gửi log đăng nhập:", err);
             });
         }
 
-        // --- CHỐNG MỞ CONSOLE TỐI ƯU CHO IPHONE/SAFARI ---
+        // CHỐNG MỞ CONSOLE
         (function() {
             const check = function() {
                 const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
@@ -500,27 +1302,28 @@
         }
 
         if (localStorage.getItem('user_login')) {
+            document.getElementById('body-root').className = 'logged-in-mode';
             document.getElementById('main-content').style.display = 'block';
             document.getElementById('logout-btn').style.display = 'block'; 
+            document.getElementById('login-section').style.display = 'none';
         } else {
+            document.getElementById('body-root').className = 'landing-mode';
             document.getElementById('login-section').style.display = 'block';
+            document.getElementById('main-content').style.display = 'none';
         }
 
-        // ĐOẠN CODE MỚI ĐÃ TÍCH HỢP GHI NHẬT KÝ BẢO MẬT
         async function startLogin() {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
     
             if (!user || !pass) return;
 
-            // 🚀 CHẠY LUÔN TẠI ĐÂY: Vừa ấn nút là lập tức bắn log lên Sheet luôn
             ghiLogDangNhapBaoMat(user);
 
             document.getElementById('login-btn').style.display = 'none';
             document.getElementById('loading-text').style.display = 'block';
 
             try {
-                // Sau đó mới gọi file auth.js để kiểm tra đăng nhập và chuyển trang
                 const success = await handleLogin(user, pass);
                 if (!success) {
                     document.getElementById('login-btn').style.display = 'block';
@@ -534,9 +1337,11 @@
 
         const inputs = [document.getElementById('username'), document.getElementById('password')];
         inputs.forEach(input => {
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') startLogin();
-            });
+            if (input) {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') startLogin();
+                });
+            }
         });
 
         document.addEventListener('keydown', function(e) {
