@@ -685,10 +685,17 @@
             .register-form-section { max-width: 100%; padding: 0 15px; }
         }
 
+        /* TỐI ƯU HIỂN THỊ 1 CỘT HOÀN TOÀN TRÊN ĐIỆN THOẠI (< 600px) */
         @media (max-width: 600px) {
-            .grid-4col-feat, .grid-4col-diff { grid-template-columns: 1fr; }
+            .grid-5col, .why-grid, .menu-grid, .grid-4col-feat, .grid-4col-diff, .results-grid { 
+                grid-template-columns: 1fr !important; 
+            }
+            .notice-container { 
+                flex-direction: column; 
+            }
             .form-card-container { padding: 25px 15px; }
             .form-card-title { font-size: 20px; }
+            .landing-footer { flex-direction: column; gap: 10px; text-align: center; }
         }
     </style>
 </head>
@@ -1201,7 +1208,7 @@
             });
         }
 
-        // HÀM TỰ ĐỘNG GHI LOG ĐĂNG NHẬP VỀ SHEET CŨ CỦA ANH
+        // HÀM TỰ ĐỘNG GHI LOG ĐĂNG NHẬP VỀ SHEET CỦA ANH
         async function ghiLogDangNhapBaoMat(taiKhoanHocVien) {
             let ip = "Không rõ";
             let thietBi = "Không rõ";
