@@ -14,6 +14,11 @@
 
     <!-- Bài viết chi tiết -->
     <url>
+        <loc>https://shinevisionapp.com/blog/nhuoc-thi-o-nguoi-lon-co-cai-thien-duoc-khong/</loc>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
         <loc>https://shinevisionapp.com/blog/tai-sao-ngung-tap-nhuoc-thi-thi-lai-bi-tai-lai-nguyen-nhan-va-cach-khac-phuc/</loc>
         <priority>0.7</priority>
     </url>
