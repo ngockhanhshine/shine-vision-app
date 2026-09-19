@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <!-- Trang chủ -->
+    <url>
+        <loc>https://shinevisionapp.com/</loc>
+        <priority>1.0</priority>
+    </url>
+
+    <!-- Trang danh sách bài viết -->
+    <url>
+        <loc>https://shinevisionapp.com/blog/</loc>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Bài viết chi tiết -->
+    <url>
+        <loc>https://shinevisionapp.com/blog/tai-sao-ngung-tap-nhuoc-thi-thi-lai-bi-tai-lai-nguyen-nhan-va-cach-khac-phuc/</loc>
+        <priority>0.7</priority>
+    </url>
+</urlset>
