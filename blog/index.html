@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShineVision App - Danh Sách Bài Viết</title>
+    
+    <link rel="icon" type="image/png" href="../assets/favicon.png">
+    
+    <!-- Đã cập nhật đường dẫn CSS chính xác -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    
+    <script src="../auth.js"></script>
+    <script src="../readme.js"></script>
+    <script src="../notice.js"></script>
+</head>
+<body>
+
+    <!-- 1. HEADER NAVBAR -->
+    <nav class="navbar">
+        <a href="../index.html" class="logo-landing">
+            👁️ ShineVision
+        </a>
+        <ul class="nav-links">
+            <li><a href="../index.html">Trang chủ</a></li>
+            <li><a href="#danhsach">Danh sách bài viết</a></li>
+            <li><a href="#noibat">Tính năng</a></li>
+            <li><a href="#dangky">Đăng ký</a></li>
+        </ul>
+        
+        <div class="login-bar-top">
+            <input type="text" id="username" placeholder="Tên học viên">
+            <input type="password" id="password" placeholder="Mật khẩu">
+            <button id="login-btn" onclick="startLogin()">Đăng nhập</button>
+        </div>
+    </nav>
+
+    <!-- 2. HERO BANNER -->
+    <section class="hero-banner-full" id="trangchu">
+        <a href="#dangky">
+            <img src="../mainmenu/banner.png" alt="ShineVision Banner" onerror="this.src='../assets/piano.jpg'">
+        </a>
+    </section>
+
+    <!-- 3. DANH SÁCH BÀI VIẾT -->
+    <main class="main-container" id="danhsach">
+        
+        <h1 class="page-title">DANH SÁCH BÀI VIẾT & HƯỚNG DẪN TẬP THỊ GIÁC</h1>
+        <p class="page-subtitle">Kiến thức chuyên sâu và giải pháp phục hồi Lác Lé, Nhược Thị không qua phẫu thuật xâm lấn</p>
+
+        <div class="grid-container">
+            
+            <a href="tai-sao-ngung-tap-nhuoc-thi-thi-lai-bi-tai-lai-nguyen-nhan-va-cach-khac-phuc/index.html" class="card-item">
+                <img src="tai-sao-ngung-tap-nhuoc-thi-thi-lai-bi-tai-lai-nguyen-nhan-va-cach-khac-phuc/tai-sao-ngung-tap-nhuoc-thi-thi-lai-bi-tai-lai-nguyen-nhan-va-cach-khac-phuc.png" alt="Tái phát nhược thị" onerror="this.src='../assets/1.jpg'">
+                <div class="card-item-title">Tại Sao Ngừng Tập Nhược Thị Phục Hồi Lại Bị Tái Lại? Nguyên Nhân Và Cách Khắc Phục</div>
+                <div class="card-item-desc">Giải mã cơ chế tái phát nhược thị sau khi dừng tập luyện và phương pháp huấn luyện phục hồi bền vững không phẫu thuật.</div>
+            </a>
+
+        </div>
+
+    </main>
+
+    <!-- 4. FOOTER -->
+    <footer class="landing-footer">
+        <div class="footer-brand-socials">
+            <span>Khôi phục thị lực Shine</span>
+            <div class="footer-social-icons">
+                <a href="https://www.tiktok.com/@khoiphucthilucshine" target="_blank" title="TikTok">
+                    <img src="../tiktok.png" alt="TikTok" onerror="this.style.display='none'">
+                </a>
+                <a href="https://www.youtube.com/@khoiphucthilucshine" target="_blank" title="YouTube">
+                    <img src="../ytb.png" alt="YouTube" onerror="this.style.display='none'">
+                </a>
+                <a href="https://www.facebook.com/makeyoureyesShine" target="_blank" title="Facebook">
+                    <img src="../facebook.png" alt="Facebook" onerror="this.style.display='none'">
+                </a>
+            </div>
+        </div>
+        <div>Đơn vị Tiên phong trong lĩnh vực Đào Tạo Thị Giác 2 mắt</div>
+    </footer>
+
+</body>
+</html>
