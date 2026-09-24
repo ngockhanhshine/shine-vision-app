@@ -214,6 +214,29 @@
             margin-bottom: 4px;
         }
 
+        /* NÚT XEM VIDEO HƯỚNG DẪN MÀU ĐỎ */
+        .btn-video-guide {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: #ff4d4d;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 4px 12px rgba(255, 77, 77, 0.3);
+        }
+
+        .btn-video-guide:hover {
+            background: #e63939;
+            transform: translateY(-2px);
+        }
+
         .btn-start {
             width: 100%;
             padding: 14px;
@@ -247,13 +270,14 @@
             gap: 12px;
             margin-bottom: 8px;
             width: 100%;
-            max-width: 800px;
+            max-width: 850px;
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
             background: #2b2d42;
             padding: 8px 16px;
             border-radius: 8px;
+            flex-wrap: wrap;
         }
 
         .btn-action {
@@ -551,6 +575,11 @@
                 </div>
             </div>
 
+            <!-- NÚT MỞ VIDEO HƯỚNG DẪN MÀU ĐỎ -->
+            <a href="https://www.youtube.com/watch?v=Yh5bKfqM9fw" target="_blank" class="btn-video-guide">
+                🎥 Xem Video Hướng Dẫn Cách Giải
+            </a>
+
             <button class="btn-start" id="btn-start-game">BẮT ĐẦU CHƠI 🚀</button>
         </div>
 
@@ -566,6 +595,9 @@
                         <span class="slider"></span>
                     </label>
                 </div>
+
+                <!-- NÚT TOÀN MÀN HÌNH MỚI BỔ SUNG -->
+                <button class="btn-action" id="btn-fullscreen" style="background: #fab005; color: #121212;">🖥️ Toàn Màn Hình</button>
 
                 <button class="btn-action" id="btn-show-preview">📷 Xem Ảnh Mẫu</button>
                 <button class="btn-action" id="btn-shuffle">🔀 Xáo Trộn</button>
@@ -653,6 +685,7 @@
     const previewModal = document.getElementById('preview-modal');
     const modalPreviewImg = document.getElementById('modal-preview-img');
     const toggleHint = document.getElementById('toggle-hint');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
     
     const container = document.getElementById('puzzle-container');
     const winMessage = document.getElementById('win-message');
@@ -702,7 +735,45 @@
         isTimerStarted = false;
     }
 
-    // 5. HÀM TẠO DẤU THỜI GIAN THEO ĐỊNH DẠNG DD/MM/YY - hh:mm
+    // --- LOGIC XỬ LÝ NÚT TOÀN MÀN HÌNH (FULLSCREEN) ---
+    function toggleFullScreen() {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen().catch(err => console.log(err));
+            } else if (docEl.webkitRequestFullscreen) {
+                docEl.webkitRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
+    }
+
+    function updateFullscreenButtonText() {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            btnFullscreen.innerHTML = '🗗 Thu Nhỏ';
+        } else {
+            btnFullscreen.innerHTML = '🖥️ Toàn Màn Hình';
+        }
+    }
+
+    btnFullscreen.addEventListener('click', toggleFullScreen);
+
+    document.addEventListener('fullscreenchange', () => {
+        updateFullscreenButtonText();
+        setTimeout(autoScaleWorkspace, 100);
+    });
+
+    document.addEventListener('webkitfullscreenchange', () => {
+        updateFullscreenButtonText();
+        setTimeout(autoScaleWorkspace, 100);
+    });
+
+    // 5. HÀM TẠO DẤU THỜI GIAN THEO ĐỊNH DẠNG DD/MM/YY - hh/mm
     function getFormattedTimestamp() {
         const now = new Date();
         const dd = String(now.getDate()).padStart(2, '0');
