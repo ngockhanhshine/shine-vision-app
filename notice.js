@@ -1,8 +1,9 @@
 const noticeData = {
-    date: "13/09/2026",
+    date: "23/09/2026",
     content: [
-        "Tính năng ẩn cột tuỳ chỉnh cho App Circle Cross Training",
-        "App Trò chơi xếp hình cho mắt Nhược thị"
+        "Điều chỉnh giao diện trang Đăng nhập",
+        "Video hướng dẫn cho app Trò Chơi Xếp Hình"
+        "Thêm Mục Kinh nghiệm hay vào Trang đăng nhập"
     ]
 };
 
