@@ -12,7 +12,13 @@
         <priority>0.8</priority>
     </url>
 
-    <!-- Bài viết chi tiết -->
+    <!-- Bài viết chi tiết mới nhất -->
+    <url>
+        <loc>https://shinevisionapp.com/blog/vai-tro-cua-thi-giac-hai-mat-trong-dieu-tri-nhuoc-thi/</loc>
+        <priority>0.7</priority>
+    </url>
+
+    <!-- Các bài viết chi tiết trước đó -->
     <url>
         <loc>https://shinevisionapp.com/blog/tai-sao-nen-su-dung-app-tap-nhuoc-thi-tai-nha/</loc>
         <priority>0.7</priority>
