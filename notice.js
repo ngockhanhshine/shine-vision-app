@@ -3,7 +3,6 @@ const noticeData = {
     content: [
         "Điều chỉnh giao diện trang Đăng nhập",
         "Video hướng dẫn cho app Trò Chơi Xếp Hình"
-        "Thêm Mục Kinh nghiệm hay vào Trang đăng nhập"
     ]
 };
 
