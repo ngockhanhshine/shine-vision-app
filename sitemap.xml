@@ -12,57 +12,73 @@
         <priority>0.8</priority>
     </url>
 
-    <!-- Bài viết mới nhất -->
+    <!-- 1. Bài viết mới nhất: Nhược thị do cận loạn phải làm sao -->
+    <url>
+        <loc>https://shinevisionapp.com/blog/nhuoc-thi-do-can-loan-phai-lam-sao/</loc>
+        <priority>0.7</priority>
+    </url>
+
+    <!-- 2. Viễn loạn nhược thị -->
     <url>
         <loc>https://shinevisionapp.com/blog/vien-loan-nhuoc-thi-thi-phai-lam-sao/</loc>
         <priority>0.7</priority>
     </url>
 
+    <!-- 3. Trẻ nhìn nghiêng đầu -->
     <url>
         <loc>https://shinevisionapp.com/blog/tre-nhin-nghieng-dau-dau-hieu-va-nguy-co-gay-nhuoc-thi/</loc>
         <priority>0.7</priority>
     </url>
 
+    <!-- 4. Vai trò thị giác hai mắt -->
     <url>
         <loc>https://shinevisionapp.com/blog/vai-tro-cua-thi-giac-hai-mat-trong-dieu-tri-nhuoc-thi/</loc>
         <priority>0.7</priority>
     </url>
 
+    <!-- 5. Tại sao nên sử dụng app tập nhược thị tại nhà -->
     <url>
         <loc>https://shinevisionapp.com/blog/tai-sao-nen-su-dung-app-tap-nhuoc-thi-tai-nha/</loc>
         <priority>0.7</priority>
     </url>
 
+    <!-- 6. Tập nhược thị cho trẻ sao cho hiệu quả -->
     <url>
         <loc>https://shinevisionapp.com/blog/tap-nhuoc-thi-cho-tre-sao-cho-hieu-qua/</loc>
         <priority>0.7</priority>
     </url>
 
+    <!-- 7. 5 Tips tập nhược thị ở người lớn -->
     <url>
         <loc>https://shinevisionapp.com/blog/5-tips-tap-nhuoc-thi-hieu-qua-o-nguoi-lon/</loc>
         <priority>0.7</priority>
     </url>
 
+    <!-- 8. Thị giác 2 mắt là gì -->
     <url>
         <loc>https://shinevisionapp.com/blog/thi-giac-2-mat-la-gi-ma-co-the-nhanh-chong-cai-thien-nhuoc-thi/</loc>
         <priority>0.7</priority>
     </url>
 
+    <!-- 9. 5 bài tập cần thiết cho nhược thị -->
     <url>
         <loc>https://shinevisionapp.com/blog/5-bai-tap-can-thiet-cho-nhuoc-thi/</loc>
         <priority>0.7</priority>
     </url>
 
+    <!-- 10. Bài tập tương tác tay - mắt -->
     <url>
         <loc>https://shinevisionapp.com/blog/bat-mi-phuong-phap-cai-thien-nhuoc-thi-cac-bai-tap-tuong-tac-tay-mat/</loc>
         <priority>0.7</priority>
     </url>
 
+    <!-- 11. Nhược thị ở người lớn có cải thiện được không -->
     <url>
         <loc>https://shinevisionapp.com/blog/nhuoc-thi-o-nguoi-lon-co-cai-thien-duoc-khong/</loc>
         <priority>0.7</priority>
     </url>
 
+    <!-- 12. Tại sao ngừng tập nhược thị lại bị tái phát -->
     <url>
         <loc>https://shinevisionapp.com/blog/tai-sao-ngung-tap-nhuoc-thi-thi-lai-bi-tai-lai-nguyen-nhan-va-cach-khac-phuc/</loc>
         <priority>0.7</priority>
