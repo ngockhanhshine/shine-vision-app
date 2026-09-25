@@ -12,7 +12,7 @@
         <priority>0.8</priority>
     </url>
 
-    <!-- 1. Bài viết mới nhất: Nhược thị do cận loạn phải làm sao -->
+    <!-- 1. Nhược thị do cận loạn phải làm sao -->
     <url>
         <loc>https://shinevisionapp.com/blog/nhuoc-thi-do-can-loan-phai-lam-sao/</loc>
         <priority>0.7</priority>
@@ -78,9 +78,9 @@
         <priority>0.7</priority>
     </url>
 
-    <!-- 12. Tại sao ngừng tập nhược thị lại bị tái phát -->
+    <!-- 12. Tại sao ngừng tập nhược thị lại bị tái phát (Đã sửa lại chuẩn tên folder) -->
     <url>
-        <loc>https://shinevisionapp.com/blog/tai-sao-ngung-tap-nhuoc-thi-thi-lai-bi-tai-lai-nguyen-nhan-va-cach-khac-phuc/</loc>
+        <loc>https://shinevisionapp.com/blog/tai-sao-ngung-tap-nhuoc-thi-lai-bi-tai-lai-nguyen-nhan-va-cach-khac-phuc/</loc>
         <priority>0.7</priority>
     </url>
 </urlset>
