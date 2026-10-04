@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <!-- 1. Tải tập tin xác thực tài khoản -->
+    <script src="../auth.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stereo Hunter - Anaglyph Game - Shine Vision App</title>
+    <!-- Tải tập tin đính kèm để tương thích với cấu trúc chung -->
+    <script src="readme.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #121212;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Ẩn toàn bộ nội dung ứng dụng khi chưa xác thực xong */
+        #main-app-content {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            color: #00ffff;
+            text-shadow: 2px 2px #ff0055;
+            font-size: 28px;
+        }
+
+        p.subtitle {
+            color: #aaa;
+            margin-top: 0;
+            font-size: 14px;
+        }
+
+        #game-container {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            text-align: center;
+            max-width: 360px;
+            width: 90%;
+            box-sizing: border-box;
+        }
+
+        canvas {
+            border: 2px solid #333;
+            border-radius: 8px;
+            background-color: #000;
+            image-rendering: pixelated;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .controls {
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        select {
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 5px 10px;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button.opt-btn {
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button.opt-btn:hover {
+            background: #00ffff;
+            color: #000;
+            border-color: #00ffff;
+            font-weight: bold;
+        }
+
+        #score-board {
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        #msg {
+            height: 20px;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="main-app-content">
+        <h1>STEREO HUNTER</h1>
+        <p class="subtitle">Đeo kính Anaglyph (Đỏ/Xanh) để tìm hình ẩn 3D!</p>
+
+        <div id="game-container">
+            <div id="score-board">Điểm: <span id="score">0</span></div>
+            
+            <canvas id="stereoCanvas" width="300" height="300"></canvas>
+            
+            <div class="controls">
+                <label for="difficulty">Độ nổi (Disparity):</label>
+                <select id="difficulty" onchange="nextRound()">
+                    <option value="10">Dễ (Nổi nhiều)</option>
+                    <option value="6" selected>Vừa</option>
+                    <option value="4">Khó (Nổi nhẹ)</option>
+                </select>
+            </div>
+
+            <div id="msg"></div>
+
+            <div class="options-grid" id="options"></div>
+        </div>
+    </div>
+
+    <script>
+    // =========================================================================
+    // 1. CHẶN TÊN MIỀN (CHỈ CHO PHÉP SHINEVISIONAPP.COM VÀ LOCALHOST KHI DEV)
+    // =========================================================================
+    (function() {
+        const allowedDomain = "shinevisionapp.com";
+        const hostname = window.location.hostname;
+        
+        const isAllowed = hostname === allowedDomain || 
+                          hostname.endsWith("." + allowedDomain) || 
+                          hostname === "localhost" || 
+                          hostname === "127.0.0.1";
+
+        if (!isAllowed) {
+            document.body.innerHTML = "<h2 style='color:red; text-align:center; margin-top:20%; font-family:sans-serif;'>Ứng dụng đã bị khóa!</h2>";
+            window.stop();
+            throw new Error("Unauthorized domain");
+        }
+    })();
+
+    // =========================================================================
+    // 2. CHẶN PHÍM TẮT MỞ CONSOLE, DEVTOOLS VÀ LƯU/TẢI TRANG
+    // =========================================================================
+    window.addEventListener('keydown', function(e) {
+        // Khóa F12
+        if (e.key === 'F12' || e.keyCode === 123) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+
+        const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+        const key = e.key.toLowerCase();
+
+        // Khóa Ctrl+S (Lưu trang), Ctrl+U (Xem nguồn), Ctrl+P (In trang)
+        if (isCtrlOrCmd && (key === 's' || key === 'u' || key === 'p')) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+
+        // Khóa các tổ hợp phím mở DevTools / Console:
+        // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+Shift+S
+        if (isCtrlOrCmd && e.shiftKey && (key === 'i' || key === 'j' || key === 'c' || key === 's')) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+    }, true);
+
+    // =========================================================================
+    // 3. BẢO MẬT CONSOLE & VÔ HIỆU HÓA DEVTOOLS (THEO APP PIANO)
+    // =========================================================================
+    (function() {
+        const check = function() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const threshold = 160;
+            const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+            const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+            const devtools = { open: false };
+            const element = new Image();
+            
+            Object.defineProperty(element, 'id', {
+                get: function() { 
+                    devtools.open = true; 
+                    terminateSession(); 
+                }
+            });
+
+            function terminateSession() {
+                localStorage.removeItem('user_login');
+                document.body.innerHTML = "";
+                window.location.replace("about:blank");
+            }
+
+            console.log(element);
+            console.clear();
+
+            if (!isMobile) {
+                if (widthThreshold || heightThreshold || devtools.open) terminateSession();
+            } else {
+                if (devtools.open) terminateSession();
+            }
+        };
+
+        setInterval(function() {
+            const start = performance.now();
+            debugger;
+            if (performance.now() - start > 100) window.location.replace("about:blank");
+        }, 500);
+
+        setInterval(check, 500);
+        window.addEventListener('resize', check);
+    })();
+
+    // =========================================================================
+    // 4. KIỂM TRA ĐĂNG NHẬP & TỰ ĐỘNG ĐỒNG BỘ ĐĂNG XUẤT VỚI MAIN INDEX
+    // =========================================================================
+    let currentUsername = "Khách";
+    (function() {
+        const loginData = JSON.parse(localStorage.getItem('user_login'));
+        if (!loginData) {
+            // Chưa đăng nhập -> Chuyển sang main index
+            window.location.href = '../index.html';
+        } else {
+            // Đã đăng nhập -> Hiện ứng dụng
+            document.getElementById('main-app-content').style.display = 'flex';
+            currentUsername = loginData.username || loginData.email || loginData.phone || "Ẩn danh";
+        }
+
+        // Lắng nghe sự kiện thay đổi localStorage từ tab/cửa sổ khác
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'user_login' && !e.newValue) {
+                window.location.href = '../index.html';
+            }
+        });
+    })();
+
+    // =========================================================================
+    // 5. NỘI DUNG GAME STEREO HUNTER
+    // =========================================================================
+    const canvas = document.getElementById('stereoCanvas');
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    let currentShape = '';
+    let score = 0;
+
+    const SHAPES = [
+        { id: 'star', name: 'Ngôi Sao' },
+        { id: 'boat', name: 'Con Thuyền' },
+        { id: 'bird', name: 'Con Chim' },
+        { id: 'bottle', name: 'Chai Nước' },
+        { id: 'circle', name: 'Hình Tròn' },
+        { id: 'square', name: 'Hình Vuông' }
+    ];
+
+    function isInsideShape(x, y, shapeId) {
+        const cx = x - width / 2;
+        const cy = y - height / 2;
+
+        switch(shapeId) {
+            case 'star': {
+                const r = Math.sqrt(cx * cx + cy * cy);
+                const angle = Math.atan2(cy, cx);
+                const starRadius = 55 + 25 * Math.cos(5 * angle);
+                return r < starRadius;
+            }
+
+            case 'boat': {
+                const inHull = (cy > 10 && cy < 60) && (Math.abs(cx) < 80 - (cy - 10) * 0.6);
+                const inSail = (cy >= -70 && cy <= 5) && (cx >= -40 && cx <= 10) && ((cx + 40) * 1.5 > (cy + 70));
+                return inHull || inSail;
+            }
+
+            case 'bird': {
+                const head = Math.sqrt((cx + 45)*(cx + 45) + (cy + 15)*(cy + 15)) < 18;
+                const beak = (cx < -60 && cx > -75) && (cy > -20 && cy < -10);
+                const body = (cx*cx)/Math.pow(45, 2) + (cy*cy)/Math.pow(22, 2) <= 1;
+                const wing = (cy < 0 && cy > -75) && (Math.abs(cx - 5) < (75 + cy) * 0.5);
+                const tail = (cx > 35 && cx < 75) && (cy > -10 && cy < 15) && (cy > (cx - 35) * 0.3 - 10);
+                return head || beak || body || wing || tail;
+            }
+
+            case 'bottle': {
+                const body = (cy > -15 && cy < 75) && (Math.abs(cx) < 35);
+                const shoulder = (cy >= -40 && cy <= -15) && (Math.abs(cx) < 35 - (-15 - cy) * 0.8);
+                const neck = (cy >= -75 && cy < -40) && (Math.abs(cx) < 12);
+                const cap = (cy >= -85 && cy < -75) && (Math.abs(cx) < 15);
+                return body || shoulder || neck || cap;
+            }
+
+            case 'circle':
+                return Math.sqrt(cx * cx + cy * cy) < 65;
+
+            case 'square':
+                return Math.abs(cx) < 55 && Math.abs(cy) < 55;
+
+            default:
+                return false;
+        }
+    }
+
+    function generateStereogram(targetShape) {
+        const imgData = ctx.createImageData(width, height);
+        const data = imgData.data;
+        const shiftAmount = parseInt(document.getElementById('difficulty').value, 10);
+
+        const leftPattern = [];
+        for (let y = 0; y < height; y++) {
+            leftPattern[y] = [];
+            for (let x = 0; x < width; x++) {
+                leftPattern[y][x] = Math.random() > 0.5 ? 255 : 0;
+            }
+        }
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const index = (y * width + x) * 4;
+                const leftVal = leftPattern[y][x];
+
+                let rightX = x;
+                if (isInsideShape(x, y, targetShape)) {
+                    rightX = x - shiftAmount;
+                }
+
+                let rightVal = 0;
+                if (rightX >= 0 && rightX < width) {
+                    rightVal = leftPattern[y][rightX];
+                } else {
+                    rightVal = Math.random() > 0.5 ? 255 : 0;
+                }
+
+                data[index]     = leftVal;  // Red
+                data[index + 1] = rightVal; // Green
+                data[index + 2] = rightVal; // Blue
+                data[index + 3] = 255;      // Alpha
+            }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+    }
+
+    function nextRound() {
+        document.getElementById('msg').innerText = '';
+        
+        const randomIndex = Math.floor(Math.random() * SHAPES.length);
+        currentShape = SHAPES[randomIndex].id;
+
+        generateStereogram(currentShape);
+
+        const optionsContainer = document.getElementById('options');
+        optionsContainer.innerHTML = '';
+
+        SHAPES.forEach(shape => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = shape.name;
+            btn.onclick = () => checkAnswer(shape.id);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selectedId) {
+        const msgEl = document.getElementById('msg');
+        if (selectedId === currentShape) {
+            score += 10;
+            document.getElementById('score').innerText = score;
+            msgEl.style.color = '#00ff00';
+            msgEl.innerText = ' chính xác! +10 điểm';
+            setTimeout(nextRound, 800);
+        } else {
+            msgEl.style.color = '#ff0055';
+            msgEl.innerText = '❌ Chưa đúng, thử lại xem!';
+        }
+    }
+
+    nextRound();
+    </script>
+</body>
+</html>
