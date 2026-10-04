@@ -12,115 +12,121 @@
         <priority>0.8</priority>
     </url>
 
-    <!-- 1. Nhược thị 1/10 2/10 có thể cải thiện được không -->
+    <!-- 1. Bị mắt nhược thị như nào tốt nhất -->
+    <url>
+        <loc>https://shinevisionapp.com/blog/bit-mat-nhuoc-thi-nhu-nao-tot-nhat/</loc>
+        <priority>0.7</priority>
+    </url>
+
+    <!-- 2. Nhược thị 1/10 2/10 có thể cải thiện được không -->
     <url>
         <loc>https://shinevisionapp.com/blog/nhuoc-thi-1-10-2-10-co-the-cai-thien-duoc-khong/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 2. Tập nhược thị bao lâu thì có kết quả -->
+    <!-- 3. Tập nhược thị bao lâu thì có kết quả -->
     <url>
         <loc>https://shinevisionapp.com/blog/tap-nhuoc-thi-bao-lau-thi-co-ket-qua/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 3. Phát hiện chấn động khi nhược thị ở người lớn hoàn toàn có thể cải thiện -->
+    <!-- 4. Phát hiện chấn động khi nhược thị ở người lớn hoàn toàn có thể cải thiện -->
     <url>
         <loc>https://shinevisionapp.com/blog/phat-hien-chan-dong-khi-nhuoc-thi-o-nguoi-lon-hoan-toan-co-the-cai-thien/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 4. Muốn chữa nhược thị bạn phải biết 4 yếu tố sau -->
+    <!-- 5. Muốn chữa nhược thị bạn phải biết 4 yếu tố sau -->
     <url>
         <loc>https://shinevisionapp.com/blog/muon-chua-nhuoc-thi-ban-phai-biet-4-yeu-to-sau/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 5. Tại sao tập nhược thị với phần mềm shinevisionapp lại hiệu quả nhanh chóng -->
+    <!-- 6. Tại sao tập nhược thị với phần mềm shinevisionapp lại hiệu quả nhanh chóng -->
     <url>
         <loc>https://shinevisionapp.com/blog/tai-sao-tap-nhuoc-thi-voi-phan-mem-shinevisionapp-lai-hieu-qua-nhanh-chong/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 6. Nhược thị do bị lác lé thì phải làm sao -->
+    <!-- 7. Nhược thị do bị lác lé thì phải làm sao -->
     <url>
         <loc>https://shinevisionapp.com/blog/nhuoc-thi-do-bi-lac-le-thi-phai-lam-sao/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 7. Nhược thị 1 bên mắt phải làm thế nào -->
+    <!-- 8. Nhược thị 1 bên mắt phải làm thế nào -->
     <url>
         <loc>https://shinevisionapp.com/blog/nhuoc-thi-1-ben-mat-phai-lam-the-nao/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 8. Nhược thị do cận loạn phải làm sao -->
+    <!-- 9. Nhược thị do cận loạn phải làm sao -->
     <url>
         <loc>https://shinevisionapp.com/blog/nhuoc-thi-do-can-loan-phai-lam-sao/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 9. Viễn loạn nhược thị -->
+    <!-- 10. Viễn loạn nhược thị -->
     <url>
         <loc>https://shinevisionapp.com/blog/vien-loan-nhuoc-thi-thi-phai-lam-sao/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 10. Trẻ nhìn nghiêng đầu -->
+    <!-- 11. Trẻ nhìn nghiêng đầu -->
     <url>
         <loc>https://shinevisionapp.com/blog/tre-nhin-nghieng-dau-dau-hieu-va-nguy-co-gay-nhuoc-thi/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 11. Vai trò thị giác hai mắt -->
+    <!-- 12. Vai trò thị giác hai mắt -->
     <url>
         <loc>https://shinevisionapp.com/blog/vai-tro-cua-thi-giac-hai-mat-trong-dieu-tri-nhuoc-thi/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 12. Tại sao nên sử dụng app tập nhược thị tại nhà -->
+    <!-- 13. Tại sao nên sử dụng app tập nhược thị tại nhà -->
     <url>
         <loc>https://shinevisionapp.com/blog/tai-sao-nen-su-dung-app-tap-nhuoc-thi-tai-nha/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 13. Tập nhược thị cho trẻ sao cho hiệu quả -->
+    <!-- 14. Tập nhược thị cho trẻ sao cho hiệu quả -->
     <url>
         <loc>https://shinevisionapp.com/blog/tap-nhuoc-thi-cho-tre-sao-cho-hieu-qua/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 14. 5 Tips tập nhược thị ở người lớn -->
+    <!-- 15. 5 Tips tập nhược thị ở người lớn -->
     <url>
         <loc>https://shinevisionapp.com/blog/5-tips-tap-nhuoc-thi-hieu-qua-o-nguoi-lon/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 15. Thị giác 2 mắt là gì -->
+    <!-- 16. Thị giác 2 mắt là gì -->
     <url>
         <loc>https://shinevisionapp.com/blog/thi-giac-2-mat-la-gi-ma-co-the-nhanh-chong-cai-thien-nhuoc-thi/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 16. 5 bài tập cần thiết cho nhược thị -->
+    <!-- 17. 5 bài tập cần thiết cho nhược thị -->
     <url>
         <loc>https://shinevisionapp.com/blog/5-bai-tap-can-thiet-cho-nhuoc-thi/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 17. Bài tập tương tác tay - mắt -->
+    <!-- 18. Bài tập tương tác tay - mắt -->
     <url>
         <loc>https://shinevisionapp.com/blog/bat-mi-phuong-phap-cai-thien-nhuoc-thi-cac-bai-tap-tuong-tac-tay-mat/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 18. Nhược thị ở người lớn có cải thiện được không -->
+    <!-- 19. Nhược thị ở người lớn có cải thiện được không -->
     <url>
         <loc>https://shinevisionapp.com/blog/nhuoc-thi-o-nguoi-lon-co-cai-thien-duoc-khong/</loc>
         <priority>0.7</priority>
     </url>
 
-    <!-- 19. Tại sao ngừng tập nhược thị lại bị tái phát -->
+    <!-- 20. Tại sao ngừng tập nhược thị lại bị tái phát -->
     <url>
         <loc>https://shinevisionapp.com/blog/tai-sao-ngung-tap-nhuoc-thi-thi-lai-bi-tai-lai-nguyen-nhan-va-cach-khac-phuc/</loc>
         <priority>0.7</priority>
