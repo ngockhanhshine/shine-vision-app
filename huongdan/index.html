@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shine Vision Center - Hướng Dẫn Tập Nhược Thị</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        shine: {
+                            primary: '#1B603F',      /* Dark Forest Green */
+                            dark: '#13472E',         /* Darker shade for hover/gradients */
+                            light: '#D8EED9',        /* Light Green Border/Accent */
+                            bg: '#EFF9F0',           /* Pale Background Green */
+                            accent: '#2A8257'        /* Vibrant Emerald Accent */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-selected {
+            border-color: #1B603F !important;
+            background-color: #EFF9F0 !important;
+            box-shadow: 0 10px 20px -5px rgba(27, 96, 63, 0.2) !important;
+        }
+        .custom-radio {
+            transition: all 0.25s ease;
+        }
+    </style>
+</head>
+<body class="bg-[#EFF9F0] text-slate-800 font-sans min-h-screen flex flex-col justify-between selection:bg-shine-primary selection:text-white">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-shine-light sticky top-0 z-50 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-shine-primary flex items-center justify-center text-white text-xl font-bold shadow-md shadow-shine-primary/20">
+                    <i class="fa-solid fa-eye"></i>
+                </div>
+                <div>
+                    <span class="font-extrabold text-lg sm:text-xl text-shine-primary tracking-tight leading-none block">SHINE VISION</span>
+                    <span class="text-xs text-shine-accent font-medium tracking-wide block">Center • Huấn Luyện & Phục Hồi Thị Giác</span>
+                </div>
+            </div>
+            <a href="https://shinevisionapp.com/#dangky" class="hidden sm:inline-flex items-center gap-2 bg-shine-bg hover:bg-shine-light text-shine-primary px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition border border-shine-light">
+                <i class="fa-solid fa-headset text-shine-primary"></i>
+                Tập Thử Miễn Phí
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
+
+        <!-- Welcome Banner -->
+        <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-shine-dark via-shine-primary to-shine-accent text-white p-6 sm:p-10 shadow-xl mb-8">
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="relative z-10 max-w-2xl">
+                <span class="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md text-shine-light text-xs font-semibold px-3 py-1 rounded-full mb-3 border border-white/20">
+                    <i class="fa-solid fa-circle-check text-shine-light"></i> Giải pháp Phục hồi Thị giác Không xâm lấn
+                </span>
+                <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight mb-3">
+                    Chào Mừng Đến Với Hướng Dẫn Tập Nhược Thị
+                </h1>
+                <p class="text-shine-light/90 text-sm sm:text-base leading-relaxed mb-4">
+                    Ứng dụng <span class="font-semibold text-white">Shine Vision App</span> mang đến các bài huấn luyện thị giác thiết kế chuẩn y khoa, giúp kích hoạt vùng vỏ não thị giác và cải thiện thị lực hiệu quả. Hãy chọn tình trạng của bạn để nhận phác đồ luyện tập tối ưu nhất!
+                </p>
+                <div class="flex flex-wrap items-center gap-4 text-xs font-medium text-shine-light/80">
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-shield-halved text-shine-light"></i> An toàn tuyệt đối
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-wand-magic-sparkles text-shine-light"></i> Chuẩn bài tập Y khoa
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-clock text-shine-light"></i> Chỉ 30-60 phút/ngày
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 1: Survey Section -->
+        <section id="step-1" class="fade-in bg-white rounded-3xl p-6 sm:p-8 border border-shine-light shadow-sm">
+            <div class="text-center max-w-xl mx-auto mb-8">
+                <span class="text-xs font-bold uppercase tracking-wider text-shine-primary bg-shine-bg px-3 py-1 rounded-full border border-shine-light inline-block mb-2">Bước 1 trên 2</span>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Tình trạng Nhược thị của bạn ra sao?</h2>
+                <p class="text-sm text-slate-500">Hãy chọn tình trạng thực tế để ứng dụng đưa ra bài tập phù hợp nhất cho mắt của bạn.</p>
+            </div>
+
+            <!-- Selection Options Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto mb-8">
+                <!-- Option 1: One Eye -->
+                <div id="card-option-1" onclick="selectOption('one_eye')" class="custom-radio border-2 border-slate-200 rounded-2xl p-5 cursor-pointer hover:border-shine-primary hover:shadow-md transition relative flex flex-col justify-between bg-white">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-shine-bg text-shine-primary border border-shine-light flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-eye-slash"></i>
+                        </div>
+                        <input type="radio" name="amblyopia_type" value="one_eye" id="radio-one_eye" class="w-5 h-5 text-shine-primary focus:ring-shine-primary">
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-lg mb-1">Nhược thị 1 bên mắt</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">Có sự chênh lệch thị lực rõ rệt giữa 2 mắt. Một mắt khỏe (hoặc bình thường) và một mắt nhược thị (mắt yếu).</p>
+                    </div>
+                </div>
+
+                <!-- Option 2: Both Eyes Equal -->
+                <div id="card-option-2" onclick="selectOption('both_eyes')" class="custom-radio border-2 border-slate-200 rounded-2xl p-5 cursor-pointer hover:border-shine-primary hover:shadow-md transition relative flex flex-col justify-between bg-white">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-shine-bg text-shine-primary border border-shine-light flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-eye text-lg"></i><i class="fa-solid fa-eye text-lg -ml-1"></i>
+                        </div>
+                        <input type="radio" name="amblyopia_type" value="both_eyes" id="radio-both_eyes" class="w-5 h-5 text-shine-primary focus:ring-shine-primary">
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-lg mb-1">Nhược thị 2 mắt đều nhau</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">Cả hai mắt đều bị giảm thị lực ở mức độ tương đương nhau, chưa đạt thị lực tối đa dù đã chỉnh kính.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="text-center">
+                <button id="btn-submit-step1" disabled onclick="goToStep2()" class="w-full sm:w-auto px-8 py-3.5 bg-slate-300 text-slate-500 font-bold rounded-xl shadow cursor-not-allowed transition duration-200 inline-flex items-center justify-center gap-2">
+                    <span>Tiếp tục phác đồ</span>
+                    <i class="fa-solid fa-arrow-right text-sm"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 2: Protocol Output Section (Hidden by default) -->
+        <section id="step-2" class="hidden fade-in">
+            <!-- Navigation Back Control -->
+            <div class="mb-6 flex items-center justify-between">
+                <button onclick="backToStep1()" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-shine-primary bg-white border border-shine-light px-4 py-2 rounded-xl shadow-sm transition">
+                    <i class="fa-solid fa-arrow-left"></i> Chọn lại tình trạng
+                </button>
+                <span id="selected-badge" class="bg-shine-bg text-shine-primary text-xs font-bold px-3 py-1.5 rounded-xl border border-shine-light">
+                    <!-- Dynamic Badge Text -->
+                </span>
+            </div>
+
+            <!-- Dynamic Protocol Content Target -->
+            <div id="protocol-content" class="space-y-6">
+                <!-- JavaScript populates output content here -->
+            </div>
+
+            <!-- CTA Callout Box -->
+            <div class="mt-8 bg-gradient-to-r from-shine-dark via-shine-primary to-shine-accent text-white rounded-3xl p-6 sm:p-8 shadow-lg text-center relative overflow-hidden">
+                <div class="relative z-10 max-w-2xl mx-auto">
+                    <span class="inline-block bg-white/20 text-shine-light text-xs font-bold px-3 py-1 rounded-full mb-3 uppercase tracking-wider border border-white/20">
+                        Phục hồi không xâm lấn
+                    </span>
+                    <h3 class="text-xl sm:text-2xl font-extrabold mb-3">Nhược thị hoàn toàn có thể phục hồi!</h3>
+                    <p class="text-sm text-shine-light/90 mb-6 leading-relaxed">
+                        Nhược thị không phải là bệnh lý vĩnh viễn nếu được can thiệp kịp thời bằng phương pháp huấn luyện thị giác đúng chuẩn. Hãy để chuyên gia Shine Vision Center đồng hành cùng bạn.
+                    </p>
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <a href="https://shinevisionapp.com/#dangky" class="w-full sm:w-auto bg-white text-shine-primary hover:bg-shine-bg font-bold px-6 py-3.5 rounded-xl shadow-md transition transform active:scale-95 inline-flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-calendar-check"></i>
+                            Đăng ký Tập thử Miễn phí
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-shine-light mt-12 py-6">
+        <div class="max-w-5xl mx-auto px-4 text-center text-xs text-slate-500">
+            <p class="mb-2">© 2026 <strong>Shine Vision Center</strong>. Tất cả các quyền được bảo lưu.</p>
+            <p class="max-w-xl mx-auto text-slate-400">Ứng dụng hỗ trợ huấn luyện thị giác không thay thế hoàn toàn chẩn đoán y khoa. Vui lòng tham khảo ý kiến bác sĩ chuyên khoa mắt định kỳ.</p>
+        </div>
+    </footer>
+
+    <!-- Consultation Modal -->
+    <div id="consultation-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative fade-in border border-shine-light">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-shine-bg text-shine-primary rounded-2xl flex items-center justify-center mx-auto text-xl mb-3 border border-shine-light">
+                    <i class="fa-solid fa-user-doctor"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Đăng Ký Tư Vấn Miễn Phí</h3>
+                <p class="text-xs text-slate-500 mt-1">Chuyên viên y tế Shine Vision Center sẽ liên hệ hỗ trợ bạn trong thời gian sớm nhất.</p>
+            </div>
+            <form onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Họ và tên *</label>
+                    <input type="text" required placeholder="Nhập họ và tên..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-shine-primary focus:border-shine-primary outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Số điện thoại / Zalo *</label>
+                    <input type="tel" required placeholder="Nhập số điện thoại..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-shine-primary focus:border-shine-primary outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Độ tuổi người tập</label>
+                    <select class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-shine-primary focus:border-shine-primary outline-none transition">
+                        <option value="child">Trẻ em (Dưới 12 tuổi)</option>
+                        <option value="teen">Thanh thiếu niên (12 - 18 tuổi)</option>
+                        <option value="adult">Người lớn (Trên 18 tuổi)</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-shine-primary hover:bg-shine-dark text-white font-bold py-3 rounded-xl shadow transition text-sm">
+                    Gửi yêu cầu tư vấn
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application JavaScript -->
+    <script>
+        let selectedOption = null;
+
+        const protocolData = {
+            one_eye: {
+                badgeText: "Trạng thái: Nhược thị 1 bên",
+                analysis: `
+                    <div class="bg-white rounded-2xl p-6 border border-shine-light shadow-sm">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-shine-bg text-shine-primary border border-shine-light flex items-center justify-center font-bold">
+                                <i class="fa-solid fa-microscope text-lg"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900">1. Phân Tích Sơ Bộ</h3>
+                        </div>
+                        <p class="text-sm text-slate-600 leading-relaxed mb-3">
+                            Khi bị <strong>Nhược thị 1 bên</strong>, thường là do các lý do như Bất Đồng Khúc Xạ, Lác/Lé mắt, sụp 1 bên mí hoặc 1 bên mắt bị cản trở việc nhìn.
+                        </p>
+                        <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                            Từ đó, não bộ có xu hướng "bỏ qua" hoặc ức chế tín hiệu từ mắt yếu hơn và chỉ tập trung sử dụng mắt khỏe. Điều này khiến mắt yếu ngày càng giảm khả năng phản xạ thị giác, dẫn tới Nhược Thị.
+                        </p>
+                        <div class="bg-shine-bg border-l-4 border-shine-primary p-4 rounded-r-xl text-xs text-slate-800 space-y-2">
+                            <strong class="text-shine-primary block text-sm mb-1">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i> Nguyên tắc cốt lõi:
+                            </strong>
+                            <ol class="list-decimal pl-4 space-y-1.5 font-medium leading-relaxed">
+                                <li><strong>Bịt mắt khỏe 2-4 tiếng/ngày</strong> để mắt yếu được hoạt động.</li>
+                                <li><strong>Áp dụng các bài tập thị giác</strong>, để kích thích brain/não bộ học cách sử dụng lại mắt yếu và giảm nhược thị.</li>
+                                <li><strong>Học cách sử dụng 2 mắt cùng lúc (Thị giác 2 mắt)</strong> để loại bỏ hoàn toàn nguyên nhân gây ra Nhược thị 1 bên.</li>
+                            </ol>
+                        </div>
+                    </div>
+                `,
+                goals: `
+                    <div class="bg-white rounded-2xl p-6 border border-shine-light shadow-sm">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-shine-bg text-shine-primary border border-shine-light flex items-center justify-center font-bold">
+                                <i class="fa-solid fa-bullseye text-lg"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900">2. Mục Tiêu Luyện Tập</h3>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="p-3.5 rounded-xl bg-shine-bg/50 border border-shine-light flex items-start gap-3">
+                                <i class="fa-solid fa-circle-check text-shine-primary mt-0.5"></i>
+                                <span class="text-xs text-slate-700 font-medium">Tăng cường thị lực tối đa cho mắt yếu.</span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-shine-bg/50 border border-shine-light flex items-start gap-3">
+                                <i class="fa-solid fa-circle-check text-shine-primary mt-0.5"></i>
+                                <span class="text-xs text-slate-700 font-medium">Tăng độ nhạy phản xạ ánh sáng & độ tương phản.</span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-shine-bg/50 border border-shine-light flex items-start gap-3">
+                                <i class="fa-solid fa-circle-check text-shine-primary mt-0.5"></i>
+                                <span class="text-xs text-slate-700 font-medium">Cân bằng thị lực giữa 2 mắt để chuẩn bị tái tạo thị giác 2 mắt.</span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-shine-bg/50 border border-shine-light flex items-start gap-3">
+                                <i class="fa-solid fa-circle-check text-shine-primary mt-0.5"></i>
+                                <span class="text-xs text-slate-700 font-medium">Học cách sử dụng 2 mắt cùng 1 lúc, loại bỏ hoàn toàn nguyên nhân gây Nhược</span>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                exercises: `
+                    <div class="bg-white rounded-2xl p-6 border border-shine-light shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-shine-bg text-shine-primary border border-shine-light flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-dumbbell text-lg"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-900">3. Các Bài Tập Cần Thiết (Ấn vào từng bài để xem chi tiết)</h3>
+                            </div>
+                            <span class="text-xs font-semibold bg-shine-bg text-shine-primary border border-shine-light px-3 py-1 rounded-full">30-60 phút / ngày</span>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <!-- Exercise 1 -->
+                            <div class="p-4 rounded-xl border border-slate-200 hover:border-shine-primary transition bg-white" role="button" tabindex="0" aria-expanded="false" data-exercise-image="1-a" onclick="showExerciseImage(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showExerciseImage(this); }" style="cursor: pointer;">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-shine-primary text-white text-xs flex items-center justify-center font-bold">1</span>
+                                        Bài tập Gia tăng độ nhạy tương phản, và khả năng nhìn chi tiết
+                                    </h4>
+                                    <span class="text-xs font-medium text-slate-400">15-20 phút</span>
+                                </div>
+                                <p class="text-xs text-slate-600 pl-8 leading-relaxed">
+                                    <strong>Thao tác:</strong> Sử dụng miếng bịt mắt y tế để che hoàn toàn mắt khoẻ. Dùng mắt yếu và bắt đầu tập với App Gabor Match. Nhiệm vụ của bạn là lựa chọn ra các cặp hình giống nhau. App sẽ tự động tăng độ khó mỗi khi bạn dễ dàng hoàn thành cấp độ trước. Hãy nhanh chóng chinh mục cấp độ khó nhất nhé!
+                                </p>
+                                <img data-exercise-preview="1-a" hidden class="w-full h-auto rounded-xl mt-4" alt="Minh hoạ bài tập 1" data-src="images/1-a.png">
+                            </div>
+
+                            <!-- Exercise 2 -->
+                            <div class="p-4 rounded-xl border border-slate-200 hover:border-shine-primary transition bg-white" role="button" tabindex="0" aria-expanded="false" data-exercise-image="1-b" onclick="showExerciseImage(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showExerciseImage(this); }" style="cursor: pointer;">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-shine-primary text-white text-xs flex items-center justify-center font-bold">2</span>
+                                        Luyện tập gia tăng Phản xạ và độ nhạy Ánh Sáng, độ nhạy Màu Sắc
+                                    </h4>
+                                    <span class="text-xs font-medium text-slate-400">15-20 phút</span>
+                                </div>
+                                <p class="text-xs text-slate-600 pl-8 leading-relaxed">
+                                    <strong>Thao tác:</strong> Mở app Anaglyph Piano, cài màu thành 2 ô Đỏ và Xanh Lá để tập (Chế độ dễ). Khi mắt làm quen dần với chế độ dễ, có thể cài màu mờ dần, giúp Não được kích thích mạnh hơn, cải thiện rõ rệt khả năng phân tích Ánh sáng và Màu Sắc.
+                                </p>
+                                <img data-exercise-preview="1-b" hidden class="w-full h-auto rounded-xl mt-4" alt="Minh hoạ bài tập 2" data-src="images/1-b.png">
+                            </div>
+
+                            <!-- Exercise 3 -->
+                            <div class="p-4 rounded-xl border border-slate-200 hover:border-shine-primary transition bg-white" role="button" tabindex="0" aria-expanded="false" data-exercise-image="1-c" onclick="showExerciseImage(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showExerciseImage(this); }" style="cursor: pointer;">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-shine-primary text-white text-xs flex items-center justify-center font-bold">3</span>
+                                        Bài Tập Thị Giác 2 mắt - Học cách sử dụng 2 mắt đồng thời
+                                    </h4>
+                                    <span class="text-xs font-medium text-slate-400">10-15 phút</span>
+                                </div>
+                                <p class="text-xs text-slate-600 pl-8 leading-relaxed">
+                                    <strong>Thao tác:</strong> Đeo kính Anaglyph Đỏ - Xanh, mở app có chữ Anaglyph trong tên (Ví dụ: Anaglyph Piano). Việc đeo kính Xanh Đỏ sẽ khiến cho mỗi mắt chỉ có thể nhìn thấy 1 màu, như vậy khi tập với App, Não sẽ học cách phải sử dụng 2 mắt cùng lúc. Từ đó hình thành nên Thị Giác 2 mắt. Những app Anaglyph này nên tập khi thị lực mắt yếu đã đạt khoảng 70% so với mắt khoẻ.
+                                </p>
+                                <img data-exercise-preview="1-c" hidden class="w-full h-auto rounded-xl mt-4" alt="Minh hoạ bài tập 3" data-src="images/1-c.png">
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            both_eyes: {
+                badgeText: "Trạng thái: Nhược thị 2 bên",
+                analysis: `
+                    <div class="bg-white rounded-2xl p-6 border border-shine-light shadow-sm">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-shine-bg text-shine-primary border border-shine-light flex items-center justify-center font-bold">
+                                <i class="fa-solid fa-microscope text-lg"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900">1. Phân Tích Sơ Bộ</h3>
+                        </div>
+                        <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                            Nếu bị <strong>Nhược thị cả 2 mắt</strong>, thường là do Cận/Viễn/Loạn nặng ở cả 2 mắt và không được đeo kính từ sớm. đường dẫn truyền thị giác từ cả hai mắt về vỏ não đều bị suy giảm kích thích. Thường <strong>KHÔNG CẦN BỊT MẮT</strong> trong trường hợp này.
+                        </p>
+                        <div class="bg-shine-bg border-l-4 border-shine-primary p-4 rounded-r-xl text-xs text-slate-800 space-y-2">
+                            <strong class="text-shine-primary block text-sm mb-1">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i> Nguyên tắc cốt lõi:
+                            </strong>
+                            <ol class="list-decimal pl-4 space-y-1.5 font-medium leading-relaxed">
+                                <li><strong>Cần phải đeo kính thường xuyên để tạo đủ điều kiện cho các kích thích thị giác</li>
+                                <li><strong>Áp dụng các bài tập thị giác</strong>, để kích thích não bộ hoàn thiện hệ thống thần kinh thị giác và giảm nhược thị.</li>
+                                <li><strong>Học cách sử dụng 2 mắt cùng lúc (Thị giác 2 mắt)</strong> 2 mắt có thể phát triển đồng đều, không bị Lệch mắt</li>
+                            </ol>
+                        </div>
+                    </div>
+                `,
+                goals: `
+                    <div class="bg-white rounded-2xl p-6 border border-shine-light shadow-sm">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-shine-bg text-shine-primary border border-shine-light flex items-center justify-center font-bold">
+                                <i class="fa-solid fa-bullseye text-lg"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900">2. Mục Tiêu Luyện Tập</h3>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="p-3.5 rounded-xl bg-shine-bg/50 border border-shine-light flex items-start gap-3">
+                                <i class="fa-solid fa-circle-check text-shine-primary mt-0.5"></i>
+                                <span class="text-xs text-slate-700 font-medium">Tăng độ phân giải và thị lực tối đa đồng thời cho 2 mắt.</span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-shine-bg/50 border border-shine-light flex items-start gap-3">
+                                <i class="fa-solid fa-circle-check text-shine-primary mt-0.5"></i>
+                                <span class="text-xs text-slate-700 font-medium">Kích thích hệ thống đường truyền thần kinh thị giác bằng những bài tập có mức độ khó cao.</span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-shine-bg/50 border border-shine-light flex items-start gap-3">
+                                <i class="fa-solid fa-circle-check text-shine-primary mt-0.5"></i>
+                                <span class="text-xs text-slate-700 font-medium">Khôi phục khả năng điều tiết & phối hợp vận động mắt.</span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-shine-bg/50 border border-shine-light flex items-start gap-3">
+                                <i class="fa-solid fa-circle-check text-shine-primary mt-0.5"></i>
+                                <span class="text-xs text-slate-700 font-medium">Tăng thị lực khi kiểm tra bằng bảng 1 cách bền vững.</span>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                exercises: `
+                    <div class="bg-white rounded-2xl p-6 border border-shine-light shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-shine-bg text-shine-primary border border-shine-light flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-dumbbell text-lg"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-900">3. Các Bài Tập Cần Thiết (Ấn vào từng mục để xem bài tập)</h3>
+                            </div>
+                            <span class="text-xs font-semibold bg-shine-bg text-shine-primary border border-shine-light px-3 py-1 rounded-full">40-60 phút / ngày</span>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <!-- Exercise 1 -->
+                            <div class="p-4 rounded-xl border border-slate-200 hover:border-shine-primary transition bg-white" role="button" tabindex="0" aria-expanded="false" data-exercise-image="2-a" onclick="showExerciseImage(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showExerciseImage(this); }" style="cursor: pointer;">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-shine-primary text-white text-xs flex items-center justify-center font-bold">1</span>
+                                        Kích thích thị giác, tăng Độ Nhạy Tương Phản, Khả năng nhìn chi tiết
+                                    </h4>
+                                    <span class="text-xs font-medium text-slate-400">20-25 phút/ngày</span>
+                                </div>
+                                <p class="text-xs text-slate-600 pl-8 leading-relaxed">
+                                    <strong>Thao tác & Mục tiêu:</strong> Gia tăng độ nhạy tương phản, và khả năng nhìn chi tiết. Mở cả hai mắt (mắt luôn đeo kính đúng độ cận/loạn nếu có). Chọn các bài tập tập trung cao độ như Schulte Table, Gabor Match, Xếp hình trên App để rèn luyện cả hai mắt liên tục nhận diện tín hiệu.
+                                </p>
+                                <img data-exercise-preview="2-a" hidden class="w-full h-auto rounded-xl mt-4" alt="Minh hoạ bài tập 1" data-src="images/2-a.png">
+                            </div>
+
+                            <!-- Exercise 2 -->
+                            <div class="p-4 rounded-xl border border-slate-200 hover:border-shine-primary transition bg-white" role="button" tabindex="0" aria-expanded="false" data-exercise-image="2-b" onclick="showExerciseImage(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showExerciseImage(this); }" style="cursor: pointer;">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-shine-primary text-white text-xs flex items-center justify-center font-bold">2</span>
+                                        Tăng Độ nhạy Ánh sáng và Độ nhạy Màu sắc thông qua các bài tập phân màu
+                                    </h4>
+                                    <span class="text-xs font-medium text-slate-400">15-20 phút/ngày</span>
+                                </div>
+                                <p class="text-xs text-slate-600 pl-8 leading-relaxed">
+                                    <strong>Thao tác:</strong> Sử dụng các App có tính năng chỉnh màu, nâng cao độ khó bằng cách chuyển màu sắc mờ dần để não làm quen với việc phân biệt màu sắc, ánh sáng trong điều kiện độ tương phản thấp
+                                </p>
+                                <img data-exercise-preview="2-b" hidden class="w-full h-auto rounded-xl mt-4" alt="Minh hoạ bài tập 2" data-src="images/2-b.png">
+                            </div>
+                            <!-- Exercise 3 -->
+                            <div class="p-4 rounded-xl border border-slate-200 hover:border-shine-primary transition bg-white" role="button" tabindex="0" aria-expanded="false" data-exercise-image="2-c" onclick="showExerciseImage(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showExerciseImage(this); }" style="cursor: pointer;">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-shine-primary text-white text-xs flex items-center justify-center font-bold">3</span>
+                                        Cải thiện đều cả 2 mắt thông qua các bài tập Anaglyph (Với kính xanh đỏ)
+                                    </h4>
+                                    <span class="text-xs font-medium text-slate-400">10-15 phút/ngày</span>
+                                </div>
+                                <p class="text-xs text-slate-600 pl-8 leading-relaxed">
+                                    <strong>Thao tác:</strong> Sử dụng các App có tính năng chỉnh màu, nâng cao độ khó bằng cách chuyển màu sắc mờ dần để não làm quen với việc phân biệt màu sắc, ánh sáng trong điều kiện độ tương phản thấp
+                                </p>
+                                <img data-exercise-preview="2-c" hidden class="w-full h-auto rounded-xl mt-4" alt="Minh hoạ bài tập 3" data-src="images/2-c.png">
+                            </div>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        function showExerciseImage(card) {
+            const container = card.closest('.space-y-4');
+            container.querySelectorAll('[data-exercise-preview]').forEach(image => {
+                image.hidden = image.dataset.exercisePreview !== card.dataset.exerciseImage;
+                if (!image.hidden && !image.getAttribute('src')) image.src = image.dataset.src;
+            });
+            container.querySelectorAll('[data-exercise-image]').forEach(item => {
+                item.setAttribute('aria-expanded', String(item === card));
+            });
+        }
+
+        function selectOption(option) {
+            selectedOption = option;
+
+            const card1 = document.getElementById('card-option-1');
+            const card2 = document.getElementById('card-option-2');
+            const radio1 = document.getElementById('radio-one_eye');
+            const radio2 = document.getElementById('radio-both_eyes');
+            const btnSubmit = document.getElementById('btn-submit-step1');
+
+            if (option === 'one_eye') {
+                card1.classList.add('card-selected');
+                card2.classList.remove('card-selected');
+                radio1.checked = true;
+                radio2.checked = false;
+            } else {
+                card2.classList.add('card-selected');
+                card1.classList.remove('card-selected');
+                radio2.checked = true;
+                radio1.checked = false;
+            }
+
+            btnSubmit.disabled = false;
+            btnSubmit.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+            btnSubmit.classList.add('bg-shine-primary', 'hover:bg-shine-dark', 'text-white', 'shadow-md', 'transform', 'active:scale-95');
+        }
+
+        function goToStep2() {
+            if (!selectedOption) return;
+
+            const data = protocolData[selectedOption];
+            const contentContainer = document.getElementById('protocol-content');
+            const selectedBadge = document.getElementById('selected-badge');
+
+            selectedBadge.textContent = data.badgeText;
+            contentContainer.innerHTML = data.analysis + data.goals + data.exercises;
+
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function backToStep1() {
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-1').classList.remove('hidden');
+        }
+
+        function openModal() {
+            document.getElementById('consultation-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('consultation-modal').classList.add('hidden');
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            alert('Cảm ơn bạn đã đăng ký! Chuyên viên tư vấn Shine Vision Center sẽ liên hệ với bạn ngay qua số điện thoại đã cung cấp.');
+            closeModal();
+        }
+    </script>
+</body>
+</html>
