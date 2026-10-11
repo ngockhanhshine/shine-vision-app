@@ -1,5 +1,5 @@
 const GUIDE_HAI_MAT = `
-    <h3 style="color: #0b8457; margin-top: 0; text-align: center;">Hướng dẫn Bài tập Thị giác 2 mắt</h3>
+    <h3 style="color: #FFFF00; margin-top: 0; text-align: center;">Huấn luyện Não bộ cách sử dụng và phối hợp 2 mắt cùng lúc</h3>
     <table class="guide-table">
         <thead>
             <tr>

@@ -1,5 +1,5 @@
 const GUIDE_NHUOC_THI = `
-    <h3 style="color: #0b8457; margin-top: 0; text-align: center;">Hướng dẫn Bài tập Nhược Thị</h3>
+    <h3 style="color: #FFFF00; margin-top: 0; text-align: center;">Cải thiện Độ nhạy Tương phản, Nhạy Màu Sắc, và Độ sắc nét</h3>
     <table class="guide-table">
         <thead>
             <tr>
