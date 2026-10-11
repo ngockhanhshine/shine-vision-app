@@ -10,6 +10,9 @@
     <script src="auth.js"></script>
     <script src="readme.js"></script>
     <script src="notice.js"></script>
+    <!-- Nạp 2 file chứa text hướng dẫn -->
+    <script src="grid1.js"></script>
+    <script src="grid2.js"></script>
 
     <style>
         /* =========================================================
@@ -102,11 +105,48 @@
             justify-content: center;
         }
 
+        /* KHU VỰC CHIA 2 GRID RIÊNG BIỆT */
+        .section-category-wrapper {
+            margin-bottom: 40px;
+            text-align: left;
+        }
+
+        .category-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .category-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #0b8457;
+            margin: 0;
+        }
+
+        .btn-guide-overlay {
+            background-color: #0b8457;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-guide-overlay:hover {
+            background-color: #065f3e;
+        }
+
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 15px;
-            margin-bottom: 40px;
             justify-items: center;
         }
 
@@ -132,6 +172,33 @@
             border-color: #aaa;
         }
 
+        /* CSS CHO BẢNG HƯỚNG DẪN - CÓ ĐƯỜNG KẺ PHÂN TÁCH RÕ RÀNG */
+        .guide-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13.5px;
+            text-align: left;
+            background-color: #1e1e1e;
+        }
+        .guide-table th, .guide-table td {
+            border: 1px solid #444343 !important; /* Đường kẻ phân tách rõ ràng giữa các ô, hàng và cột */
+            padding: 10px 12px;
+            vertical-align: top;
+            color: #e0e0e0;
+        }
+        .guide-table th {
+            background-color: #0b8457;
+            color: #ffffff;
+            font-weight: bold;
+            border-color: #0b8457 !important;
+        }
+        .guide-table tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.04);
+        }
+        .guide-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
         .app-card img {
             width: 100%;
             max-width: 140px;
@@ -146,10 +213,46 @@
             font-size: 17px;
             font-weight: bold;
             line-height: 1.2;
+            text-align: center;
         }
 
         .red { color: #ff3b30; }
         .blue { color: #007aff; }
+
+        /* OVERLAY HƯỚNG DẪN TẬP */
+        #guideOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+        .guide-overlay-content {
+            background: #1a1a1a;
+            border: 2px solid #0b8457;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            color: #fff;
+            position: relative;
+            text-align: left;
+        }
+        .guide-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #ff3b30;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
         .results-grid {
             display: grid;
@@ -239,7 +342,6 @@
             font-size: 14px;
         }
 
-        /* KHUNG ĐĂNG NHẬP MẶC ĐỊNH (DESKTOP) */
         .login-bar-top {
             display: flex;
             align-items: center;
@@ -586,9 +688,6 @@
             object-fit: cover;
         }
 
-        /* =========================================================
-           STYLES SECTION FORM ĐĂNG KÝ MỚI
-           ========================================================= */
         .register-form-section {
             width: 100%;
             max-width: 75%;
@@ -667,7 +766,6 @@
             background-color: #065f3e;
         }
 
-        /* THÔNG BÁO ĐĂNG KÝ THÀNH CÔNG */
         .form-success-alert {
             display: none;
             background-color: #e8f5e9;
@@ -730,7 +828,6 @@
             .register-form-section { max-width: 100%; padding: 0 15px; }
         }
 
-        /* TỐI ƯU HIỂN THỊ 1 CỘT VÀ Ô ĐĂNG NHẬP DỌC TRÊN ĐIỆN THOẠI (< 600px) */
         @media (max-width: 600px) {
             .grid-5col, .why-grid, .menu-grid, .grid-4col-feat, .grid-4col-diff, .results-grid { 
                 grid-template-columns: 1fr !important; 
@@ -739,7 +836,6 @@
                 flex-direction: column; 
             }
             
-            /* SẮP XẾP KHUNG ĐĂNG NHẬP TRÊN ĐIỆN THOẠI */
             .login-bar-top {
                 display: flex;
                 flex-direction: column;
@@ -751,7 +847,7 @@
             }
             .login-bar-top button {
                 width: auto;
-                align-self: flex-end; /* Nút Đăng nhập đẩy sang bên phải */
+                align-self: flex-end;
             }
 
             .form-card-container { padding: 25px 15px; }
@@ -1131,79 +1227,105 @@
                 </div>
             </div>
 
-            <div class="menu-grid">
-                <a href="piano/index.html" class="app-card">
-                    <img src="assets/piano.jpg" alt="Piano">
-                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano</div>
-                </a>
-                <a href="rg-dot/index.html" class="app-card">
-                    <img src="assets/dot.jpg" alt="RG Dot">
-                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> RG Dot</div>
-                </a>
-                <a href="snellen/index.html" class="app-card">
-                    <img src="assets/snellen.jpg" alt="Snellen">
-                    <div class="app-title">Snellen Test</div>
-                </a>
-                <a href="reading/index.html" class="app-card">
-                    <img src="assets/reading.jpg" alt="Reading">
-                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Reading</div>
-                </a>
-                <a href="gabormatch/index.html" class="app-card">
-                    <img src="assets/gabor.jpeg" alt="Gabor Match">
-                    <div class="app-title">Gabor Match</div>
-                </a>
-                <a href="tetris/index.html" class="app-card">
-                    <img src="assets/tetris.png" alt="Tetris">
-                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Tetris</div>
-                </a>
-                <a href="crowd/index.html" class="app-card">
-                    <img src="assets/crowd.png" alt="Crowd Training">
-                    <div class="app-title">Crowd Training</div>
-                </a>
-                <a href="cross/index.html" class="app-card">
-                    <img src="assets/cross.png" alt="Circle Cross">
-                    <div class="app-title">Circle Cross Training</div>
-                </a>
-                <a href="brock/index.html" class="app-card">
-                    <img src="assets/brock.png" alt="Brockstring">
-                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Brockstring</div>
-                </a>
-                <a href="pianoh/index.html" class="app-card">
-                    <img src="assets/pianoh.png" alt="Piano Hardcore">
-                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano Hardcore</div>
-                </a>
-                <a href="rdot/index.html" class="app-card">
-                    <img src="assets/rdot.jpg" alt="Random Dot">
-                    <div class="app-title">Random Dot</div>
-                </a>
-                <a href="finger/index.html" class="app-card">
-                    <img src="assets/finger.png" alt="Finger Dance">
-                    <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Finger Dance</div>
-                </a>
-                <a href="schulte/index.html" class="app-card">
-                    <img src="assets/schulte.png" alt="Tìm số Schulte Table">
-                    <div class="app-title">Tìm Số Schulte Table</div>
-                </a>
-                <a href="randomtext/index.html" class="app-card">
-                    <img src="assets/rtext.png" alt="Random Text">
-                    <div class="app-title">Thẻ chữ Ngẫu nhiên</div>
-                </a>
-                <a href="shiftchart/index.html" class="app-card">
-                    <img src="assets/shiftchart.png" alt="Shift Chart">
-                    <div class="app-title">Tập với bảng chữ</div>
-                </a>
-                <a href="mecung/index.html" class="app-card">
-                    <img src="assets/mecung.png" alt="Trò chơi Mê Cung">
-                    <div class="app-title">Trò chơi Mê Cung</div>
-                </a>
-                <a href="xephinh/index.html" class="app-card">
-                    <img src="assets/xephinh.png" alt="Trò chơi Xếp Hình">
-                    <div class="app-title">Trò chơi Xếp Hình</div>
-                </a>
-                <a href="stereohunter/index.html" class="app-card">
-                    <img src="assets/stereohunter.png" alt="Tìm Đồ vật ẩn giấu">
-                    <div class="app-title">Tìm Đồ vật ẩn giấu</div>
-                </a>
+            <!-- PHẦN 1: BÀI TẬP NHƯỢC THỊ -->
+            <div class="section-category-wrapper">
+                <div class="category-header-row">
+                    <h2 class="category-title">Bài tập Nhược Thị</h2>
+                    <button class="btn-guide-overlay" onclick="openGuide('nhuoc-thi')">Bật hướng dẫn tập</button>
+                </div>
+                <div class="menu-grid">
+                    <a href="piano/index.html" class="app-card">
+                        <img src="assets/piano.jpg" alt="Piano">
+                        <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano</div>
+                    </a>
+                    <a href="snellen/index.html" class="app-card">
+                        <img src="assets/snellen.jpg" alt="Snellen">
+                        <div class="app-title">Snellen Test</div>
+                    </a>
+                    <a href="gabormatch/index.html" class="app-card">
+                        <img src="assets/gabor.jpeg" alt="Gabor Match">
+                        <div class="app-title">Gabor Match</div>
+                    </a>
+                    <a href="crowd/index.html" class="app-card">
+                        <img src="assets/crowd.png" alt="Crowd Training">
+                        <div class="app-title">Crowd Training</div>
+                    </a>
+                    <a href="schulte/index.html" class="app-card">
+                        <img src="assets/schulte.png" alt="Tìm số Schulte Table">
+                        <div class="app-title">Tìm Số Schulte Table</div>
+                    </a>
+                    <a href="randomtext/index.html" class="app-card">
+                        <img src="assets/rtext.png" alt="Random Text">
+                        <div class="app-title">Thẻ chữ Ngẫu nhiên</div>
+                    </a>
+                    <a href="shiftchart/index.html" class="app-card">
+                        <img src="assets/shiftchart.png" alt="Shift Chart">
+                        <div class="app-title">Tập với bảng chữ</div>
+                    </a>
+                    <a href="mecung/index.html" class="app-card">
+                        <img src="assets/mecung.png" alt="Trò chơi Mê Cung">
+                        <div class="app-title">Trò chơi Mê Cung</div>
+                    </a>
+                    <a href="xephinh/index.html" class="app-card">
+                        <img src="assets/xephinh.png" alt="Trò chơi Xếp Hình">
+                        <div class="app-title">Trò chơi Xếp Hình</div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- PHẦN 2: BÀI TẬP THỊ GIÁC 2 MẮT -->
+            <div class="section-category-wrapper">
+                <div class="category-header-row">
+                    <h2 class="category-title">Bài Tập Thị Giác 2 Mắt</h2>
+                    <button class="btn-guide-overlay" onclick="openGuide('hai-mat')">Bật hướng dẫn tập</button>
+                </div>
+                <div class="menu-grid">
+                    <a href="piano/index.html" class="app-card">
+                        <img src="assets/piano.jpg" alt="Piano">
+                        <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano</div>
+                    </a>
+                    <a href="tetris/index.html" class="app-card">
+                        <img src="assets/tetris.png" alt="Tetris">
+                        <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Tetris</div>
+                    </a>
+                    <a href="rg-dot/index.html" class="app-card">
+                        <img src="assets/dot.jpg" alt="RG Dot">
+                        <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> RG Dot</div>
+                    </a>
+                    <a href="reading/index.html" class="app-card">
+                        <img src="assets/reading.jpg" alt="Reading">
+                        <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Reading</div>
+                    </a>
+                    <a href="cross/index.html" class="app-card">
+                        <img src="assets/cross.png" alt="Circle Cross">
+                        <div class="app-title">Circle Cross Training</div>
+                    </a>
+                    <a href="brock/index.html" class="app-card">
+                        <img src="assets/brock.png" alt="Brockstring">
+                        <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Brockstring</div>
+                    </a>
+                    <a href="pianoh/index.html" class="app-card">
+                        <img src="assets/pianoh.png" alt="Piano Hardcore">
+                        <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Piano Hardcore</div>
+                    </a>
+                    <a href="finger/index.html" class="app-card">
+                        <img src="assets/finger.png" alt="Finger Dance">
+                        <div class="app-title"><span class="red">Ana</span><span class="blue">glyph</span> Finger Dance</div>
+                    </a>
+                    <a href="stereohunter/index.html" class="app-card">
+                        <img src="assets/stereohunter.png" alt="Tìm Đồ vật ẩn giấu">
+                        <div class="app-title">Tìm Đồ vật ẩn giấu</div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- OVERLAY HIỂN THỊ HƯỚNG DẪN -->
+            <div id="guideOverlay">
+                <div class="guide-overlay-content">
+                    <button class="guide-close-btn" onclick="closeGuide()">&times;</button>
+                    <h3 id="guideTitle" style="margin-top: 0; color: #0b8457;">Hướng Dẫn Tập Luyện</h3>
+                    <div id="guideBody">Đang tải nội dung hướng dẫn...</div>
+                </div>
             </div>
 
             <hr style="border: none; border-top: 1px solid #444; width: 50%; margin: 30px auto;">
@@ -1232,6 +1354,27 @@
          3. JAVASCRIPT LOGIC & BẢO MẬT
          ========================================================= -->
     <script>
+        // HÀM QUẢN LÝ OVERLAY HƯỚNG DẪN TẬP (ĐỌC TỪ grid1.js & grid2.js)
+        function openGuide(type) {
+            const overlay = document.getElementById('guideOverlay');
+            const titleEl = document.getElementById('guideTitle');
+            const bodyEl = document.getElementById('guideBody');
+
+            if (type === 'nhuoc-thi') {
+                titleEl.innerText = "Hướng dẫn Bài tập Nhược Thị";
+                bodyEl.innerHTML = (typeof GUIDE_NHUOC_THI !== 'undefined') ? GUIDE_NHUOC_THI : "<p>Chưa có nội dung hướng dẫn.</p>";
+            } else {
+                titleEl.innerText = "Hướng dẫn Bài tập Thị giác 2 mắt";
+                bodyEl.innerHTML = (typeof GUIDE_HAI_MAT !== 'undefined') ? GUIDE_HAI_MAT : "<p>Chưa có nội dung hướng dẫn.</p>";
+            }
+
+            overlay.style.display = 'flex';
+        }
+
+        function closeGuide() {
+            document.getElementById('guideOverlay').style.display = 'none';
+        }
+
         // 1. LINK SCRIPT FORM ĐĂNG KÝ TẬP THỬ (Gửi về Sheet "Khách hàng mới")
         const FORM_REGISTER_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9URMNePDNt3pGEAHkpt4xjBfxkRc3wUaiF9vZdsuw4j2KPmMNaeCbZ899Pt03L-Kb/exec";
 
@@ -1239,7 +1382,6 @@
         const LOGIN_LOG_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8dyQRnQn2HCXUbZgMn_bgiotX79I4591ylKt6DyyfmRMLqdx9orVU9GM6RS6k97Nqew/exec";
         const SECRET_TOKEN = "ShineVision_Secure_2026_@Khnh"; 
 
-        // HÀM XỬ LÝ ĐẨY DỮ LIỆU FORM TẬP THỬ VỀ SHEET MỚI
         function submitFormWeb(event) {
             event.preventDefault();
 
@@ -1247,19 +1389,16 @@
             const successAlert = document.getElementById('registerSuccessAlert');
             const form = document.getElementById('trialRegisterForm');
 
-            // Lấy thông tin đầu vào
             const fullname = document.getElementById('fullname').value.trim();
             const phone = document.getElementById('phone').value.trim();
             const email = document.getElementById('email').value.trim();
 
-            // Định dạng ngày DD/MM/YYYY
             const today = new Date();
             const dd = String(today.getDate()).padStart(2, '0');
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const yyyy = today.getFullYear();
             const formattedDate = `${dd}/${mm}/${yyyy}`;
 
-            // Lấy nguyên vẹn URL đăng ký (gồm cả đuôi ?ref=...)
             const currentFullUrl = window.location.href;
 
             submitBtn.innerText = "Đang gửi đăng ký...";
@@ -1274,7 +1413,6 @@
                 pageUrl: currentFullUrl
             };
 
-            // Dùng Content-Type: text/plain để tránh dính lỗi CORS Preflight
             fetch(FORM_REGISTER_SCRIPT_URL, {
                 method: "POST",
                 mode: "no-cors",
@@ -1292,7 +1430,6 @@
             });
         }
 
-        // HÀM TỰ ĐỘNG GHI LOG ĐĂNG NHẬP VỀ SHEET CỦA ANH
         async function ghiLogDangNhapBaoMat(taiKhoanHocVien) {
             let ip = "Không rõ";
             let thietBi = "Không rõ";
@@ -1340,7 +1477,6 @@
             });
         }
 
-        // CHỐNG MỞ CONSOLE
         (function() {
             const check = function() {
                 const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
