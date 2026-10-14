@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký Tài khoản - ShineVision App</title>
+    
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <style>
+        :root {
+            --primary-color: #0b8457;
+            --primary-dark: #065f3e;
+            --text-main: #222222;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: #ffffff;
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 5%;
+            background: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-landing {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* CONTAINER FORM */
+        .register-wrapper {
+            flex: 1;
+            width: 100%;
+            max-width: 650px;
+            margin: 40px auto;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .form-card {
+            background: #ffffff;
+            border: 2px solid var(--primary-color);
+            border-radius: 16px;
+            padding: 35px 30px;
+            box-shadow: 0 4px 15px rgba(11, 132, 87, 0.1);
+        }
+
+        .form-title {
+            color: var(--primary-color);
+            font-size: 24px;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"],
+        .form-group input[type="email"],
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        .note-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* 12 Ô NHẬP MÃ KÍCH HOẠT */
+        .code-inputs-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .code-box {
+            width: 100%;
+            height: 44px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 1.5px solid #ccc;
+            border-radius: 6px;
+            outline: none;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .code-box:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 4px rgba(11, 132, 87, 0.4);
+        }
+
+        /* RADIO CHO BỘ KÍNH */
+        .radio-option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .radio-custom-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: #f0fbf2;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #d0e7d5;
+            cursor: pointer;
+            font-size: 13.5px;
+            transition: background 0.2s;
+        }
+
+        .radio-custom-label:hover {
+            background: #e2f6e6;
+        }
+
+        .radio-custom-label input[type="radio"] {
+            margin-top: 3px;
+            accent-color: var(--primary-color);
+        }
+
+        /* NÚT SUBMIT */
+        .btn-submit {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* THÔNG BÁO KẾT QUẢ */
+        .alert-box {
+            display: none;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .alert-success {
+            background-color: #e8f5e9;
+            border: 1.5px solid #2e7d32;
+            color: #1b5e20;
+        }
+
+        .alert-error {
+            background-color: #ffebee;
+            border: 1.5px solid #c62828;
+            color: #b71c1c;
+        }
+
+        .btn-login-redirect {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 22px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn-login-redirect:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* FOOTER */
+        .landing-footer { 
+            background: #111; 
+            color: #fff; 
+            padding: 20px 5%; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 12px; 
+            margin-top: auto;
+        }
+
+        .footer-brand-socials {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .footer-social-icons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-social-icons img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .code-inputs-container { gap: 3px; }
+            .code-box { height: 38px; font-size: 14px; }
+            .landing-footer { flex-direction: column; gap: 12px; text-align: center; }
+            .footer-brand-socials { flex-direction: column; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <nav class="navbar">
+        <a href="index.html" class="logo-landing">
+            👁️ ShineVision
+        </a>
+    </nav>
+
+    <!-- FORM ĐĂNG KÝ -->
+    <div class="register-wrapper">
+        <div class="form-card">
+            <h2 class="form-title">Đăng ký Tài khoản</h2>
+
+            <form id="registerForm" onsubmit="handleRegistration(event)">
+                <div class="form-group">
+                    <label for="reg-username">Tài khoản *</label>
+                    <input type="text" id="reg-username" required placeholder="Nhập tài khoản" oninput="cleanNoSpaces(this)">
+                    <div class="note-text">(Viết liền không dấu)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-password">Mật khẩu *</label>
+                    <input type="password" id="reg-password" required placeholder="Nhập mật khẩu" oninput="cleanNoSpaces(this)">
+                    <div class="note-text">(Viết liền không dấu)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-email">Email *</label>
+                    <input type="email" id="reg-email" required placeholder="Nhập địa chỉ email">
+                </div>
+
+                <div class="form-group">
+                    <label>Mã kích hoạt (12 ký tự) *</label>
+                    <div class="code-inputs-container" id="codeInputsContainer">
+                        <!-- 12 ô vuông nhập mã -->
+                        <input type="text" class="code-box" maxlength="1" required>
+                        <input type="text" class="code-box" maxlength="1" required>
+                        <input type="text" class="code-box" maxlength="1" required>
+                        <input type="text" class="code-box" maxlength="1" required>
+                        <input type="text" class="code-box" maxlength="1" required>
+                        <input type="text" class="code-box" maxlength="1" required>
+                        <input type="text" class="code-box" maxlength="1" required>
+                        <input type="text" class="code-box" maxlength="1" required>
+                        <input type="text" class="code-box" maxlength="1" required>
+                        <input type="text" class="code-box" maxlength="1" required>
+                        <input type="text" class="code-box" maxlength="1" required>
+                        <input type="text" class="code-box" maxlength="1" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-address">Địa chỉ nhận dụng cụ *</label>
+                    <textarea id="reg-address" rows="3" required placeholder="Nhập địa chỉ nhận dụng cụ tập luyện"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Loại kính lựa chọn *</label>
+                    <div class="radio-option-group">
+                        <label class="radio-custom-label">
+                            <input type="radio" name="glasses_type" value="Kính kẹp" checked>
+                            <span><b>Kính kẹp</b> - sử dụng để kẹp vào kính có sẵn của bạn</span>
+                        </label>
+                        <label class="radio-custom-label">
+                            <input type="radio" name="glasses_type" value="Kính gọng">
+                            <span><b>Kính gọng</b> - sử dụng khi bạn đang không phải đeo kính</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn-submit">ĐĂNG KÝ TÀI KHOẢN</button>
+            </form>
+
+            <!-- THÔNG BÁO THÀNH CÔNG -->
+            <div id="alertSuccess" class="alert-box alert-success">
+                🎉 Tài khoản đã được kích hoạt thành công, bạn đã có thể đăng nhập ngay bây giờ!<br>
+                <a href="index.html" class="btn-login-redirect">Quay về trang đăng nhập</a>
+            </div>
+
+            <!-- THÔNG BÁO LỖI -->
+            <div id="alertError" class="alert-box alert-error">
+                ❌ Mã kích hoạt đã được sử dụng hoặc không hợp lệ, xin vui lòng sử dụng mã kích hoạt khác.
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="landing-footer">
+        <div class="footer-brand-socials">
+            <span>Khôi phục thị lực Shine</span>
+            <div class="footer-social-icons">
+                <a href="https://www.tiktok.com/@khoiphucthilucshine" target="_blank" title="TikTok">
+                    <img src="tiktok.png" alt="TikTok">
+                </a>
+                <a href="https://www.youtube.com/@khoiphucthilucshine" target="_blank" title="YouTube">
+                    <img src="ytb.png" alt="YouTube">
+                </a>
+                <a href="https://www.facebook.com/makeyoureyesShine" target="_blank" title="Facebook Fanpage">
+                    <img src="facebook.png" alt="Facebook">
+                </a>
+            </div>
+        </div>
+        <div>
+            <a href="https://shinevisionapp.com/huongdan/index.html" target="_blank" style="color: #ffffff; text-decoration: underline;">Hướng dẫn sử dụng</a>
+        </div>
+        <div>Đơn vị Tiên phong trong lĩnh vực Đào Tạo Thị Giác 2 mắt</div>
+    </footer>
+
+    <script>
+        // 1. URL App Script Check mã kích hoạt
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUA65_qQQj2rdnRLM4BRK8pq0kiSUa6ay3879fhgZw92-QleRlQOMm2XWlQLBIoQYGPQ/exec";
+        
+        // 2. URL App Script Check tài khoản tồn tại
+        const APPS_SCRIPT_CHECK_URL = "https://script.google.com/macros/s/AKfycbwjpwZo7b4xG5DSQxzBQz5yGEJyhTOcy-6qe5vytEyQrZGSfieBBb_qOBxTZb4_USgO/exec";
+
+        // Tự động chuyển focus giữa 12 ô mã kích hoạt + xử lý Paste mã dài
+        const codeBoxes = document.querySelectorAll('.code-box');
+        codeBoxes.forEach((box, index) => {
+            box.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (val.length === 1 && index < codeBoxes.length - 1) {
+                    codeBoxes[index + 1].focus();
+                }
+            });
+
+            box.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !box.value && index > 0) {
+                    codeBoxes[index - 1].focus();
+                }
+            });
+
+            box.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim().replace(/\s+/g, '');
+                if (pasteData) {
+                    const chars = pasteData.split('');
+                    codeBoxes.forEach((b, i) => {
+                        b.value = chars[i] ? chars[i].toUpperCase() : '';
+                    });
+                    const lastIndex = Math.min(chars.length - 1, codeBoxes.length - 1);
+                    if (lastIndex >= 0) codeBoxes[lastIndex].focus();
+                }
+            });
+        });
+
+        // Xóa dấu tiếng Việt và khoảng trắng
+        function cleanNoSpaces(input) {
+            let val = input.value;
+            val = val.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            val = val.replace(/đ/g, "d").replace(/Đ/g, "D");
+            val = val.replace(/\s+/g, "");
+            input.value = val;
+        }
+
+        // Xử lý submit Đăng ký (Đã bổ sung bước check tài khoản trước, sau đó mới gọi app script cũ)
+        async function handleRegistration(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const address = document.getElementById('reg-address').value.trim();
+            const glassesType = document.querySelector('input[name="glasses_type"]:checked').value;
+
+            // Lấy mã từ 12 ô vuông
+            let activationCode = "";
+            codeBoxes.forEach(box => activationCode += box.value.trim().toUpperCase());
+
+            if (activationCode.length !== 12) {
+                alert("Vui lòng điền đủ 12 ký tự của mã kích hoạt!");
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const alertSuccess = document.getElementById('alertSuccess');
+            const alertError = document.getElementById('alertError');
+            const form = document.getElementById('registerForm');
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Đang kiểm tra tài khoản...";
+            alertSuccess.style.display = 'none';
+            alertError.style.display = 'none';
+
+            try {
+                // BƯỚC 1: Gọi App Script thứ 2 để kiểm tra xem tài khoản đã tồn tại trên Cột A, Sheet1 chưa
+                const checkResponse = await fetch(APPS_SCRIPT_CHECK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "checkUser", username: username })
+                });
+                const checkData = await checkResponse.json();
+
+                if (checkData.exists === true) {
+                    // Nếu tài khoản đã tồn tại => Báo lỗi, dừng flow
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "ĐĂNG KÝ TÀI KHOẢN";
+                    alertError.style.display = 'block';
+                    alertError.innerText = "❌ Tài khoản này đã tồn tại, vui lòng lựa chọn tên tài khoản khác";
+                    return;
+                }
+
+                // BƯỚC 2: Nếu tài khoản CHƯA tồn tại => Tiếp tục chạy flow cũ gọi App Script 1 để check mã kích hoạt
+                submitBtn.innerText = "Đang kiểm tra mã kích hoạt...";
+                const payload = {
+                    action: "registerUser",
+                    username: username,
+                    password: password,
+                    email: email,
+                    activationCode: activationCode,
+                    address: address,
+                    glassesType: glassesType
+                };
+
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(payload)
+                });
+
+                const resData = await response.json();
+
+                if (resData.status === "SUCCESS") {
+                    form.style.display = 'none';
+                    alertSuccess.style.display = 'block';
+                } else {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "ĐĂNG KÝ TÀI KHOẢN";
+                    alertError.style.display = 'block';
+                    alertError.innerText = "❌ " + (resData.message || "Mã kích hoạt đã được sử dụng hoặc không hợp lệ, xin vui lòng sử dụng mã kích hoạt khác.");
+                }
+            } catch (err) {
+                console.error("Lỗi gửi dữ liệu:", err);
+                submitBtn.disabled = false;
+                submitBtn.innerText = "ĐĂNG KÝ TÀI KHOẢN";
+                alertError.style.display = 'block';
+                alertError.innerText = "❌ Lỗi kết nối hệ thống, vui lòng thử lại.";
+            }
+        }
+    </script>
+</body>
+</html>
