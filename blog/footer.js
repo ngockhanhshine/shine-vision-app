@@ -16,6 +16,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 </a>
             </div>
         </div>
+        <div>
+            <a href="https://shinevisionapp.com/huongdan/index.html" target="_blank" style="color: #ffffff; text-decoration: underline;">Hướng dẫn sử dụng</a>
+        </div>
         <div>Đơn vị Tiên phong trong lĩnh vực Đào Tạo Thị Giác 2 mắt</div>
     </footer>
     `;
