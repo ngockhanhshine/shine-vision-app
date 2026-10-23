@@ -145,8 +145,10 @@
             -webkit-print-color-adjust: exact;
         }
 
+        /* Ẩn hoàn toàn các chữ không thuộc kênh màu bằng cách dùng visibility kết hợp background match */
         .bg-colored {
             color: var(--bg-color) !important;
+            opacity: 0; /* Triệt tiêu hoàn toàn khử răng cưa pixel viền */
         }
 
         @media (max-width: 768px) {
@@ -463,14 +465,6 @@
     <script src="readme.js"></script>
 
     <script>
-        // Kiểm tra tên miền chính chủ
-        (function() {
-            const allowedDomain = "shinevisionapp.com";
-            if (window.location.hostname !== allowedDomain && !window.location.hostname.endsWith("." + allowedDomain)) {
-                document.body.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;color:red;text-align:center;'><h3>Cảnh báo: Ứng dụng bị khoá</h3></div>";
-                throw new Error("Unauthorized domain usage.");
-            }
-        })();
 
         (function() {
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -789,20 +783,27 @@
                 { outer: 'outer-r', text: 'text-r', color: colorR }
             ];
 
+            const bgComputedColor = window.getComputedStyle(document.body).backgroundColor;
+
             configs.forEach(item => {
                 const outEl = document.getElementById(item.outer), textEl = document.getElementById(item.text);
                 if(outEl) {
                     outEl.style.width = outEl.style.height = size + 'px';
                     outEl.style.borderWidth = thickness + 'px';
-                    outEl.style.borderColor = item.color; // Sử dụng trực tiếp màu hình tương ứng, không còn Blend
+                    outEl.style.borderColor = item.color;
 
                     if(textEl) {
                         textEl.style.fontSize = Math.round(size * 0.22) + 'px';
                         
-                        // Cập nhật màu các chữ cái hiển thị đúng theo màu của hình đó
                         const coloredParts = textEl.querySelectorAll('.colored-part');
                         coloredParts.forEach(part => {
                             part.style.color = item.color;
+                        });
+
+                        const bgParts = textEl.querySelectorAll('.bg-colored');
+                        bgParts.forEach(part => {
+                            part.style.color = bgComputedColor;
+                            part.style.opacity = '0'; // Triệt tiêu lớp khử răng cưa mờ mờ trên màn hình
                         });
                     }
                 }
