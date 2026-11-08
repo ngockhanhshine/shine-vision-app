@@ -18,6 +18,15 @@
         .status { font-size: 18px; font-weight: bold; margin-bottom: 5px; color: black; }
         #swipe-hint { display: none; color: rgb(100,100,100); font-size: 12px; font-style: italic; margin-top: 5px; }
         
+        /* CSS cho nút Hướng dẫn góc phải (Cả PC và Mobile) */
+        #help-btn {
+            position: absolute; top: 20px; right: 20px; z-index: 10;
+            color: rgb(100, 100, 100); font-size: 12px; font-style: italic;
+            cursor: pointer; pointer-events: auto; user-select: none;
+            background: rgba(255, 255, 255, 0.8); padding: 4px 8px; border-radius: 4px;
+        }
+        #help-btn:hover { color: #007bff; background: rgba(240, 247, 255, 0.9); }
+        
         #menu-layer { 
             position: absolute; top: 100px; left: 20px; pointer-events: auto; 
             background: rgba(255,255,255,0.9); padding: 12px; border-radius: 8px; 
@@ -80,6 +89,9 @@
         <div id="swipe-hint">Vuốt sang trái để mở cài đặt</div>
         <div id="input-display" class="status" style="color:blue"></div>
     </div>
+
+    <!-- Nút Hướng dẫn góc phải màn hình -->
+    <div id="help-btn" onclick="showReadme()">? Hướng dẫn</div>
 
     <div id="menu-layer">
         <div class="menu-item"><input type="radio" name="chartPC" id="typeCPC" checked onchange="toggleChart('landolt')"><label for="typeCPC">Bảng Chữ C (WASD)</label></div>
@@ -305,7 +317,6 @@
         };
 
         window.addEventListener('keydown', (e) => {
-            // NEW: F1 to reset
             if (e.key === 'F1') {
                 e.preventDefault();
                 resetToFirstLevel();
@@ -350,7 +361,6 @@
         });
 
         window.addEventListener('touchend', e => {
-            // NEW: 2-finger swipe down to reset
             if (e.touches.length === 0 && e.changedTouches.length === 2) {
                 let endTwoY = (e.changedTouches[0].screenY + e.changedTouches[1].screenY) / 2;
                 if (endTwoY - tTwoStartY > 60) {
@@ -365,19 +375,14 @@
                 const absX = Math.abs(dX);
                 const absY = Math.abs(dY);
 
-                // 1. Kiểm tra Click (Chạm nhanh để đổi hình)
                 if (absX < 15 && absY < 15 && (Date.now() - tStartTime) < 250) { 
                     if (!isStageActive) { changeRandom(); draw(); } 
                 } 
-                // 2. Kiểm tra Vuốt Ngang (Mở menu cài đặt)
-                // Phải vuốt dài hơn 60px VÀ chiều ngang phải dài hơn chiều dọc (tránh nhầm khi vuốt chéo)
                 else if (absX > 60 && absX > absY) { 
                     isStageActive = (dX > 0); 
                     stageLeft.classList.toggle('active', isStageActive); 
                     draw(); 
                 } 
-                // 3. Kiểm tra Vuốt Dọc (Lên/Xuống hàng thị lực)
-                // Phải vuốt dọc dài hơn 40px VÀ chiều dọc phải dài hơn chiều ngang
                 else if (absY > 40 && absY > absX) { 
                     currentIndex = Math.max(0, Math.min(CHARTS[currentChart].levels.length - 1, currentIndex + (dY > 0 ? -1 : 1))); 
                     sessionCount = 0; sessionCorrect = 0; changeRandom(); draw(); 
