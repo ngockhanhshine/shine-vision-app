@@ -195,6 +195,17 @@
             left: 50%;
             transform: translate(-50%, -50%);
             -webkit-print-color-adjust: exact;
+            white-space: nowrap;
+        }
+
+        /* Canvas vẽ cung tròn nằm ở giữa 2 hình tròn */
+        .arc-canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 3;
         }
 
         @media (max-width: 768px) {
@@ -403,6 +414,7 @@
 
         <div id="container-left" class="shape-container">
             <div class="circle-outer" id="outer-l">
+                <canvas id="arc-canvas-l" class="arc-canvas"></canvas>
                 <div class="circle-inner" id="inner-l">
                     <div class="cross" id="cross-l">+</div>
                 </div>
@@ -411,6 +423,7 @@
 
         <div id="container-right" class="shape-container">
             <div class="circle-outer" id="outer-r">
+                <canvas id="arc-canvas-r" class="arc-canvas"></canvas>
                 <div class="circle-inner" id="inner-r">
                     <div class="cross" id="cross-r">+</div>
                 </div>
@@ -441,10 +454,10 @@
 
         <div id="spacing-controls">
             <div class="control-group">
-                <label>KHOẢNG CÁCH NGANG: <input type="number" id="val-h-space" class="inline-num-input" min="-1200" max="1200">px</label>
+                <label>KHOẢNG CÁCH NGANG: <input type="number" id="val-h-space" class="inline-num-input" min="-800" max="800">px</label>
                 <div class="slider-row">
                     <div class="step-btn" onclick="stepSlider('slider-h-space', -2)">-</div>
-                    <input type="range" id="slider-h-space" min="-1200" max="1200" value="150">
+                    <input type="range" id="slider-h-space" min="-800" max="800" value="150">
                     <div class="step-btn" onclick="stepSlider('slider-h-space', 2)">+</div>
                 </div>
                 <label>KHOẢNG CÁCH DỌC: <input type="number" id="val-v-space" class="inline-num-input" min="-400" max="400">px</label>
@@ -829,6 +842,41 @@
             }
         }
 
+        // Vẽ cung tròn 20 độ lấy tâm dấu +, bán kính = trung bình cộng 2 hình tròn
+        function drawArcOnCanvas(canvasId, color, side, size, thickness) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = size;
+            canvas.height = size;
+            ctx.clearRect(0, 0, size, size);
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = thickness; // Độ dày nét vẽ trùng khớp với 2 hình tròn
+            ctx.lineCap = 'round';
+
+            const centerX = size / 2;
+            const centerY = size / 2;
+            
+            // Bán kính trung bình cộng giữa vòng ngoài (size/2) và vòng trong (size * 0.55 / 2)
+            const radiusOuter = (size - thickness) / 2;
+            const radiusInner = (Math.round(size * 0.55) - thickness) / 2;
+            const radius = (radiusOuter + radiusInner) / 2;
+
+            const angleSpan = 20 * Math.PI / 180; // Góc mở 20 độ
+
+            ctx.beginPath();
+            if (side === 'left') {
+                // Cung tròn bên trái dấu + (hướng 180 độ)
+                ctx.arc(centerX, centerY, radius, Math.PI - angleSpan / 2, Math.PI + angleSpan / 2, false);
+            } else {
+                // Cung tròn bên phải dấu + (hướng 0 độ)
+                ctx.arc(centerX, centerY, radius, -angleSpan / 2, angleSpan / 2, false);
+            }
+            ctx.stroke();
+        }
+
         function updateStyles(updateInputs = true) {
             const size = parseInt(document.getElementById('slider-size').value);
             const hSpace = parseInt(document.getElementById('slider-h-space').value);
@@ -893,6 +941,10 @@
                     crossEl.style.color = item.color;
                 }
             });
+
+            // Vẽ 2 cung tròn 20 độ với bán kính trung bình cộng & nét dày chuẩn
+            drawArcOnCanvas('arc-canvas-l', colorL, 'left', size, thickness);
+            drawArcOnCanvas('arc-canvas-r', colorR, 'right', size, thickness);
 
             const leftCont = document.getElementById('container-left'), rightCont = document.getElementById('container-right');
             if (mode === 1) {
