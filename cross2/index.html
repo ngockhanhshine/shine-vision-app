@@ -268,6 +268,7 @@
             <div class="demo-box" id="demo-r">Màu hiện tại</div>
             <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee;">
                 <label>GÓC XOAY (PHÍM 1, 2): <span id="val-rotation">0</span>°</label>
+                <label style="margin-top: 5px;">TỈ LỆ HÌNH PHẢI (PHÍM 3, 4): <span id="val-scale">100</span>%</label>
             </div>
         </div>
 
@@ -282,7 +283,7 @@
         // --- LOGIC KIỂM TRA ĐĂNG NHẬP ---
         const LOGIN_KEY = 'user_login';
         const LOGIN_PAGE_URL = '../index.html';
-        let currentUsername = "Unknown User"; // Biến lưu tên học viên để gửi đi
+        let currentUsername = "Unknown User";
 
         function checkAppAuth() {
             try {
@@ -302,7 +303,6 @@
                     return false;
                 }
                 
-                // Lấy tên username từ dữ liệu đăng nhập nếu có
                 if (loginData.username) {
                     currentUsername = loginData.username;
                 }
@@ -314,10 +314,8 @@
             }
         }
 
-        // Thực thi kiểm tra ngay lập tức để chặn giao diện trước khi render phần còn lại
         checkAppAuth();
 
-        // Lắng nghe sự kiện nếu người dùng bấm đăng xuất hoặc bị xoá session từ một tab khác
         window.addEventListener('storage', (e) => {
             if (e.key === LOGIN_KEY) {
                 checkAppAuth();
@@ -326,7 +324,6 @@
 
         // --- TÍNH NĂNG TỰ ĐỘNG LƯU DỮ LIỆU KHI THOÁT APP LÊN GOOGLE SHEET ---
         function sendConfigToGoogleSheet() {
-            // Định dạng thời gian theo kiểu: dd/mm/yy - hh/mm/ss
             const now = new Date();
             const dateStr = String(now.getDate()).padStart(2, '0') + '/' +
                             String(now.getMonth() + 1).padStart(2, '0') + '/' +
@@ -336,41 +333,36 @@
                             String(now.getSeconds()).padStart(2, '0');
             const formattedTime = `${dateStr} - ${timeStr}`;
 
-            // Lấy thông số hiện tại từ các input sliders và góc xoay
             const size = document.getElementById('slider-size').value;
             const hSpace = document.getElementById('slider-h-space').value;
             const vSpace = document.getElementById('slider-v-space').value;
-            const statsStr = `${size} - ${hSpace} - ${vSpace} - ${rotationR}`;
+            const statsStr = `${size} - ${hSpace} - ${vSpace} - ${rotationR} - ${scaleR}%`;
 
-            // Gói dữ liệu gửi đi (Đồng bộ cấu trúc payload xử lý trên Apps Script của anh)
             const payload = {
-                action: "saveConfig", // Nhãn hành động để file Script của anh phân biệt
+                action: "saveConfig",
                 username: currentUsername,
                 timestamp: formattedTime,
                 configDetails: statsStr
             };
 
-            // URL script kết nối Google Sheet của anh (Lấy từ file auth.js)
             const scriptURL = 'https://script.google.com/macros/s/AKfycby3YNV5okekqtqb2oFWZWHZ-EzGWru2aBR6OeQahysbFJ39-rN-F0u34cUpJxQPcGeW/exec';
 
-            // Dùng sendBeacon đảm bảo truyền thông tin thành công kể cả khi tab bị đóng lập tức
             const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain' });
             navigator.sendBeacon(scriptURL, blob);
         }
 
-        // Kích hoạt khi tắt tab, đóng trình duyệt hoặc điều hướng rời khỏi trang
         window.addEventListener('pagehide', sendConfigToGoogleSheet);
         window.addEventListener('beforeunload', sendConfigToGoogleSheet);
         // ----------------------------------------------------------------
 
         let mode = 2;
         let rotationR = 0; // Biến lưu góc xoay hình phải
+        let scaleR = 100;   // Biến lưu tỉ lệ phần trăm kích thước hình phải (100% ban đầu)
         let isRecording = false;
         let startTime, timerInterval;
         let trainingLogs = [];
 
         window.onload = function() {
-            // Kiểm tra lại lần nữa khi window nạp toàn bộ tài nguyên xong
             if (!checkAppAuth()) return;
 
             try {
@@ -396,6 +388,7 @@
             const config = {
                 mode: mode,
                 rotationR: rotationR,
+                scaleR: scaleR,
                 size: document.getElementById('slider-size').value,
                 hSpace: document.getElementById('slider-h-space').value,
                 vSpace: document.getElementById('slider-v-space').value,
@@ -419,6 +412,7 @@
                 const config = JSON.parse(savedConfig);
                 mode = config.mode || 2;
                 rotationR = config.rotationR || 0;
+                scaleR = config.scaleR !== undefined ? config.scaleR : 100;
                 document.getElementById('slider-size').value = config.size;
                 document.getElementById('slider-h-space').value = config.hSpace;
                 document.getElementById('slider-v-space').value = config.vSpace;
@@ -459,6 +453,9 @@
             document.getElementById('val-h-space').innerText = hSpace;
             document.getElementById('val-v-space').innerText = vSpace;
             document.getElementById('val-rotation').innerText = rotationR;
+            if(document.getElementById('val-scale')) {
+                document.getElementById('val-scale').innerText = scaleR;
+            }
             document.getElementById('demo-l').style.backgroundColor = colorL;
             document.getElementById('demo-r').style.backgroundColor = colorR;
 
@@ -495,9 +492,10 @@
                 leftCont.style.transform = 'translate(-50%, -50%)';
             } else {
                 rightCont.style.display = 'flex';
-                // Áp dụng xoay vào Transform của Container phải
+                // Áp dụng vị trí, xoay và scale vào Transform của Container phải
+                const scaleVal = scaleR / 100;
                 leftCont.style.transform = `translate(calc(-50% - ${hSpace/2}px), calc(-50% - ${vSpace/2}px))`;
-                rightCont.style.transform = `translate(calc(-50% + ${hSpace/2}px), calc(-50% + ${vSpace/2}px)) rotate(${rotationR}deg)`;
+                rightCont.style.transform = `translate(calc(-50% + ${hSpace/2}px), calc(-50% + ${vSpace/2}px)) rotate(${rotationR}deg) scale(${scaleVal})`;
             }
         }
 
@@ -581,7 +579,7 @@
                 case 'ArrowDown': e.preventDefault(); stepSlider('slider-v-space', -2); break;
                 case 'ArrowLeft': e.preventDefault(); stepSlider('slider-h-space', -2); break;
                 case 'ArrowRight': e.preventDefault(); stepSlider('slider-h-space', 2); break;
-                // Thêm phím xoay: 1 (xuôi), 2 (ngược)
+                // Phím xoay: 1 (xuôi), 2 (ngược)
                 case '1': 
                     rotationR = (rotationR + 1) % 360; 
                     updateStyles(); 
@@ -592,6 +590,17 @@
                     if(rotationR < 0) rotationR += 360;
                     updateStyles(); 
                     saveConfig(); 
+                    break;
+                // Phím chỉnh kích thước hình phải: 3 (giảm 1%), 4 (tăng 1%)
+                case '3':
+                    if (scaleR > 10) scaleR -= 1; // Giới hạn tối thiểu 10%
+                    updateStyles();
+                    saveConfig();
+                    break;
+                case '4':
+                    scaleR += 1;
+                    updateStyles();
+                    saveConfig();
                     break;
             }
         });
