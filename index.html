@@ -1371,6 +1371,44 @@
          3. JAVASCRIPT LOGIC & BẢO MẬT
          ========================================================= -->
     <script>
+        // =========================================================
+        // XỬ LÝ MÃ SALE (HẠN 48H & LAST CLICK WINS)
+        // =========================================================
+        (function() {
+            const HOURS_48_IN_MS = 48 * 60 * 60 * 1000;
+            const now = new Date().getTime();
+
+            // Kiểm tra xem mã sale cũ đã quá hạn 48h chưa
+            const savedTime = localStorage.getItem('shine_sale_timestamp');
+            if (savedTime && (now - parseInt(savedTime, 10) > HOURS_48_IN_MS)) {
+                localStorage.removeItem('shine_sale_id');
+                localStorage.removeItem('shine_sale_timestamp');
+            }
+
+            // Quét xem URL hiện tại có chứa ID Sale mới không (hỗ trợ dạng ?=IDsale hoặc ?sale=IDsale hoặc ?ref=...)
+            const urlParams = new URLSearchParams(window.location.search);
+            let saleId = urlParams.get('sale') || urlParams.get('ref');
+
+            if (!saleId) {
+                for (const [key, value] of urlParams.entries()) {
+                    if (key === "" || key.toLowerCase().includes("sale") || key.toLowerCase().includes("id")) {
+                        saleId = value || key;
+                        break;
+                    }
+                }
+            }
+
+            // Nếu phát hiện ID Sale mới -> Ghi đè (Last Click Wins) và reset lại mốc 48h
+            if (saleId) {
+                localStorage.setItem('shine_sale_id', saleId);
+                localStorage.setItem('shine_sale_timestamp', now.toString());
+                
+                // Cập nhật URL gọn gàng trên thanh địa chỉ
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?sale=" + encodeURIComponent(saleId);
+                window.history.replaceState({path: newUrl}, '', newUrl);
+            }
+        })();
+
         // HÀM QUẢN LÝ OVERLAY HƯỚNG DẪN TẬP (ĐỌC TỪ grid1.js & grid2.js)
         function openGuide(type) {
             const overlay = document.getElementById('guideOverlay');
@@ -1416,7 +1454,12 @@
             const yyyy = today.getFullYear();
             const formattedDate = `${dd}/${mm}/${yyyy}`;
 
-            const currentFullUrl = window.location.href;
+            // Lấy thông tin ID Sale đang được lưu trong LocalStorage (nếu trong vòng 48h)
+            const savedSaleId = localStorage.getItem('shine_sale_id') || "";
+
+            // Xây dựng chuỗi gộp chung vào cột F theo định dạng: "Link đăng ký" - "IDsales"
+            const currentBaseUrl = window.location.origin + window.location.pathname;
+            const sourceInfo = savedSaleId ? `${currentBaseUrl} - ${savedSaleId}` : `${currentBaseUrl} - Khách tự do`;
 
             submitBtn.innerText = "Đang gửi đăng ký...";
             submitBtn.disabled = true;
@@ -1427,7 +1470,7 @@
                 fullname: fullname,
                 phone: phone,
                 email: email,
-                pageUrl: currentFullUrl
+                pageUrl: sourceInfo // Đẩy toàn bộ chuỗi gộp vào cột F thông qua key pageUrl cũ
             };
 
             fetch(FORM_REGISTER_SCRIPT_URL, {
