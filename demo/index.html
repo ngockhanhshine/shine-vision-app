@@ -35,7 +35,7 @@
         .demo-box { width: 100%; height: 30px; border-radius: 4px; margin-top: 5px; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.75rem; color: white; }
         .btn-start { background: var(--red-main); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
 
-        #loading-overlay { display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.9); z-index: 200; flex-direction: column; justify-content: center; align-items: center; }
+        #loading-overlay { display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.95); z-index: 200; flex-direction: column; justify-content: center; align-items: center; }
         .loader { border: 5px solid #f3f3f3; border-top: 5px solid var(--red-main); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -51,13 +51,12 @@
         .res-score { font-size: 2.5rem; font-weight: 900; color: var(--red-main); margin: 10px 0; }
         .btn-back { background: #333; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
 
-        /* NÚT ĐIỀU KHIỂN CẢM ỨNG DÀNH CHO MOBILE / IPAD (MẶC ĐỊNH ẨN TRÊN DESKTOP) */
+        /* NÚT ĐIỀU KHIỂN CẢM ỨNG DÀNH CHO MOBILE / IPAD */
         .touch-controls { display: none; }
 
         @media (hover: none) and (pointer: coarse), (max-width: 1024px) {
             .touch-controls { display: flex; position: absolute; inset: 0; z-index: 30; pointer-events: none; }
             
-            /* D-Pad góc dưới bên phải */
             .dpad-container {
                 position: absolute; bottom: 20px; right: 20px;
                 width: 140px; height: 140px; pointer-events: auto;
@@ -75,7 +74,6 @@
             .dpad-right { top: 48px; right: 0; }
             .dpad-down { bottom: 0; left: 48px; }
 
-            /* Nút GO! ở bên trái màn hình */
             .go-container {
                 position: absolute; bottom: 45px; left: 25px; pointer-events: auto;
             }
@@ -102,7 +100,7 @@
     <div id="app-container">
         <div id="loading-overlay">
             <div class="loader"></div>
-            <div id="loading-text" style="font-weight: bold; color: #333;">ĐANG TẢI DỮ LIỆU...</div>
+            <div id="loading-text" style="font-weight: bold; color: #333;">ĐANG CHUẨN BỊ DỮ LIỆU...</div>
         </div>
 
         <div id="menu-layer">
@@ -153,7 +151,6 @@
             <div class="hud" id="hudStatus">Level: 1 | Count: 0/1 | Score: 0</div>
             <canvas id="gameCanvas"></canvas>
             
-            <!-- NÚT ĐIỀU KHIỂN CẢM ỨNG TRÊN MOBILE / IPAD -->
             <div class="touch-controls" id="touchControls">
                 <div class="go-container">
                     <div class="btn-go" onclick="triggerVirtualKey(' ')">GO!</div>
@@ -175,7 +172,7 @@
     </div>
 </div>
 
-<video id="charVideo" muted playsinline></video>
+<video id="charVideo" muted playsinline webkit-playsinline></video>
 <audio id="audioMusic"></audio>
 <audio id="audioDing" src="sounds/Ding.wav"></audio>
 <audio id="audioFail" src="sounds/Fail.wav"></audio>
@@ -269,7 +266,7 @@ setInterval(function() {
 })();
 
 /* ==========================================
-   LOGIC GAME & XỬ LÝ SỰ KIỆN PHÍM BẤM / CẢM ỨNG
+   LOGIC GAME & TẢI TRƯỚC MEDIA VÀO MEMORY (BLOB CACHE)
    ========================================== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -287,28 +284,89 @@ let particles = [];
 let isPreFinish = false, preFinishCounter = 0;
 let isPostFinishWait = false, postFinishCounter = 0;
 
+// BỘ NHỚ LƯU TRỮ MEDIA ĐÃ TẢI VỀ RAM (BLOB URLs)
+const blobCache = {
+    videos: {},
+    audios: {}
+};
+
 const ARROWS = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
 
-function preloadVideos(prefix) {
+// Tải một file trực tiếp dưới dạng Blob và gán vào URL bộ nhớ tạm
+async function fetchAndCacheBlob(url, category) {
+    if (category === 'videos' && blobCache.videos[url]) return blobCache.videos[url];
+    if (category === 'audios' && blobCache.audios[url]) return blobCache.audios[url];
+
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        if (category === 'videos') blobCache.videos[url] = blobUrl;
+        if (category === 'audios') blobCache.audios[url] = blobUrl;
+        return blobUrl;
+    } catch (e) {
+        return url; // Nếu lỗi mạng thì fallback dùng URL gốc
+    }
+}
+
+// Tải toàn bộ Video + Âm thanh vào RAM trước khi vào trận đấu
+async function preloadAllMedia(prefix, selectedAudioUrl) {
+    const loadingText = document.getElementById('loading-text');
+    document.getElementById('loading-overlay').style.display = 'flex';
+
     const videoFiles = [
         `movie/${prefix}wait.mp4`, `movie/${prefix}fail.mp4`, `movie/${prefix}finish.mp4`,
         `movie/${prefix}win.mp4`, `movie/${prefix}dance1.mp4`, `movie/${prefix}dance2.mp4`,
         `movie/${prefix}dance3.mp4`, `movie/${prefix}dance4.mp4`, `movie/${prefix}dance5.mp4`
     ];
-    document.getElementById('loading-overlay').style.display = 'flex';
-    const promises = videoFiles.map(url => {
-        return new Promise((resolve) => {
-            const v = document.createElement('video');
-            v.src = url; v.preload = 'auto';
-            v.oncanplaythrough = resolve; v.onerror = resolve; 
-            setTimeout(resolve, 3000); 
-        });
+
+    const audioFiles = [
+        'sounds/Ding.wav', 'sounds/Fail.wav', 'sounds/clap.mp3',
+        'sounds/up2.mp3', 'sounds/up3.mp3', 'sounds/up4.mp3', 'sounds/up5.mp3',
+        'sounds/up6.mp3', 'sounds/up7.mp3', 'sounds/up8.mp3', 'sounds/up9.mp3'
+    ];
+    if (selectedAudioUrl && !selectedAudioUrl.startsWith('blob:')) audioFiles.push(selectedAudioUrl);
+
+    const totalFiles = videoFiles.length + audioFiles.length;
+    let completed = 0;
+
+    const updateProgress = () => {
+        completed++;
+        const percent = Math.floor((completed / totalFiles) * 100);
+        loadingText.innerText = `ĐANG TẢI DỮ LIỆU... ${percent}%`;
+    };
+
+    // Tải song song tất cả tài nguyên
+    const videoPromises = videoFiles.map(url => fetchAndCacheBlob(url, 'videos').then(res => { updateProgress(); return res; }));
+    const audioPromises = audioFiles.map(url => fetchAndCacheBlob(url, 'audios').then(res => { updateProgress(); return res; }));
+
+    await Promise.all([...videoPromises, ...audioPromises]);
+
+    // Gán sẵn Blob URL cho các sound effects mặc định
+    audioDing.src = blobCache.audios['sounds/Ding.wav'] || 'sounds/Ding.wav';
+    audioFail.src = blobCache.audios['sounds/Fail.wav'] || 'sounds/Fail.wav';
+    audioClap.src = blobCache.audios['sounds/clap.mp3'] || 'sounds/clap.mp3';
+}
+
+// Unlock Audio / Video Context cho trình duyệt di động khi chạm nút BẮT ĐẦU
+function unlockMobileMedia() {
+    [audioDing, audioFail, audioMusic, audioLevelUp, audioClap].forEach(a => {
+        a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
     });
-    return Promise.all(promises);
+    charVid.play().then(() => { charVid.pause(); }).catch(() => {});
 }
 
 async function handlePreloadThenStart() {
-    await preloadVideos(charPrefix);
+    unlockMobileMedia();
+
+    const userFile = document.getElementById('userAudioFile').files[0];
+    let selectedAudioUrl = "";
+    if (!userFile) {
+        const activeSong = document.querySelector('.song.active');
+        selectedAudioUrl = 'sounds/' + activeSong.dataset.file;
+    }
+
+    await preloadAllMedia(charPrefix, selectedAudioUrl);
     document.getElementById('loading-overlay').style.display = 'none';
     startGame();
 }
@@ -406,11 +464,21 @@ function updateDemo() {
 updateDemo();
 
 function playVideo(type) {
-    let fileName = (type === 'dance') ? `movie/${charPrefix}dance${Math.floor(Math.random()*5)+1}.mp4` : `movie/${charPrefix}${type}.mp4`;
-    charVid.src = fileName;
+    let rawPath = (type === 'dance') ? `movie/${charPrefix}dance${Math.floor(Math.random()*5)+1}.mp4` : `movie/${charPrefix}${type}.mp4`;
+    let targetSrc = blobCache.videos[rawPath] || rawPath;
+    
+    if (charVid.src !== targetSrc) {
+        charVid.src = targetSrc;
+    }
     charVid.loop = (type === 'wait');
-    charVid.load();
     charVid.play().catch(() => {});
+}
+
+function playLevelUpAudio(lvl) {
+    const rawPath = `sounds/up${lvl}.mp3`;
+    audioLevelUp.src = blobCache.audios[rawPath] || rawPath;
+    audioLevelUp.currentTime = 0;
+    audioLevelUp.play().catch(() => {});
 }
 
 audioMusic.onended = () => { 
@@ -420,7 +488,9 @@ audioMusic.onended = () => {
     updateLeaderboardUI();
     document.getElementById('finalScoreDisplay').innerText = score;
     document.getElementById('result-board').style.display = 'block';
-    playVideo('win'); audioClap.play();
+    playVideo('win'); 
+    audioClap.currentTime = 0;
+    audioClap.play().catch(() => {});
     msg = "MISSION COMPLETE!"; msgTime = 150; 
 };
 
@@ -449,19 +519,20 @@ function startGame() {
     } else {
         const activeSong = document.querySelector('.song.active');
         bpm = parseInt(activeSong.dataset.bpm);
-        audioMusic.src = 'sounds/' + activeSong.dataset.file;
+        const rawPath = 'sounds/' + activeSong.dataset.file;
+        audioMusic.src = blobCache.audios[rawPath] || rawPath;
     }
     isEnding = false; level = 1; successCount = 0; score = 0; particles = []; 
     isPreFinish = false; isPostFinishWait = false;
     document.getElementById('result-board').style.display = 'none';
-    playVideo('wait'); audioMusic.play();
+    playVideo('wait'); 
+    audioMusic.play().catch(() => {});
     document.getElementById('menu-layer').style.display = 'none';
     document.getElementById('game-layer').style.display = 'block';
     resize(); generateSeq();
     requestAnimationFrame(gameLoop);
 }
 
-// Xử lý logic phím bấm chung cho cả bàn phím máy tính và nút ảo trên mobile/ipad
 function handleGameInput(key) {
     if (isEnding || isPreFinish || isPostFinishWait) return;
 
@@ -469,14 +540,21 @@ function handleGameInput(key) {
         if (key === sequence[userInput.length]?.key) {
             userInput.push(key);
         } else {
-            userInput = []; audioFail.play(); playVideo('fail'); msg = "WRONG KEY"; msgTime = 30;
+            userInput = []; 
+            audioFail.currentTime = 0;
+            audioFail.play().catch(() => {}); 
+            playVideo('fail'); 
+            msg = "WRONG KEY"; msgTime = 30;
         }
     }
     if (key === ' ' && userInput.length === sequence.length) {
         if (fanAngle >= 90 && fanAngle <= 135) {
             handleSuccess();
         } else {
-            audioFail.play(); playVideo('fail'); msg = "MISS TIME"; userInput = [];
+            audioFail.currentTime = 0;
+            audioFail.play().catch(() => {}); 
+            playVideo('fail'); 
+            msg = "MISS TIME"; userInput = [];
         }
         msgTime = 40;
     }
@@ -493,10 +571,14 @@ window.addEventListener('keydown', (e) => {
 });
 
 function handleSuccess() {
-    audioDing.currentTime = 0; audioDing.play();
+    audioDing.currentTime = 0; 
+    audioDing.play().catch(() => {});
     score += level * 10;
     if (sequence.length === 10) {
-        playVideo('finish'); audioClap.play(); createExplosion();
+        playVideo('finish'); 
+        audioClap.currentTime = 0;
+        audioClap.play().catch(() => {}); 
+        createExplosion();
         msg = "FINISH COMPLETE!"; isPostFinishWait = true; postFinishCounter = 0; sequence = []; return;
     }
     successCount++;
@@ -506,7 +588,7 @@ function handleSuccess() {
             msg = "GET READY FOR FINISH!"; msgTime = 100;
         } else {
             level++; successCount = 0;
-            audioLevelUp.src = `sounds/up${level}.mp3`; audioLevelUp.play();
+            playLevelUpAudio(level);
             createExplosion(); playVideo('dance'); msg = "LEVEL UP!"; generateSeq();
         }
     } else {
