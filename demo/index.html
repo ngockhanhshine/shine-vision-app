@@ -1,276 +1,609 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <script src="../auth.js"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shine Vision - Gabor Auto-Next</title>
+    <title>Finger Dance - Shine Vision App</title>
     <script src="readme.js"></script>
     <style>
-        body { margin: 0; padding: 0; background-color: #7F7F7F; overflow: hidden; font-family: sans-serif; touch-action: none; display: flex; flex-direction: column; height: 100vh; position: relative; }
-        #main-app-content { display: none; flex-direction: column; height: 100vh; width: 100%; }
-        #game-ui { text-align: center; color: white; font-size: 16px; font-weight: bold; padding: 10px; background: rgba(0,0,0,0.2); z-index: 10; }
-        #grid-container { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; align-content: center; justify-items: center; transition: opacity 0.1s; }
-        #pause-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #7F7F7F; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; font-weight: bold; pointer-events: none; }
-        .card { background-color: #7F7F7F; border: 2px solid #999; border-radius: 12px; width: 80px; height: 80px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        .gabor-content { position: absolute; width: 100%; height: 100%; background: repeating-linear-gradient(var(--ang), #fff, #fff 1px, #000 var(--sz), #000 var(--sz2)); mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); opacity: var(--op); }
-        .card.selected { border-color: #2196F3; box-shadow: 0 0 15px #2196F3; z-index: 2; }
-        .card.matched { opacity: 0.1; pointer-events: none; }
-        #controls-wrapper { background: white; padding: 15px; border-radius: 20px 20px 0 0; display: flex; flex-wrap: wrap; gap: 15px; max-height: 45vh; overflow-y: auto; z-index: 101; position: relative; }
-        .control-section { flex: 1; min-width: 250px; }
-        .journal-section { flex: 1; min-width: 250px; border-left: 1px solid #eee; padding-left: 15px; }
-        .slider-group { display: flex; align-items: center; margin-bottom: 12px; gap: 8px; }
-        .slider-group label { width: 60px; font-size: 12px; font-weight: bold; }
-        .slider-group input { flex: 1; }
-        .btn-step { width: 30px; height: 30px; border-radius: 5px; border: 1px solid #ccc; background: #f8f8f8; cursor: pointer; font-weight: bold; }
-        #journal-list { font-size: 12px; list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 5px; }
-        #journal-list li { padding: 5px; border-bottom: 1px solid #eee; color: #444; }
-        button#resetBtn { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #2196F3; color: white; font-weight: bold; margin-top: 10px; cursor: pointer; }
-        .msg-alert { color: #d32f2f; font-size: 11px; font-weight: bold; margin-top: 5px; display: none; }
-        #instruction-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; color: white; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        #instruction-content { background: #fff; color: #333; padding: 20px; border-radius: 10px; max-width: 600px; margin: 40px auto; white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
+        :root { --red-main: #d32f2f; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #222; font-family: 'Segoe UI', Arial, sans-serif; display: flex; justify-content: center; align-items: center; }
+        
+        /* Lớp bảo vệ chống soi nội dung */
+        #secure-pause-overlay { 
+            display: none; position: fixed; inset: 0; background: black; z-index: 9999; 
+            color: white; flex-direction: column; justify-content: center; align-items: center; 
+            font-size: 3rem; font-weight: bold; letter-spacing: 5px; pointer-events: none;
+        }
+
+        #app-content-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        #app-container { width: 85vw; height: 85vh; max-width: 950px; max-height: 600px; background: white; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+
+        #menu-layer { position: absolute; inset: 0; background: white; z-index: 100; display: flex; flex-direction: column; padding: 15px 25px; box-sizing: border-box; overflow-y: auto; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        h3 { margin: 0 0 8px 0; font-size: 0.9rem; text-transform: uppercase; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        .song-list, .char-select { border: 1px solid #ddd; height: 100px; overflow-y: auto; border-radius: 4px; background: #fff; margin-bottom: 10px; }
+        .item { padding: 6px 12px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
+        .item:hover { background: #fef2f2; }
+        .item.active { background: #fff5f5; color: var(--red-main); font-weight: bold; border-left: 4px solid var(--red-main); }
+        .custom-upload { border: 1px dashed #ccc; padding: 10px; border-radius: 6px; background: #fafafa; margin-bottom: 10px; }
+        .custom-upload label { font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 5px; }
+        .custom-upload input { font-size: 0.8rem; width: 100%; box-sizing: border-box; }
+        .rgb-panel { border: 1px solid #eee; padding: 8px; border-radius: 8px; margin-bottom: 8px; background: #fafafa; }
+        .slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+        .slider-row label { width: 15px; font-weight: bold; font-size: 11px; }
+        input[type="range"] { flex: 1; height: 4px; cursor: pointer; }
+        .demo-box { width: 100%; height: 30px; border-radius: 4px; margin-top: 5px; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.75rem; color: white; }
+        .btn-start { background: var(--red-main); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; }
+
+        #loading-overlay { display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.9); z-index: 200; flex-direction: column; justify-content: center; align-items: center; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid var(--red-main); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #leaderboard { margin-top: 15px; padding: 10px; border: 1px solid #eee; border-radius: 8px; background: #f9f9f9; }
+        .lb-title { font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; color: #666; text-align: center; }
+        .lb-row { display: flex; justify-content: space-between; font-size: 0.8rem; padding: 2px 5px; border-bottom: 1px solid #f0f0f0; }
+
+        #game-layer { display: none; width: 100%; height: 100%; position: relative; }
+        canvas { display: block; background: #fff; width: 100%; height: 100%; }
+        .hud { position: absolute; top: 15px; left: 20px; font-size: 18px; font-weight: bold; color: #333; z-index: 10; pointer-events: none; }
+        
+        #result-board { display: none; position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); padding: 20px 40px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.3); text-align: center; z-index: 20; border: 3px solid var(--red-main); }
+        .res-score { font-size: 2.5rem; font-weight: 900; color: var(--red-main); margin: 10px 0; }
+        .btn-back { background: #333; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+
+        /* NÚT ĐIỀU KHIỂN CẢM ỨNG DÀNH CHO MOBILE / IPAD (MẶC ĐỊNH ẨN TRÊN DESKTOP) */
+        .touch-controls { display: none; }
+
+        @media (hover: none) and (pointer: coarse), (max-width: 1024px) {
+            .touch-controls { display: flex; position: absolute; inset: 0; z-index: 30; pointer-events: none; }
+            
+            /* D-Pad góc dưới bên phải */
+            .dpad-container {
+                position: absolute; bottom: 20px; right: 20px;
+                width: 140px; height: 140px; pointer-events: auto;
+            }
+            .dpad-btn {
+                position: absolute; width: 44px; height: 44px; background: rgba(0,0,0,0.6);
+                border: 2px solid rgba(255,255,255,0.8); border-radius: 50%; color: white;
+                font-size: 20px; display: flex; justify-content: center; align-items: center;
+                cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+                transition: background 0.1s, transform 0.1s;
+            }
+            .dpad-btn:active { background: var(--red-main); transform: scale(0.92); }
+            .dpad-up { top: 0; left: 48px; }
+            .dpad-left { top: 48px; left: 0; }
+            .dpad-right { top: 48px; right: 0; }
+            .dpad-down { bottom: 0; left: 48px; }
+
+            /* Nút GO! ở bên trái màn hình */
+            .go-container {
+                position: absolute; bottom: 45px; left: 25px; pointer-events: auto;
+            }
+            .btn-go {
+                width: 75px; height: 75px; background: var(--red-main);
+                border: 3px solid white; border-radius: 50%; color: white;
+                font-size: 1.2rem; font-weight: 900; letter-spacing: 1px;
+                display: flex; justify-content: center; align-items: center;
+                box-shadow: 0 4px 15px rgba(211,47,47,0.5); cursor: pointer;
+                user-select: none; -webkit-tap-highlight-color: transparent;
+                transition: transform 0.1s, background 0.1s;
+            }
+            .btn-go:active { background: #b71c1c; transform: scale(0.92); }
+        }
+
+        #charVideo { display: none; }
     </style>
 </head>
 <body oncontextmenu="return false;">
-    <script>
-        // --- BẢO MẬT CONSOLE (ĐÃ TỐI ƯU THÂN THIỆN VỚI MOBILE / IOS NHƯ APP PIANO) ---
-        (function() {
-            const check = function() {
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                const threshold = 160;
-                const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-                const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-                const devtools = { open: false };
-                const element = new Image();
-                Object.defineProperty(element, 'id', {
-                    get: function() { devtools.open = true; terminateSession(); }
-                });
-                function terminateSession() {
-                    localStorage.removeItem('user_login');
-                    window.location.replace("about:blank");
-                    document.body.innerHTML = "";
-                }
-                console.log(element);
-                console.clear();
-                
-                // Chỉ quét kích thước cửa sổ trên PC, trên mobile bỏ qua để tránh lỗi vặt khi vuốt/thanh địa chỉ ẩn hiện
-                if (!isMobile) {
-                    if (widthThreshold || heightThreshold || devtools.open) terminateSession();
-                } else {
-                    if (devtools.open) terminateSession();
-                }
-            };
 
-            // Kiểm tra performance/debugger thông minh (bỏ qua setInterval gắt gao gây lag văng trang trên Mobile Safari)
-            setInterval(function() {
-                const start = performance.now();
-                debugger;
-                if (performance.now() - start > 100) {
-                    window.location.replace("about:blank");
-                }
-            }, 500);
+<div id="secure-pause-overlay">PAUSED</div>
 
-            setInterval(check, 500);
-            window.addEventListener('resize', check);
-        })();
-
-        // --- TỰ ĐỘNG LOGOUT IM LẶNG KHI TRANG CHÍNH LOGOUT ---
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'user_login' && !e.newValue) {
-                window.location.replace('../index.html');
-                document.body.innerHTML = "";
-            }
-        });
-
-        // --- CHẶN PHÍM TẮT VÀ KẾT NỐI README.JS ---
-        (function() {
-            const showHelp = () => {
-                const modal = document.getElementById('instruction-modal');
-                const content = document.getElementById('readme-text');
-                
-                if (typeof readmeContent !== 'undefined') {
-                    content.innerHTML = readmeContent;
-                } else if (typeof getReadmeContent === 'function') {
-                    content.innerHTML = getReadmeContent();
-                } else {
-                    content.innerHTML = "Đang tải hướng dẫn...";
-                }
-                
-                modal.style.display = 'block';
-            };
-
-            window.addEventListener('keydown', (e) => {
-                const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-                const metaOrCtrl = isMac ? e.metaKey : e.ctrlKey;
-                const forbiddenCodes = [123, 73, 74, 67, 85, 83];
-                
-                if (forbiddenCodes.includes(e.keyCode)) {
-                    if (e.keyCode === 123 || metaOrCtrl) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        showHelp();
-                    }
-                }
-            }, true);
-        })();
-    </script>
-
-    <div id="pause-overlay">⏸ TẠM DỪNG<br><small>Di chuyển chuột vào trang web để tiếp tục</small></div>
-    <div id="main-app-content">
-        <div id="game-ui">Cặp còn lại: <span id="pairs-left">6</span> | <span id="timer">00:00</span></div>
-        <div id="grid-container"></div>
-        <div id="controls-wrapper">
-            <div class="control-section">
-                <div class="slider-group"><label>Độ rõ:</label><button class="btn-step" onclick="adjust('op', -5)">-</button><input type="range" id="opSlider" min="5" max="100" value="100"><button class="btn-step" onclick="adjust('op', 5)">+</button></div>
-                <div class="slider-group"><label>Cỡ sọc:</label><button class="btn-step" onclick="adjust('sz', -1)">-</button><input type="range" id="sizeSlider" min="2" max="10" value="10"><button class="btn-step" onclick="adjust('sz', 1)">+</button></div>
-                <button id="resetBtn">🔄 VÁN MỚI / ĐỔI VỊ TRÍ</button>
-                <div id="auto-msg" class="msg-alert">🔥 Tuyệt vời! Độ khó đã tự tăng.</div>
-            </div>
-            <div class="journal-section">
-                <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between;"><span>NHẬT KÝ TẬP</span><span style="color:red; cursor:pointer; font-size: 11px;" onclick="clearJournal()">Xóa hết</span></div>
-                <ul id="journal-list"></ul>
-            </div>
+<div id="app-content-wrapper">
+    <div id="app-container">
+        <div id="loading-overlay">
+            <div class="loader"></div>
+            <div id="loading-text" style="font-weight: bold; color: #333;">ĐANG TẢI DỮ LIỆU...</div>
         </div>
-        <div id="instruction-modal" onclick="this.style.display='none'">
-            <div id="instruction-content" onclick="event.stopPropagation()">
-                <div id="readme-text"></div>
-                <button onclick="document.getElementById('instruction-modal').style.display='none'" style="margin-top:20px; width:100%; padding:10px; cursor:pointer; font-weight:bold;">ĐÓNG</button>
+
+        <div id="menu-layer">
+            <div class="menu-grid">
+                <div class="left-col">
+                    <h3>1. Chọn bài hát</h3>
+                    <div class="song-list" id="songList">
+                        <div class="item song active" data-bpm="96" data-file="Shape-Of-You.mp3">Shape Of You (96 BPM)</div>
+                        <div class="item song" data-bpm="115" data-file="BabyShark.mp3">BabyShark (115 BPM)</div>
+                        <div class="item song" data-bpm="124" data-file="Counting-Star.mp3">Counting Star (124 BPM)</div>
+                    </div>
+                    <h3>2. Tự tải nhạc</h3>
+                    <div class="custom-upload">
+                        <input type="file" id="userAudioFile" accept="audio/*">
+                        <label style="margin-top:8px;">BPM:</label>
+                        <input type="number" id="userBPM" value="120">
+                    </div>
+                    <h3>3. Chọn nhân vật</h3>
+                    <div class="char-select" id="charSelect">
+                        <div class="item char active" data-prefix="ami">Nhân vật Ami</div>
+                        <div class="item char" data-prefix="alex">Nhân vật Alex</div>
+                    </div>
+                </div>
+                <div class="right-col">
+                    <h3>4. Anaglyph</h3>
+                    <div class="rgb-panel">
+                        <div class="slider-row"><label>R</label><input type="range" id="r1" min="0" max="255" value="255"></div>
+                        <div class="slider-row"><label>G</label><input type="range" id="g1" min="0" max="255" value="0"></div>
+                        <div class="slider-row"><label>B</label><input type="range" id="b1" min="0" max="255" value="0"></div>
+                        <div class="demo-box" id="demo1">KÍNH TRÁI</div>
+                    </div>
+                    <div class="rgb-panel">
+                        <div class="slider-row"><label>R</label><input type="range" id="r2" min="0" max="255" value="0"></div>
+                        <div class="slider-row"><label>G</label><input type="range" id="g2" min="0" max="255" value="255"></div>
+                        <div class="slider-row"><label>B</label><input type="range" id="b2" min="0" max="255" value="255"></div>
+                        <div class="demo-box" id="demo2">KÍNH PHẢI</div>
+                    </div>
+                    <div id="leaderboard">
+                        <div class="lb-title">TOP 5 ĐIỂM CAO</div>
+                        <div id="lb-content"></div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-start" onclick="handlePreloadThenStart()">BẮT ĐẦU</button>
+        </div>
+
+        <div id="game-layer">
+            <div class="hud" id="hudStatus">Level: 1 | Count: 0/1 | Score: 0</div>
+            <canvas id="gameCanvas"></canvas>
+            
+            <!-- NÚT ĐIỀU KHIỂN CẢM ỨNG TRÊN MOBILE / IPAD -->
+            <div class="touch-controls" id="touchControls">
+                <div class="go-container">
+                    <div class="btn-go" onclick="triggerVirtualKey(' ')">GO!</div>
+                </div>
+                <div class="dpad-container">
+                    <div class="dpad-btn dpad-up" onclick="triggerVirtualKey('ArrowUp')">▲</div>
+                    <div class="dpad-btn dpad-left" onclick="triggerVirtualKey('ArrowLeft')">◀</div>
+                    <div class="dpad-btn dpad-right" onclick="triggerVirtualKey('ArrowRight')">▶</div>
+                    <div class="dpad-btn dpad-down" onclick="triggerVirtualKey('ArrowDown')">▼</div>
+                </div>
+            </div>
+
+            <div id="result-board">
+                <div style="font-weight:bold; color:#666;">KẾT QUẢ</div>
+                <div class="res-score" id="finalScoreDisplay">0</div>
+                <button class="btn-back" onclick="location.reload()">QUAY LẠI MENU</button>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // --- LOGIC ỨNG DỤNG ---
-        let currentUsername = ""; 
-        
-        (function() {
-            const loginData = JSON.parse(localStorage.getItem('user_login'));
-            if (!loginData) { window.location.replace('../index.html'); } 
-            else { 
-                document.getElementById('main-app-content').style.display = 'flex';
-                currentUsername = loginData.user || loginData.username || loginData.email || "Ẩn danh";
+<video id="charVideo" muted playsinline></video>
+<audio id="audioMusic"></audio>
+<audio id="audioDing" src="sounds/Ding.wav"></audio>
+<audio id="audioFail" src="sounds/Fail.wav"></audio>
+<audio id="audioLevelUp"></audio>
+<audio id="audioClap" src="sounds/clap.mp3"></audio>
+
+<script src="auth.js"></script>
+
+<script>
+/* ==========================================
+   CẤU HÌNH GOOGLE SHEETS API
+   ========================================== */
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw7UntHhUZvIMua4MJSO8TfeU-sWBcwKsB47QorlMDlTk-YSbsm_OiT846cEa1qxMKnMQ/exec";
+
+/* ==========================================
+   HỆ THỐNG BẢO MẬT: CHẶN DOWNLOAD & THOÁT NGAY KHI MỞ CONSOLE
+   ========================================== */
+const secureOverlay = document.getElementById('secure-pause-overlay');
+const appContent = document.getElementById('app-content-wrapper');
+
+function forceExit() {
+    localStorage.removeItem('user_login');
+    window.location.replace('../index.html');
+}
+
+window.addEventListener('keydown', function(e) {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isControl = isMac ? e.metaKey : e.ctrlKey;
+    
+    const forbiddenKeys = [
+        e.key === 'F12',
+        isControl && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C'),
+        isControl && (e.key === 's' || e.key === 'S'),
+        isControl && (e.key === 'u' || e.key === 'U')
+    ];
+
+    if (forbiddenKeys.some(condition => condition)) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof showInstructions === 'function') showInstructions();
+        return false;
+    }
+}, true);
+
+document.addEventListener('mouseleave', () => {
+    secureOverlay.style.display = 'flex';
+    appContent.style.display = 'none';
+    if (!audioMusic.paused) audioMusic.pause();
+    if (!charVid.paused) charVid.pause();
+});
+
+document.addEventListener('mouseenter', () => {
+    secureOverlay.style.display = 'none';
+    appContent.style.display = 'flex';
+    if (document.getElementById('game-layer').style.display === 'block') {
+        audioMusic.play().catch(()=>{});
+        charVid.play().catch(()=>{});
+    }
+});
+
+setInterval(function() {
+    const startTime = performance.now();
+    debugger;
+    const endTime = performance.now();
+    if (endTime - startTime > 50) {
+        forceExit();
+    }
+    const diff = 160;
+    if (window.outerWidth - window.innerWidth > diff || window.outerHeight - window.innerHeight > diff) {
+        forceExit();
+    }
+}, 500);
+
+(function() {
+    function checkAuth() {
+        const loginData = JSON.parse(localStorage.getItem('user_login'));
+        const currentTime = new Date().getTime();
+        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+        if (!loginData || (currentTime - loginData.loginTime > TWENTY_FOUR_HOURS)) {
+            forceExit();
+            return false;
+        }
+        return true;
+    }
+    checkAuth();
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'user_login' && !e.newValue) forceExit();
+    });
+    window.onfocus = () => checkAuth();
+})();
+
+/* ==========================================
+   LOGIC GAME & XỬ LÝ SỰ KIỆN PHÍM BẤM / CẢM ỨNG
+   ========================================== */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const charVid = document.getElementById('charVideo');
+const audioMusic = document.getElementById('audioMusic');
+const audioDing = document.getElementById('audioDing');
+const audioFail = document.getElementById('audioFail');
+const audioLevelUp = document.getElementById('audioLevelUp');
+const audioClap = document.getElementById('audioClap');
+
+let bpm = 96, level = 1, successCount = 0, score = 0, charPrefix = "ami";
+let sequence = [], userInput = [], fanAngle = 0, lastBeat = -1;
+let lastTime = 0, msg = "", msgTime = 0, isEnding = false;
+let particles = []; 
+let isPreFinish = false, preFinishCounter = 0;
+let isPostFinishWait = false, postFinishCounter = 0;
+
+const ARROWS = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
+
+function preloadVideos(prefix) {
+    const videoFiles = [
+        `movie/${prefix}wait.mp4`, `movie/${prefix}fail.mp4`, `movie/${prefix}finish.mp4`,
+        `movie/${prefix}win.mp4`, `movie/${prefix}dance1.mp4`, `movie/${prefix}dance2.mp4`,
+        `movie/${prefix}dance3.mp4`, `movie/${prefix}dance4.mp4`, `movie/${prefix}dance5.mp4`
+    ];
+    document.getElementById('loading-overlay').style.display = 'flex';
+    const promises = videoFiles.map(url => {
+        return new Promise((resolve) => {
+            const v = document.createElement('video');
+            v.src = url; v.preload = 'auto';
+            v.oncanplaythrough = resolve; v.onerror = resolve; 
+            setTimeout(resolve, 3000); 
+        });
+    });
+    return Promise.all(promises);
+}
+
+async function handlePreloadThenStart() {
+    await preloadVideos(charPrefix);
+    document.getElementById('loading-overlay').style.display = 'none';
+    startGame();
+}
+
+function loadColors() {
+    ['r1','g1','b1','r2','g2','b2'].forEach(id => {
+        const val = localStorage.getItem('anaglyph_' + id);
+        if(val !== null) document.getElementById(id).value = val;
+    });
+}
+loadColors();
+document.querySelectorAll('input[type="range"]').forEach(sl => {
+    sl.oninput = () => localStorage.setItem('anaglyph_' + sl.id, sl.value);
+});
+
+function updateLeaderboardUI() {
+    const scores = JSON.parse(localStorage.getItem('vision_scores') || "[]");
+    const container = document.getElementById('lb-content');
+    container.innerHTML = scores.length ? "" : "<div class='lb-row' style='justify-content:center'>Chưa có dữ liệu</div>";
+    scores.slice(0, 5).forEach((s, i) => {
+        container.innerHTML += `<div class="lb-row"><span>#${i+1} - ${s.date}</span> <b>${s.val}</b></div>`;
+    });
+}
+updateLeaderboardUI();
+
+function saveFinalScore(val) {
+    let scores = JSON.parse(localStorage.getItem('vision_scores') || "[]");
+    scores.push({val: val, date: new Date().toLocaleDateString('vi-VN')});
+    scores.sort((a,b) => b.val - a.val);
+    localStorage.setItem('vision_scores', JSON.stringify(scores.slice(0, 10)));
+}
+
+function sendResultToGoogleSheet(finalScore) {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const dateTimeStr = `${dd}/${mm}/${yyyy} - ${hh}:${min}`;
+
+    const loginData = JSON.parse(localStorage.getItem('user_login') || '{}');
+    const accountName = loginData.username || loginData.account || 'Khách';
+
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    let dailyData = JSON.parse(localStorage.getItem('daily_practice_tracker') || '{}');
+
+    if (dailyData.date !== todayStr) {
+        dailyData = { date: todayStr, count: 1 };
+    } else {
+        dailyData.count = (dailyData.count || 0) + 1;
+    }
+    localStorage.setItem('daily_practice_tracker', JSON.stringify(dailyData));
+    const sessionAndScore = `Lần ${dailyData.count} - ${finalScore}`;
+
+    const r1Val = document.getElementById('r1').value;
+    const g1Val = document.getElementById('g1').value;
+    const b1Val = document.getElementById('b1').value;
+    const r2Val = document.getElementById('r2').value;
+    const g2Val = document.getElementById('g2').value;
+    const b2Val = document.getElementById('b2').value;
+    const rgbStr = `L: (${r1Val},${g1Val},${b1Val}) | R: (${r2Val},${g2Val},${b2Val})`;
+
+    const payload = {
+        dateTime: dateTimeStr,
+        account: accountName,
+        sessionAndScore: sessionAndScore,
+        rgbConfig: rgbStr
+    };
+
+    if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).catch(err => console.error("Sheet Sync Error:", err));
+    }
+}
+
+document.querySelectorAll('.song').forEach(el => el.onclick = () => {
+    document.querySelectorAll('.song').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+});
+document.querySelectorAll('.char').forEach(el => el.onclick = () => {
+    document.querySelectorAll('.char').forEach(c => c.classList.remove('active'));
+    el.classList.add('active'); charPrefix = el.dataset.prefix;
+});
+
+function updateDemo() {
+    document.getElementById('demo1').style.backgroundColor = `rgb(${r1.value},${g1.value},${b1.value})`;
+    document.getElementById('demo2').style.backgroundColor = `rgb(${r2.value},${g2.value},${b2.value})`;
+    requestAnimationFrame(updateDemo);
+}
+updateDemo();
+
+function playVideo(type) {
+    let fileName = (type === 'dance') ? `movie/${charPrefix}dance${Math.floor(Math.random()*5)+1}.mp4` : `movie/${charPrefix}${type}.mp4`;
+    charVid.src = fileName;
+    charVid.loop = (type === 'wait');
+    charVid.load();
+    charVid.play().catch(() => {});
+}
+
+audioMusic.onended = () => { 
+    isEnding = true; sequence = [];
+    saveFinalScore(score); 
+    sendResultToGoogleSheet(score);
+    updateLeaderboardUI();
+    document.getElementById('finalScoreDisplay').innerText = score;
+    document.getElementById('result-board').style.display = 'block';
+    playVideo('win'); audioClap.play();
+    msg = "MISSION COMPLETE!"; msgTime = 150; 
+};
+
+charVid.onended = () => {
+    if (!isEnding && (charVid.src.includes('dance') || charVid.src.includes('fail') || charVid.src.includes('finish'))) {
+        if (!isPostFinishWait) playVideo('wait');
+    }
+};
+
+function createExplosion() {
+    const count = 60 + (level * 20);
+    for(let i=0; i<count; i++) {
+        particles.push({
+            x: canvas.width / 2, y: canvas.height / 2,
+            vx: (Math.random() - 0.5) * (12 + level), vy: (Math.random() - 0.5) * (12 + level),
+            size: Math.random() * 5 + 2, color: ['#FFD700','#FF4500','#00FF00','#00BFFF','#FF00FF','#FFFFFF'][Math.floor(Math.random()*6)], life: 1.0
+        });
+    }
+}
+
+function startGame() {
+    const userFile = document.getElementById('userAudioFile').files[0];
+    if (userFile) {
+        audioMusic.src = URL.createObjectURL(userFile);
+        bpm = parseInt(document.getElementById('userBPM').value) || 120;
+    } else {
+        const activeSong = document.querySelector('.song.active');
+        bpm = parseInt(activeSong.dataset.bpm);
+        audioMusic.src = 'sounds/' + activeSong.dataset.file;
+    }
+    isEnding = false; level = 1; successCount = 0; score = 0; particles = []; 
+    isPreFinish = false; isPostFinishWait = false;
+    document.getElementById('result-board').style.display = 'none';
+    playVideo('wait'); audioMusic.play();
+    document.getElementById('menu-layer').style.display = 'none';
+    document.getElementById('game-layer').style.display = 'block';
+    resize(); generateSeq();
+    requestAnimationFrame(gameLoop);
+}
+
+// Xử lý logic phím bấm chung cho cả bàn phím máy tính và nút ảo trên mobile/ipad
+function handleGameInput(key) {
+    if (isEnding || isPreFinish || isPostFinishWait) return;
+
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+        if (key === sequence[userInput.length]?.key) {
+            userInput.push(key);
+        } else {
+            userInput = []; audioFail.play(); playVideo('fail'); msg = "WRONG KEY"; msgTime = 30;
+        }
+    }
+    if (key === ' ' && userInput.length === sequence.length) {
+        if (fanAngle >= 90 && fanAngle <= 135) {
+            handleSuccess();
+        } else {
+            audioFail.play(); playVideo('fail'); msg = "MISS TIME"; userInput = [];
+        }
+        msgTime = 40;
+    }
+}
+
+function triggerVirtualKey(key) {
+    handleGameInput(key);
+}
+
+window.addEventListener('keydown', (e) => {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
+    if (e.key === 'Escape') location.reload();
+    handleGameInput(e.key);
+});
+
+function handleSuccess() {
+    audioDing.currentTime = 0; audioDing.play();
+    score += level * 10;
+    if (sequence.length === 10) {
+        playVideo('finish'); audioClap.play(); createExplosion();
+        msg = "FINISH COMPLETE!"; isPostFinishWait = true; postFinishCounter = 0; sequence = []; return;
+    }
+    successCount++;
+    if (successCount >= level) {
+        if (level === 9) {
+            isPreFinish = true; preFinishCounter = 0; sequence = [];
+            msg = "GET READY FOR FINISH!"; msgTime = 100;
+        } else {
+            level++; successCount = 0;
+            audioLevelUp.src = `sounds/up${level}.mp3`; audioLevelUp.play();
+            createExplosion(); playVideo('dance'); msg = "LEVEL UP!"; generateSeq();
+        }
+    } else {
+        playVideo('dance'); msg = "PERFECT!"; generateSeq();
+    }
+}
+
+function generateSeq(count = level) {
+    userInput = [];
+    sequence = Array.from({length: count}, () => ({
+        key: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'][Math.floor(Math.random()*4)],
+        type: Math.random() > 0.5 ? 1 : 2
+    }));
+}
+
+function gameLoop(time) {
+    const dt = time - lastTime; lastTime = time;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const scale = canvas.height / 600;
+    const c1 = `rgb(${r1.value}, ${g1.value}, ${b1.value})`;
+    const c2 = `rgb(${r2.value}, ${g2.value}, ${b2.value})`;
+
+    const vidAspect = charVid.videoWidth / (charVid.videoHeight || 1);
+    let drawW = canvas.width, drawH = drawW / vidAspect;
+    if (drawH > canvas.height) { drawH = canvas.height; drawW = drawH * vidAspect; }
+    ctx.drawImage(charVid, (canvas.width - drawW) / 2, (canvas.height - drawH) / 2, drawW, drawH);
+
+    particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.02;
+        if (p.life <= 0) particles.splice(i, 1);
+        ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1.0;
+
+    fanAngle = (fanAngle + ((bpm/120)*360 * dt/1000)) % 360;
+    let currentBeat = Math.floor(fanAngle / 90);
+    if (currentBeat !== lastBeat && currentBeat === 0) {
+        if (isPreFinish) {
+            preFinishCounter++;
+            if (preFinishCounter >= 2) { isPreFinish = false; generateSeq(10); msg = "FINISH!!!"; msgTime = 40; }
+        }
+        if (isPostFinishWait) {
+            postFinishCounter++;
+            if (postFinishCounter >= 7 && postFinishCounter < 10) { msg = (10 - postFinishCounter).toString(); msgTime = 55; }
+            if (postFinishCounter >= 10) {
+                isPostFinishWait = false; level = 3; successCount = 0; generateSeq();
+                playVideo('wait'); msg = "RESTART LEVEL 3"; msgTime = 60;
             }
-        })();
-
-        const grid = document.getElementById('grid-container'), opS = document.getElementById('opSlider'), sizeS = document.getElementById('sizeSlider'), journalList = document.getElementById('journal-list'), timerEl = document.getElementById('timer'), autoMsg = document.getElementById('auto-msg'), pauseOverlay = document.getElementById('pause-overlay');
-        const dingSound = new Audio('sounds/Ding.wav'), failSound = new Audio('sounds/Fail.wav');
-        let cardData = [], first = null, second = null, pairs = 6, canClick = true, startTime, timerInterval, gameRunning = false, finalTimeSec = 0, elapsedBeforePause = 0;
-
-        function loadSettings() { const savedOp = localStorage.getItem('gabor_op'), savedSz = localStorage.getItem('gabor_sz'); if (savedOp) opS.value = savedOp; if (savedSz) sizeS.value = savedSz; }
-        function saveSettings() { localStorage.setItem('gabor_op', opS.value); localStorage.setItem('gabor_sz', sizeS.value); }
-
-        document.body.onmouseleave = () => pauseGame();
-        document.body.onmouseenter = () => resumeGame();
-
-        function pauseGame() { if (gameRunning) { clearInterval(timerInterval); elapsedBeforePause = Date.now() - startTime; } grid.style.opacity = "0"; pauseOverlay.style.display = "flex"; }
-        function resumeGame() { if (gameRunning) { startTime = Date.now() - elapsedBeforePause; startTimer(true); } grid.style.opacity = "1"; pauseOverlay.style.display = "none"; }
-
-        function adjust(type, step) {
-            const s = type === 'op' ? opS : sizeS;
-            s.value = parseInt(s.value) + step;
-            updateStyles(); saveSettings(); autoMsg.style.display = 'none';
         }
+    }
+    lastBeat = currentBeat;
 
-        function startTimer(isResume = false) {
-            if (!isResume) { startTime = Date.now(); elapsedBeforePause = 0; }
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                finalTimeSec = Math.floor((Date.now() - startTime) / 1000);
-                let m = Math.floor(finalTimeSec / 60).toString().padStart(2, '0');
-                let s = (finalTimeSec % 60).toString().padStart(2, '0');
-                timerEl.innerText = `${m}:${s}`;
-            }, 1000);
-        }
+    if (!isEnding) {
+        const keySpacing = 65 * scale, groupGap = 120 * scale, r = 50 * scale;
+        const totalWidth = (110 * scale) + groupGap + (sequence.length - 1) * keySpacing + (56 * scale);
+        const cx = (canvas.width - totalWidth) / 2 + (55 * scale), baseCenterY = canvas.height - (85 * scale);
+        const keysStartX = cx + (r + groupGap/2);
 
-        function sendToGoogleSheet(username, journalText) {
-            const webAppUrl = "https://script.google.com/macros/s/AKfycbyZDtcQG2ClFFR5BeYUt8xy4mQS4fMYuojg-qisObbuSRO2f5ltCJF3DDolqdYY5QPL7w/exec"; 
-            if (!webAppUrl || webAppUrl.includes("YOUR_WEB_APP_URL_HERE")) return;
+        ctx.beginPath(); ctx.arc(cx, baseCenterY, r, 0, Math.PI*2); ctx.strokeStyle = '#eee'; ctx.lineWidth=2; ctx.stroke();
+        ctx.beginPath(); ctx.lineWidth = 12 * scale; ctx.strokeStyle = c2;
+        ctx.arc(cx, baseCenterY, r + (5*scale), (Math.PI/180)*90, (Math.PI/180)*135); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, baseCenterY);
+        ctx.arc(cx, baseCenterY, r, (Math.PI/180)*fanAngle, (Math.PI/180)*(fanAngle + 12));
+        ctx.fillStyle = c1; ctx.fill();
 
-            fetch(webAppUrl, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ account: username, log: journalText })
-            }).catch(err => console.log("Lỗi đồng bộ Sheet:", err));
-        }
+        sequence.forEach((s, i) => {
+            const x = keysStartX + (i * keySpacing), y = baseCenterY;
+            ctx.beginPath(); ctx.arc(x, y, 28 * scale, 0, Math.PI*2);
+            if (userInput.length > i) { ctx.fillStyle = '#eee'; ctx.fill(); drawBoldArrow(x, y, ARROWS[s.key], '#ccc', scale); }
+            else { ctx.fillStyle = (s.type === 1 ? c1 : c2); ctx.fill(); drawBoldArrow(x, y, ARROWS[s.key], '#fff', scale); }
+        });
+    }
 
-        function saveRecord(timeStr) {
-            const now = new Date();
-            const dateStr = `${now.getDate()}/${now.getMonth()+1}`;
-            const records = JSON.parse(localStorage.getItem('gabor_records') || '[]');
-            const sessionNum = records.filter(r => r.date === dateStr).length + 1;
-            
-            const textLog = `${dateStr}-L${sessionNum}-Rõ ${opS.value}%-Sọc ${sizeS.value}-${timeStr}`;
-            
-            records.unshift({ date: dateStr, session: sessionNum, op: opS.value, sz: sizeS.value, time: timeStr });
-            localStorage.setItem('gabor_records', JSON.stringify(records.slice(0, 50)));
-            renderJournal();
-            
-            sendToGoogleSheet(currentUsername, textLog);
+    if (msgTime > 0) {
+        ctx.font = `bold ${50 * scale}px Arial`; 
+        ctx.fillStyle = (msg.includes("PERFECT") || msg.includes("LEVEL") || msg.includes("COMPLETE") || isPostFinishWait) ? "#4caf50" : "#f44336";
+        ctx.textAlign = "center"; ctx.fillText(msg, canvas.width/2, 100 * scale);
+        msgTime--;
+    }
 
-            setTimeout(() => {
-                let changed = false;
-                if (parseInt(opS.value) <= 5 && finalTimeSec < 12 && parseInt(sizeS.value) > 2) { sizeS.value = parseInt(sizeS.value) - 1; opS.value = 50; changed = true; }
-                else if (finalTimeSec < 12 && parseInt(opS.value) > 5) { opS.value = parseInt(opS.value) - 5; changed = true; }
-                if (changed) { updateStyles(); saveSettings(); autoMsg.style.display = 'block'; }
-            }, 500);
-            setTimeout(() => { autoMsg.style.display = 'none'; init(); }, 1500);
-        }
+    document.getElementById('hudStatus').innerText = `Level: ${level} | Count: ${successCount}/${level} | Score: ${score}`;
+    if (document.getElementById('game-layer').style.display === 'block') requestAnimationFrame(gameLoop);
+}
 
-        function renderJournal() {
-            const records = JSON.parse(localStorage.getItem('gabor_records') || '[]');
-            journalList.innerHTML = records.map(r => `<li>${r.date} - L${r.session} - Rõ ${r.op}% - Sọc ${r.sz} - ${r.time}</li>`).join('');
-        }
-
-        function clearJournal() { if(confirm("Xóa hết nhật ký?")) { localStorage.removeItem('gabor_records'); renderJournal(); } }
-
-        function init() {
-            grid.innerHTML = ''; cardData = []; first = null; second = null; pairs = 6; canClick = true;
-            document.getElementById('pairs-left').innerText = pairs; timerEl.innerText = "00:00";
-            gameRunning = false; clearInterval(timerInterval);
-            if (!document.hasFocus() || !document.body.matches(':hover')) pauseGame();
-            else { grid.style.opacity = "1"; pauseOverlay.style.display = "none"; }
-
-            let angles = ["0deg", "45deg", "90deg", "135deg", "30deg", "60deg"];
-            let pool = [...angles, ...angles].sort(() => Math.random() - 0.5);
-            pool.forEach((ang) => {
-                const card = document.createElement('div');
-                card.className = 'card'; card.innerHTML = `<div class="gabor-content" style="--ang: ${ang};"></div>`;
-                grid.appendChild(card);
-                let data = { dom: card, ang: ang, matched: false };
-                card.onclick = () => {
-                    if (!canClick || data.matched || data === first) return;
-                    if (!gameRunning) { gameRunning = true; startTimer(); }
-                    card.classList.add('selected');
-                    if (!first) first = data;
-                    else {
-                        second = data;
-                        if (first.ang === second.ang) {
-                            dingSound.play(); first.dom.classList.replace('selected', 'matched'); second.dom.classList.replace('selected', 'matched');
-                            first.matched = second.matched = true; pairs--;
-                            document.getElementById('pairs-left').innerText = pairs; first = null; second = null;
-                            if(pairs === 0) { clearInterval(timerInterval); saveRecord(timerEl.innerText); }
-                        } else {
-                            canClick = false; failSound.play();
-                            setTimeout(() => { first.dom.classList.remove('selected'); second.dom.classList.remove('selected'); first = null; second = null; canClick = true; }, 400);
-                        }
-                    }
-                };
-            });
-            updateStyles();
-        }
-
-        function updateStyles() {
-            const op = opS.value / 100, size = parseInt(sizeS.value);
-            document.querySelectorAll('.gabor-content').forEach(el => {
-                el.style.setProperty('--op', op); el.style.setProperty('--sz', size + "px"); el.style.setProperty('--sz2', (size * 2) + "px");
-            });
-        }
-
-        opS.oninput = () => { updateStyles(); saveSettings(); };
-        sizeS.oninput = () => { updateStyles(); saveSettings(); };
-        document.getElementById('resetBtn').onclick = () => init();
-        loadSettings(); renderJournal(); init();
-    </script>
+function drawBoldArrow(x, y, dir, color, scale) {
+    ctx.strokeStyle = color; ctx.lineWidth = 10 * scale;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    const size = 18 * scale; ctx.beginPath();
+    if (dir === 'U') { ctx.moveTo(x, y + size); ctx.lineTo(x, y - size); ctx.moveTo(x - size, y - size/2); ctx.lineTo(x, y - size); ctx.lineTo(x + size, y - size/2); }
+    else if (dir === 'D') { ctx.moveTo(x, y - size); ctx.lineTo(x, y + size); ctx.moveTo(x - size, y + size/2); ctx.lineTo(x, y + size); ctx.lineTo(x + size, y + size/2); }
+    else if (dir === 'L') { ctx.moveTo(x + size, y); ctx.lineTo(x - size, y); ctx.moveTo(x - size/2, y - size); ctx.lineTo(x - size, y); ctx.lineTo(x - size/2, y + size); }
+    else if (dir === 'R') { ctx.moveTo(x - size, y); ctx.lineTo(x + size, y); ctx.moveTo(x + size/2, y - size); ctx.lineTo(x + size, y); ctx.lineTo(x + size/2, y + size); }
+    ctx.stroke();
+}
+function resize() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
+window.onresize = resize;
+</script>
 </body>
 </html>
