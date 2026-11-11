@@ -1,1136 +1,276 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Game Xếp Hình Trượt Professional - Shine Vision App</title>
-
-    <!-- 0. KIỂM TRA ĐĂNG NHẬP NGAY LẬP TỨC TRƯỚC KHI TẢI BẤT KỲ SCRIPT NÀO KHÁC -->
-    <script>
-        (function immediateAuthCheck() {
-            const loginData = JSON.parse(localStorage.getItem('user_login'));
-            if (!loginData) {
-                if (window.stop) window.stop(); 
-                window.location.replace('../index.html');
-            }
-        })();
-    </script>
-
-    <!-- Nhúng auth.js để kiểm tra đăng nhập & bảo mật -->
     <script src="../auth.js"></script>
-    <!-- Nạp file readme.js chứa thông tin hướng dẫn -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shine Vision - Gabor Auto-Next</title>
     <script src="readme.js"></script>
-
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: manipulation;
-        }
-
-        body {
-            background-color: #1e1e24;
-            color: #fff;
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 10px;
-            overflow: hidden;
-        }
-
-        /* KHỐI NỘI DUNG CHÍNH (ẨN MẶC ĐỊNH CHO ĐẾN KHI AUTH THÀNH CÔNG) */
-        #main-app-content {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            position: relative;
-        }
-
-        h1 {
-            margin-bottom: 8px;
-            color: #4dabf7;
-            text-align: center;
-            font-size: 22px;
-            flex-shrink: 0;
-        }
-
-        /* --- BỘ ĐẾM THỜI GIAN CHƠI (GÓC TRÊN BÊN PHẢI) --- */
-        #timer-display {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            color: #ff4d4d;
-            font-size: 16px;
-            font-weight: bold;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 4px 10px;
-            border-radius: 6px;
-            border: 1px solid #ff4d4d;
-            z-index: 150;
-            user-select: none;
-        }
-
-        /* --- MENU CHỌN GAME --- */
-        #menu-screen {
-            background: #2b2d42;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            max-width: 900px;
-            width: 95%;
-            overflow-y: auto;
-            max-height: calc(100vh - 80px);
-        }
-
-        .menu-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #a5d8ff;
-            margin-bottom: 15px;
-        }
-
-        .image-gallery-horizontal {
-            display: flex;
-            gap: 20px;
-            overflow-x: auto;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-            scroll-behavior: smooth;
-        }
-
-        .image-gallery-horizontal::-webkit-scrollbar {
-            height: 10px;
-        }
-        .image-gallery-horizontal::-webkit-scrollbar-track {
-            background: #1e1e24;
-            border-radius: 5px;
-        }
-        .image-gallery-horizontal::-webkit-scrollbar-thumb {
-            background: #4dabf7;
-            border-radius: 5px;
-        }
-
-        .image-card {
-            flex: 0 0 280px;
-            background: #1e1e24;
-            border: 3px solid #4a4e69;
-            border-radius: 12px;
-            padding: 12px;
-            cursor: pointer;
-            text-align: center;
-            transition: transform 0.2s, border-color 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .image-card:hover {
-            transform: translateY(-4px);
-            border-color: #74c0fc;
-        }
-
-        .image-card.selected {
-            border-color: #38d9a9;
-            background: #22223b;
-            box-shadow: 0 0 14px rgba(56, 217, 169, 0.5);
-        }
-
-        .image-card img, .image-card .custom-icon {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            background: #2b2d42;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-        }
-
-        .image-card .card-info {
-            font-size: 16px;
-            color: #e9ecef;
-            font-weight: bold;
-        }
-
-        .image-card .card-meta {
-            font-size: 14px;
-            color: #fab005;
-            margin-top: 4px;
-        }
-
-        #custom-options {
-            display: none;
-            background: #22223b;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px dashed #4dabf7;
-        }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 14px;
-            color: #a5d8ff;
-        }
-
-        input[type="number"], input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #4a4e69;
-            background: #1e1e24;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .grid-inputs {
-            display: flex;
-            gap: 15px;
-        }
-
-        .input-item {
-            flex: 1;
-        }
-
-        .input-item label {
-            font-size: 13px;
-            color: #fab005;
-            margin-bottom: 4px;
-        }
-
-        .btn-start {
-            width: 100%;
-            padding: 14px;
-            background: #38d9a9;
-            color: #121212;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-start:hover {
-            background: #20c997;
-        }
-
-        /* --- GIAO DIỆN TRÒ CHƠI --- */
-        #game-screen {
-            display: none;
-            width: 100%;
-            height: calc(100vh - 55px);
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            position: relative;
-        }
-
-        .game-header {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 8px;
-            width: 100%;
-            max-width: 850px;
-            justify-content: space-between;
-            align-items: center;
-            flex-shrink: 0;
-            background: #2b2d42;
-            padding: 8px 16px;
-            border-radius: 8px;
-            flex-wrap: wrap;
-        }
-
-        .btn-action {
-            padding: 8px 14px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            background: #4dabf7;
-            color: #fff;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .btn-back {
-            background: #ff6b6b;
-        }
-
-        /* CÔNG TẮC GẠT GỢI Ý MỜ */
-        .toggle-hint-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: #a5d8ff;
-            font-weight: bold;
-            user-select: none;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 22px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #4a4e69;
-            transition: .3s;
-            border-radius: 22px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: #38d9a9;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(22px);
-        }
-
-        .workspace-wrapper {
-            position: relative;
-            width: 100%;
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        .workspace {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transform-origin: center center;
-            transition: transform 0.1s ease-out;
-        }
-
-        #puzzle-container {
-            position: relative;
-            background-color: #121212;
-            border: 4px solid #4dabf7;
-            border-radius: 8px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-            touch-action: none;
-        }
-
-        .tile {
-            position: absolute;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: inset 0 0 4px rgba(0,0,0,0.4);
-            cursor: pointer;
-            transition: left 0.15s ease, top 0.15s ease;
-            user-select: none;
-        }
-
-        .tile-label {
-            position: absolute;
-            top: 0;
-            left: 0;
-            background-color: rgba(0, 0, 0, 0.65);
-            color: #fff;
-            font-size: 11px;
-            font-weight: bold;
-            padding: 2px 4px;
-            border-bottom-right-radius: 4px;
-            pointer-events: none;
-            display: block;
-        }
-
-        .hide-labels .tile-label {
-            display: none !important;
-        }
-
-        .tile.empty {
-            background: #1e1e24 !important;
-            border: none;
-            cursor: default;
-        }
-
-        .tile.empty .tile-label {
-            display: none !important;
-        }
-
-        /* POPUP XEM ẢNH MẪU & README OVERLAY */
-        #preview-modal, #readme-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 200;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-
-        .modal-content {
-            position: relative;
-            background: #2b2d42;
-            padding: 20px;
-            border-radius: 12px;
-            border: 2px solid #4dabf7;
-            max-width: 90vw;
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-y: auto;
-        }
-
-        #preview-modal img {
-            max-width: 80vw;
-            max-height: 70vh;
-            object-fit: contain;
-            border-radius: 6px;
-            border: 1px solid #fff;
-        }
-
-        #readme-content {
-            color: #e9ecef;
-            font-size: 15px;
-            line-height: 1.6;
-            width: 100%;
-            max-width: 700px;
-            white-space: pre-wrap;
-            text-align: left;
-        }
-
-        .btn-close-modal {
-            margin-top: 15px;
-            padding: 10px 24px;
-            background: #ff6b6b;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        #win-message {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(18, 18, 18, 0.95);
-            padding: 20px 30px;
-            border: 3px solid #51cf66;
-            border-radius: 12px;
-            font-size: 22px;
-            font-weight: bold;
-            color: #51cf66;
-            text-align: center;
-            display: none;
-            z-index: 100;
-            box-shadow: 0 0 30px rgba(81, 207, 102, 0.5);
-        }
-
-        @media (max-width: 768px) {
-            .image-card {
-                flex: 0 0 200px;
-            }
-            .image-card img, .image-card .custom-icon {
-                height: 140px;
-            }
-            .game-header {
-                padding: 6px 10px;
-                gap: 6px;
-            }
-            .btn-action {
-                font-size: 11px;
-                padding: 6px 10px;
-            }
-            .toggle-hint-wrapper {
-                font-size: 11px;
-            }
-        }
+        body { margin: 0; padding: 0; background-color: #7F7F7F; overflow: hidden; font-family: sans-serif; touch-action: none; display: flex; flex-direction: column; height: 100vh; position: relative; }
+        #main-app-content { display: none; flex-direction: column; height: 100vh; width: 100%; }
+        #game-ui { text-align: center; color: white; font-size: 16px; font-weight: bold; padding: 10px; background: rgba(0,0,0,0.2); z-index: 10; }
+        #grid-container { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; align-content: center; justify-items: center; transition: opacity 0.1s; }
+        #pause-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #7F7F7F; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: white; font-weight: bold; pointer-events: none; }
+        .card { background-color: #7F7F7F; border: 2px solid #999; border-radius: 12px; width: 80px; height: 80px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .gabor-content { position: absolute; width: 100%; height: 100%; background: repeating-linear-gradient(var(--ang), #fff, #fff 1px, #000 var(--sz), #000 var(--sz2)); mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%); opacity: var(--op); }
+        .card.selected { border-color: #2196F3; box-shadow: 0 0 15px #2196F3; z-index: 2; }
+        .card.matched { opacity: 0.1; pointer-events: none; }
+        #controls-wrapper { background: white; padding: 15px; border-radius: 20px 20px 0 0; display: flex; flex-wrap: wrap; gap: 15px; max-height: 45vh; overflow-y: auto; z-index: 101; position: relative; }
+        .control-section { flex: 1; min-width: 250px; }
+        .journal-section { flex: 1; min-width: 250px; border-left: 1px solid #eee; padding-left: 15px; }
+        .slider-group { display: flex; align-items: center; margin-bottom: 12px; gap: 8px; }
+        .slider-group label { width: 60px; font-size: 12px; font-weight: bold; }
+        .slider-group input { flex: 1; }
+        .btn-step { width: 30px; height: 30px; border-radius: 5px; border: 1px solid #ccc; background: #f8f8f8; cursor: pointer; font-weight: bold; }
+        #journal-list { font-size: 12px; list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 5px; }
+        #journal-list li { padding: 5px; border-bottom: 1px solid #eee; color: #444; }
+        button#resetBtn { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #2196F3; color: white; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        .msg-alert { color: #d32f2f; font-size: 11px; font-weight: bold; margin-top: 5px; display: none; }
+        #instruction-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; color: white; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        #instruction-content { background: #fff; color: #333; padding: 20px; border-radius: 10px; max-width: 600px; margin: 40px auto; white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
     </style>
 </head>
 <body oncontextmenu="return false;">
-
-    <div id="main-app-content">
-        <!-- ĐỒNG HỒ ĐẾM GIÂY PHÍA TRÊN BÊN PHẢI -->
-        <div id="timer-display">⏱️ 00:00</div>
-
-        <h1>XẾP HÌNH TRƯỢT SỐ HÓA</h1>
-
-        <!-- 1. MENU CHỌN GAME -->
-        <div id="menu-screen">
-            <div class="menu-title">Chọn hình ảnh & Độ khó:</div>
-            
-            <div class="image-gallery-horizontal" id="gallery">
-                <div class="image-card selected" data-type="preset" data-src="image/anh1.jpg" data-rows="3" data-cols="3">
-                    <img src="image/anh1.jpg" alt="Ảnh 1" onerror="this.src='https://picsum.photos/280/200?random=1'">
-                    <div class="card-info">Ảnh 1 (3x3)</div>
-                    <div class="card-meta">⭐⭐</div>
-                </div>
-                <div class="image-card" data-type="preset" data-src="image/anh2.jpg" data-rows="4" data-cols="4">
-                    <img src="image/anh2.jpg" alt="Ảnh 2" onerror="this.src='https://picsum.photos/280/200?random=2'">
-                    <div class="card-info">Ảnh 2 (4x4)</div>
-                    <div class="card-meta">⭐⭐⭐</div>
-                </div>
-                <div class="image-card" data-type="preset" data-src="image/anh3.jpg" data-rows="5" data-cols="5">
-                    <img src="image/anh3.jpg" alt="Ảnh 3" onerror="this.src='https://picsum.photos/280/200?random=3'">
-                    <div class="card-info">Ảnh 3 (5x5)</div>
-                    <div class="card-meta">⭐⭐⭐⭐</div>
-                </div>
-                <div class="image-card" data-type="preset" data-src="image/anh4.jpg" data-rows="5" data-cols="7">
-                    <img src="image/anh4.jpg" alt="Ảnh 4" onerror="this.src='https://picsum.photos/280/200?random=4'">
-                    <div class="card-info">Ảnh 4 (5x7)</div>
-                    <div class="card-meta">⭐⭐⭐⭐⭐</div>
-                </div>
-                <div class="image-card" data-type="preset" data-src="image/anh5.jpg" data-rows="5" data-cols="7">
-                    <img src="image/anh5.jpg" alt="Ảnh 5" onerror="this.src='https://picsum.photos/280/200?random=5'">
-                    <div class="card-info">Ảnh 5 (5x7)</div>
-                    <div class="card-meta">⭐⭐⭐⭐⭐</div>
-                </div>
-                <div class="image-card" data-type="custom" id="card-custom">
-                    <div class="custom-icon">🛠️</div>
-                    <div class="card-info">Tự chọn</div>
-                    <div class="card-meta">Tùy chỉnh</div>
-                </div>
-            </div>
-
-            <div id="custom-options">
-                <div class="form-group">
-                    <label for="custom-file">Tải ảnh từ máy tính / điện thoại:</label>
-                    <input type="file" id="custom-file" accept="image/*">
-                </div>
-                <div class="form-group">
-                    <label>Số lượng ô lưới:</label>
-                    <div class="grid-inputs">
-                        <div class="input-item">
-                            <label for="custom-rows">Hàng (Chiều dọc):</label>
-                            <input type="number" id="custom-rows" min="2" max="10" value="5" placeholder="Số hàng">
-                        </div>
-                        <div class="input-item">
-                            <label for="custom-cols">Cột (Chiều ngang):</label>
-                            <input type="number" id="custom-cols" min="2" max="10" value="7" placeholder="Số cột">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <button class="btn-start" id="btn-start-game">BẮT ĐẦU CHƠI 🚀</button>
-        </div>
-
-        <!-- 2. GIAO DIỆN BÀN CHƠI GAME -->
-        <div id="game-screen">
-            <div class="game-header">
-                <button class="btn-action btn-back" id="btn-menu">⬅ Menu</button>
+    <script>
+        // --- BẢO MẬT CONSOLE (ĐÃ TỐI ƯU THÂN THIỆN VỚI MOBILE / IOS NHƯ APP PIANO) ---
+        (function() {
+            const check = function() {
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const threshold = 160;
+                const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+                const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+                const devtools = { open: false };
+                const element = new Image();
+                Object.defineProperty(element, 'id', {
+                    get: function() { devtools.open = true; terminateSession(); }
+                });
+                function terminateSession() {
+                    localStorage.removeItem('user_login');
+                    window.location.replace("about:blank");
+                    document.body.innerHTML = "";
+                }
+                console.log(element);
+                console.clear();
                 
-                <div class="toggle-hint-wrapper">
-                    <span>Gợi ý</span>
-                    <label class="switch">
-                        <input type="checkbox" id="toggle-hint">
-                        <span class="slider"></span>
-                    </label>
-                </div>
+                // Chỉ quét kích thước cửa sổ trên PC, trên mobile bỏ qua để tránh lỗi vặt khi vuốt/thanh địa chỉ ẩn hiện
+                if (!isMobile) {
+                    if (widthThreshold || heightThreshold || devtools.open) terminateSession();
+                } else {
+                    if (devtools.open) terminateSession();
+                }
+            };
 
-                <!-- NÚT TOÀN MÀN HÌNH MỚI BỔ SUNG -->
-                <button class="btn-action" id="btn-fullscreen" style="background: #fab005; color: #121212;">🖥️ Toàn Màn Hình</button>
+            // Kiểm tra performance/debugger thông minh (bỏ qua setInterval gắt gao gây lag văng trang trên Mobile Safari)
+            setInterval(function() {
+                const start = performance.now();
+                debugger;
+                if (performance.now() - start > 100) {
+                    window.location.replace("about:blank");
+                }
+            }, 500);
 
-                <button class="btn-action" id="btn-show-preview">📷 Xem Ảnh Mẫu</button>
-                <button class="btn-action" id="btn-shuffle">🔀 Xáo Trộn</button>
+            setInterval(check, 500);
+            window.addEventListener('resize', check);
+        })();
+
+        // --- TỰ ĐỘNG LOGOUT IM LẶNG KHI TRANG CHÍNH LOGOUT ---
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'user_login' && !e.newValue) {
+                window.location.replace('../index.html');
+                document.body.innerHTML = "";
+            }
+        });
+
+        // --- CHẶN PHÍM TẮT VÀ KẾT NỐI README.JS ---
+        (function() {
+            const showHelp = () => {
+                const modal = document.getElementById('instruction-modal');
+                const content = document.getElementById('readme-text');
+                
+                if (typeof readmeContent !== 'undefined') {
+                    content.innerHTML = readmeContent;
+                } else if (typeof getReadmeContent === 'function') {
+                    content.innerHTML = getReadmeContent();
+                } else {
+                    content.innerHTML = "Đang tải hướng dẫn...";
+                }
+                
+                modal.style.display = 'block';
+            };
+
+            window.addEventListener('keydown', (e) => {
+                const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                const metaOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+                const forbiddenCodes = [123, 73, 74, 67, 85, 83];
+                
+                if (forbiddenCodes.includes(e.keyCode)) {
+                    if (e.keyCode === 123 || metaOrCtrl) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showHelp();
+                    }
+                }
+            }, true);
+        })();
+    </script>
+
+    <div id="pause-overlay">⏸ TẠM DỪNG<br><small>Di chuyển chuột vào trang web để tiếp tục</small></div>
+    <div id="main-app-content">
+        <div id="game-ui">Cặp còn lại: <span id="pairs-left">6</span> | <span id="timer">00:00</span></div>
+        <div id="grid-container"></div>
+        <div id="controls-wrapper">
+            <div class="control-section">
+                <div class="slider-group"><label>Độ rõ:</label><button class="btn-step" onclick="adjust('op', -5)">-</button><input type="range" id="opSlider" min="5" max="100" value="100"><button class="btn-step" onclick="adjust('op', 5)">+</button></div>
+                <div class="slider-group"><label>Cỡ sọc:</label><button class="btn-step" onclick="adjust('sz', -1)">-</button><input type="range" id="sizeSlider" min="2" max="10" value="10"><button class="btn-step" onclick="adjust('sz', 1)">+</button></div>
+                <button id="resetBtn">🔄 VÁN MỚI / ĐỔI VỊ TRÍ</button>
+                <div id="auto-msg" class="msg-alert">🔥 Tuyệt vời! Độ khó đã tự tăng.</div>
             </div>
-
-            <div class="workspace-wrapper" id="workspace-wrapper">
-                <div class="workspace" id="workspace">
-                    <div id="puzzle-container"></div>
-                </div>
+            <div class="journal-section">
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between;"><span>NHẬT KÝ TẬP</span><span style="color:red; cursor:pointer; font-size: 11px;" onclick="clearJournal()">Xóa hết</span></div>
+                <ul id="journal-list"></ul>
             </div>
-
-            <div id="win-message">🎉 CHÚC MỪNG!<br>BẠN ĐÃ HOÀN THÀNH BỨC HÌNH!</div>
         </div>
-
-        <!-- POPUP XEM ẢNH MẪU -->
-        <div id="preview-modal">
-            <div class="modal-content">
-                <img id="modal-preview-img" src="" alt="Ảnh Mẫu">
-                <button class="btn-close-modal" id="btn-close-preview">Đóng</button>
-            </div>
-        </div>
-
-        <!-- OVERLAY HƯỚNG DẪN TỪ FILE README.JS -->
-        <div id="readme-modal">
-            <div class="modal-content">
-                <h2 style="color: #4dabf7; margin-bottom: 15px; width: 100%; text-align: center;">📖 HƯỚNG DẪN SỬ DỤNG APP</h2>
-                <div id="readme-content"></div>
-                <button class="btn-close-modal" id="btn-close-readme">Tôi Đã Hiểu</button>
+        <div id="instruction-modal" onclick="this.style.display='none'">
+            <div id="instruction-content" onclick="event.stopPropagation()">
+                <div id="readme-text"></div>
+                <button onclick="document.getElementById('instruction-modal').style.display='none'" style="margin-top:20px; width:100%; padding:10px; cursor:pointer; font-weight:bold;">ĐÓNG</button>
             </div>
         </div>
     </div>
 
     <script>
-    // 1. URL GOOGLE APPS SCRIPT ĐÃ TÍCH HỢP
-    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyuFViMNPhOFPlCwuCN0YLP6yEbyOtugJ7ezDIwzjBo54HXR8adr9cpGgwQcFR_Ri9yKw/exec";
-
-    // 2. KIỂM TRA BẢO MẬT DOMAIN
-    (function checkDomain() {
-        const allowedDomain = "shinevisionapp.com";
-        const hostname = window.location.hostname.toLowerCase();
-        const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "" || window.location.protocol === "file:";
+        // --- LOGIC ỨNG DỤNG ---
+        let currentUsername = ""; 
         
-        if (!isLocal && !hostname.endsWith(allowedDomain)) {
-            console.warn("Tên miền không được ủy quyền.");
-        }
-    })();
-
-    // 3. HIỂN THỊ GIAO DIỆN NẾU AUTH THÀNH CÔNG VÀ LẮNG NGHE ĐĂNG XUẤT TUẦN TỰ
-    let currentUsername = "Khách";
-    (function initAppAuth() {
-        const loginData = JSON.parse(localStorage.getItem('user_login'));
-        
-        if (!loginData) {
-            document.body.innerHTML = "";
-            window.location.replace('../index.html');
-            return;
-        } 
-        
-        document.getElementById('main-app-content').style.display = 'flex';
-        currentUsername = loginData.username || loginData.email || loginData.phone || "Ẩn danh";
-
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'user_login' && !e.newValue) {
-                document.body.innerHTML = "";
-                window.location.replace('../index.html');
+        (function() {
+            const loginData = JSON.parse(localStorage.getItem('user_login'));
+            if (!loginData) { window.location.replace('../index.html'); } 
+            else { 
+                document.getElementById('main-app-content').style.display = 'flex';
+                currentUsername = loginData.user || loginData.username || loginData.email || "Ẩn danh";
             }
-        });
-    })();
+        })();
 
-    // 4. KHAI BÁO BIẾN CÔNG CỤ GAME XẾP HÌNH
-    const ROWS_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        const grid = document.getElementById('grid-container'), opS = document.getElementById('opSlider'), sizeS = document.getElementById('sizeSlider'), journalList = document.getElementById('journal-list'), timerEl = document.getElementById('timer'), autoMsg = document.getElementById('auto-msg'), pauseOverlay = document.getElementById('pause-overlay');
+        const dingSound = new Audio('sounds/Ding.wav'), failSound = new Audio('sounds/Fail.wav');
+        let cardData = [], first = null, second = null, pairs = 6, canClick = true, startTime, timerInterval, gameRunning = false, finalTimeSec = 0, elapsedBeforePause = 0;
 
-    const menuScreen = document.getElementById('menu-screen');
-    const gameScreen = document.getElementById('game-screen');
-    const cards = document.querySelectorAll('.image-card');
-    const customOptions = document.getElementById('custom-options');
-    const customFile = document.getElementById('custom-file');
-    const customRowsInput = document.getElementById('custom-rows');
-    const customColsInput = document.getElementById('custom-cols');
-    const btnStart = document.getElementById('btn-start-game');
-    const btnMenu = document.getElementById('btn-menu');
-    const btnShuffle = document.getElementById('btn-shuffle');
-    const btnShowPreview = document.getElementById('btn-show-preview');
-    const btnClosePreview = document.getElementById('btn-close-preview');
-    const previewModal = document.getElementById('preview-modal');
-    const modalPreviewImg = document.getElementById('modal-preview-img');
-    const toggleHint = document.getElementById('toggle-hint');
-    const btnFullscreen = document.getElementById('btn-fullscreen');
-    
-    const container = document.getElementById('puzzle-container');
-    const winMessage = document.getElementById('win-message');
-    const workspace = document.getElementById('workspace');
-    const workspaceWrapper = document.getElementById('workspace-wrapper');
+        function loadSettings() { const savedOp = localStorage.getItem('gabor_op'), savedSz = localStorage.getItem('gabor_sz'); if (savedOp) opS.value = savedOp; if (savedSz) sizeS.value = savedSz; }
+        function saveSettings() { localStorage.setItem('gabor_op', opS.value); localStorage.setItem('gabor_sz', sizeS.value); }
 
-    const readmeModal = document.getElementById('readme-modal');
-    const readmeContent = document.getElementById('readme-content');
-    const btnCloseReadme = document.getElementById('btn-close-readme');
-    const timerDisplay = document.getElementById('timer-display');
+        document.body.onmouseleave = () => pauseGame();
+        document.body.onmouseenter = () => resumeGame();
 
-    let selectedCard = document.querySelector('.image-card.selected');
-    let rows = 3;
-    let cols = 3;
-    let imgUrl = '';
-    let tiles = [];
-    let tileWidth = 80;
-    let tileHeight = 80;
-    let currentScale = 1;
+        function pauseGame() { if (gameRunning) { clearInterval(timerInterval); elapsedBeforePause = Date.now() - startTime; } grid.style.opacity = "0"; pauseOverlay.style.display = "flex"; }
+        function resumeGame() { if (gameRunning) { startTime = Date.now() - elapsedBeforePause; startTimer(true); } grid.style.opacity = "1"; pauseOverlay.style.display = "none"; }
 
-    // Biến cho tính năng đếm giờ
-    let timerInterval = null;
-    let secondsElapsed = 0;
-    let isTimerStarted = false;
-
-    function resetTimer() {
-        clearInterval(timerInterval);
-        secondsElapsed = 0;
-        isTimerStarted = false;
-        timerDisplay.innerText = "⏱️ 00:00";
-    }
-
-    function startTimer() {
-        if (isTimerStarted) return;
-        isTimerStarted = true;
-        secondsElapsed = 0;
-        timerInterval = setInterval(() => {
-            secondsElapsed++;
-            const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
-            const secs = String(secondsElapsed % 60).padStart(2, '0');
-            timerDisplay.innerText = `⏱️ ${mins}:${secs}`;
-        }, 1000);
-    }
-
-    function stopTimer() {
-        clearInterval(timerInterval);
-        isTimerStarted = false;
-    }
-
-    // --- LOGIC XỬ LÝ NÚT TOÀN MÀN HÌNH (FULLSCREEN) ---
-    function toggleFullScreen() {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            const docEl = document.documentElement;
-            if (docEl.requestFullscreen) {
-                docEl.requestFullscreen().catch(err => console.log(err));
-            } else if (docEl.webkitRequestFullscreen) {
-                docEl.webkitRequestFullscreen();
-            }
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            }
-        }
-    }
-
-    function updateFullscreenButtonText() {
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
-            btnFullscreen.innerHTML = '🗗 Thu Nhỏ';
-        } else {
-            btnFullscreen.innerHTML = '🖥️ Toàn Màn Hình';
-        }
-    }
-
-    btnFullscreen.addEventListener('click', toggleFullScreen);
-
-    document.addEventListener('fullscreenchange', () => {
-        updateFullscreenButtonText();
-        setTimeout(autoScaleWorkspace, 100);
-    });
-
-    document.addEventListener('webkitfullscreenchange', () => {
-        updateFullscreenButtonText();
-        setTimeout(autoScaleWorkspace, 100);
-    });
-
-    // 5. HÀM TẠO DẤU THỜI GIAN THEO ĐỊNH DẠNG DD/MM/YY - hh/mm
-    function getFormattedTimestamp() {
-        const now = new Date();
-        const dd = String(now.getDate()).padStart(2, '0');
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const yy = String(now.getFullYear()).slice(-2);
-        const hh = String(now.getHours()).padStart(2, '0');
-        const min = String(now.getMinutes()).padStart(2, '0');
-        return `${dd}/${mm}/${yy} - ${hh}/${min}`;
-    }
-
-    // 6. HÀM TỰ ĐỘNG GỬI KẾT QUẢ VỀ GOOGLE SHEET
-    function sendResultToGoogleSheet(timePlayedText) {
-        if (!GOOGLE_SHEET_WEB_APP_URL) return;
-
-        const payload = {
-            username: currentUsername,
-            timestamp: getFormattedTimestamp(),
-            result: `${rows}x${cols} - ${timePlayedText}`
-        };
-
-        fetch(GOOGLE_SHEET_WEB_APP_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8',
-            },
-            body: JSON.stringify(payload)
-        }).then(() => {
-            console.log("Đã gửi kết quả lên Google Sheet thành công!");
-        }).catch(err => {
-            console.error("Lỗi gửi kết quả:", err);
-        });
-    }
-
-    // XỬ LÝ HIỂN THỊ OVERLAY README
-    function showReadmeOverlay() {
-        let contentText = "";
-        if (typeof README_TEXT !== 'undefined') {
-            contentText = README_TEXT;
-        } else if (typeof README_DATA !== 'undefined') {
-            contentText = typeof README_DATA === 'string' ? README_DATA : JSON.stringify(README_DATA, null, 2);
-        } else {
-            contentText = "HƯỚNG DẪN SỬ DỤNG GAME XẾP HÌNH TRƯỢT:\n\n1. Sử dụng chuột/Cảm ứng để di chuyển các ô vuông gần ô trống.\n2. Sử dụng các phím mũi tên (Up, Down, Left, Right) trên bàn phím để trượt các ô.\n3. Nhấn '📷 Xem Ảnh Mẫu' để xem bức ảnh hoàn chỉnh.\n4. Bật/tắt công tắc 'Gợi ý' để ẩn/hiển thị ký hiệu ô.";
-        }
-        readmeContent.textContent = contentText;
-        readmeModal.style.display = 'flex';
-    }
-
-    btnCloseReadme.addEventListener('click', () => {
-        readmeModal.style.display = 'none';
-    });
-
-    readmeModal.addEventListener('click', (e) => {
-        if (e.target === readmeModal) {
-            readmeModal.style.display = 'none';
-        }
-    });
-
-    // CHẶN DEVTOOLS, LƯU TRANG (CTRL+S) VÀ CÁC THAO TÁC TRÊN WIN & MAC (CHO PHÉP F5/CTRL+R RELOAD)
-    window.addEventListener('keydown', (e) => {
-        const isCmdOrCtrl = e.metaKey || e.ctrlKey;
-        const isShift = e.shiftKey;
-        const isAlt = e.altKey;
-        const key = e.key.toUpperCase();
-
-        const isDevTools = key === 'F12' ||
-            (isCmdOrCtrl && isShift && (key === 'I' || key === 'J' || key === 'C')) ||
-            (isCmdOrCtrl && isAlt && (key === 'I' || key === 'J' || key === 'C' || key === 'U')) ||
-            (isCmdOrCtrl && key === 'U');
-    
-        const isSaveOrPageAction = isCmdOrCtrl && (key === 'S' || key === 'P' || key === 'A');
-
-        if (isDevTools || isSaveOrPageAction) {
-            e.preventDefault();
-            e.stopPropagation();
-            showReadmeOverlay();
-            return false;
+        function adjust(type, step) {
+            const s = type === 'op' ? opS : sizeS;
+            s.value = parseInt(s.value) + step;
+            updateStyles(); saveSettings(); autoMsg.style.display = 'none';
         }
 
-        if (gameScreen.style.display !== 'flex') return;
-        if (previewModal.style.display === 'flex' || readmeModal.style.display === 'flex') return;
-
-        const emptyTile = tiles.find(t => t.classList.contains('empty'));
-        if (!emptyTile) return;
-
-        const er = parseInt(emptyTile.dataset.currentRow);
-        const ec = parseInt(emptyTile.dataset.currentCol);
-
-        let targetRow = er;
-        let targetCol = ec;
-
-        if (e.key === 'ArrowUp') {
-            targetRow = er + 1;
-        } else if (e.key === 'ArrowDown') {
-            targetRow = er - 1;
-        } else if (e.key === 'ArrowLeft') {
-            targetCol = ec + 1;
-        } else if (e.key === 'ArrowRight') {
-            targetCol = ec - 1;
-        } else {
-            return;
+        function startTimer(isResume = false) {
+            if (!isResume) { startTime = Date.now(); elapsedBeforePause = 0; }
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                finalTimeSec = Math.floor((Date.now() - startTime) / 1000);
+                let m = Math.floor(finalTimeSec / 60).toString().padStart(2, '0');
+                let s = (finalTimeSec % 60).toString().padStart(2, '0');
+                timerEl.innerText = `${m}:${s}`;
+            }, 1000);
         }
 
-        e.preventDefault();
+        function sendToGoogleSheet(username, journalText) {
+            const webAppUrl = "https://script.google.com/macros/s/AKfycbyZDtcQG2ClFFR5BeYUt8xy4mQS4fMYuojg-qisObbuSRO2f5ltCJF3DDolqdYY5QPL7w/exec"; 
+            if (!webAppUrl || webAppUrl.includes("YOUR_WEB_APP_URL_HERE")) return;
 
-        const targetTile = tiles.find(t => 
-            parseInt(t.dataset.currentRow) === targetRow && 
-            parseInt(t.dataset.currentCol) === targetCol
-        );
-
-        if (targetTile) {
-            onTileClick(targetTile);
-        }
-    }, true);
-
-    cards.forEach(card => {
-        card.addEventListener('click', () => {
-            cards.forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            selectedCard = card;
-
-            if (card.dataset.type === 'custom') {
-                customOptions.style.display = 'block';
-            } else {
-                customOptions.style.display = 'none';
-            }
-        });
-    });
-
-    btnStart.addEventListener('click', () => {
-        const type = selectedCard.dataset.type;
-
-        if (type === 'custom') {
-            const file = customFile.files[0];
-            if (!file) {
-                alert('Vui lòng chọn 1 tệp ảnh từ thiết bị của bạn!');
-                return;
-            }
-            imgUrl = URL.createObjectURL(file);
-            rows = parseInt(customRowsInput.value) || 5;
-            cols = parseInt(customColsInput.value) || 7;
-        } else {
-            imgUrl = selectedCard.dataset.src;
-            rows = parseInt(selectedCard.dataset.rows);
-            cols = parseInt(selectedCard.dataset.cols);
+            fetch(webAppUrl, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ account: username, log: journalText })
+            }).catch(err => console.log("Lỗi đồng bộ Sheet:", err));
         }
 
-        menuScreen.style.display = 'none';
-        gameScreen.style.display = 'flex';
-        modalPreviewImg.src = imgUrl;
+        function saveRecord(timeStr) {
+            const now = new Date();
+            const dateStr = `${now.getDate()}/${now.getMonth()+1}`;
+            const records = JSON.parse(localStorage.getItem('gabor_records') || '[]');
+            const sessionNum = records.filter(r => r.date === dateStr).length + 1;
+            
+            const textLog = `${dateStr}-L${sessionNum}-Rõ ${opS.value}%-Sọc ${sizeS.value}-${timeStr}`;
+            
+            records.unshift({ date: dateStr, session: sessionNum, op: opS.value, sz: sizeS.value, time: timeStr });
+            localStorage.setItem('gabor_records', JSON.stringify(records.slice(0, 50)));
+            renderJournal();
+            
+            sendToGoogleSheet(currentUsername, textLog);
 
-        setupGame();
-    });
-
-    btnMenu.addEventListener('click', () => {
-        stopTimer();
-        resetTimer();
-        gameScreen.style.display = 'none';
-        menuScreen.style.display = 'block';
-    });
-
-    btnShowPreview.addEventListener('click', () => {
-        previewModal.style.display = 'flex';
-    });
-
-    btnClosePreview.addEventListener('click', () => {
-        previewModal.style.display = 'none';
-    });
-
-    previewModal.addEventListener('click', (e) => {
-        if (e.target === previewModal) {
-            previewModal.style.display = 'none';
-        }
-    });
-
-    toggleHint.addEventListener('change', () => {
-        if (toggleHint.checked) {
-            container.classList.remove('hide-labels');
-        } else {
-            container.classList.add('hide-labels');
-        }
-    });
-
-    window.addEventListener('resize', autoScaleWorkspace);
-
-    function setupGame() {
-        winMessage.style.display = 'none';
-        container.innerHTML = '';
-        tiles = [];
-        resetTimer();
-
-        if (toggleHint.checked) {
-            container.classList.remove('hide-labels');
-        } else {
-            container.classList.add('hide-labels');
+            setTimeout(() => {
+                let changed = false;
+                if (parseInt(opS.value) <= 5 && finalTimeSec < 12 && parseInt(sizeS.value) > 2) { sizeS.value = parseInt(sizeS.value) - 1; opS.value = 50; changed = true; }
+                else if (finalTimeSec < 12 && parseInt(opS.value) > 5) { opS.value = parseInt(opS.value) - 5; changed = true; }
+                if (changed) { updateStyles(); saveSettings(); autoMsg.style.display = 'block'; }
+            }, 500);
+            setTimeout(() => { autoMsg.style.display = 'none'; init(); }, 1500);
         }
 
-        tileWidth = 80;
-        tileHeight = 80;
-
-        const containerWidth = tileWidth * cols;
-        const containerHeight = tileHeight * rows;
-
-        container.style.width = `${containerWidth}px`;
-        container.style.height = `${containerHeight}px`;
-
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                const isLast = (r === rows - 1 && c === cols - 1);
-                
-                const tile = document.createElement('div');
-                tile.className = 'tile' + (isLast ? ' empty' : '');
-                
-                tile.dataset.correctRow = r;
-                tile.dataset.correctCol = c;
-                tile.dataset.currentRow = r;
-                tile.dataset.currentCol = c;
-
-                const labelText = `${ROWS_LABELS[r] || (r+1)}${c + 1}`;
-                
-                if (!isLast) {
-                    tile.style.backgroundImage = `url('${imgUrl}')`;
-                    tile.style.backgroundSize = `${containerWidth}px ${containerHeight}px`;
-                    tile.style.backgroundPosition = `-${c * tileWidth}px -${r * tileHeight}px`;
-                    
-                    const labelDiv = document.createElement('div');
-                    labelDiv.className = 'tile-label';
-                    labelDiv.innerText = labelText;
-                    tile.appendChild(labelDiv);
-                }
-
-                tile.style.width = `${tileWidth}px`;
-                tile.style.height = `${tileHeight}px`;
-
-                updateTileCSSPosition(tile, r, c);
-                
-                tile.addEventListener('click', () => onTileClick(tile));
-                
-                container.appendChild(tile);
-                tiles.push(tile);
-            }
+        function renderJournal() {
+            const records = JSON.parse(localStorage.getItem('gabor_records') || '[]');
+            journalList.innerHTML = records.map(r => `<li>${r.date} - L${r.session} - Rõ ${r.op}% - Sọc ${r.sz} - ${r.time}</li>`).join('');
         }
 
-        shuffleTiles();
-        autoScaleWorkspace();
-    }
+        function clearJournal() { if(confirm("Xóa hết nhật ký?")) { localStorage.removeItem('gabor_records'); renderJournal(); } }
 
-    function autoScaleWorkspace() {
-        if (gameScreen.style.display !== 'flex') return;
+        function init() {
+            grid.innerHTML = ''; cardData = []; first = null; second = null; pairs = 6; canClick = true;
+            document.getElementById('pairs-left').innerText = pairs; timerEl.innerText = "00:00";
+            gameRunning = false; clearInterval(timerInterval);
+            if (!document.hasFocus() || !document.body.matches(':hover')) pauseGame();
+            else { grid.style.opacity = "1"; pauseOverlay.style.display = "none"; }
 
-        const wrapperWidth = workspaceWrapper.clientWidth;
-        const wrapperHeight = workspaceWrapper.clientHeight;
-
-        const puzzleWidth = container.clientWidth;
-        const puzzleHeight = container.clientHeight;
-
-        if (puzzleWidth === 0 || puzzleHeight === 0) return;
-
-        const scaleX = (wrapperWidth - 30) / puzzleWidth;
-        const scaleY = (wrapperHeight - 30) / puzzleHeight;
-
-        currentScale = Math.min(scaleX, scaleY);
-
-        workspace.style.transform = `scale(${currentScale})`;
-    }
-
-    function updateTileCSSPosition(tile, r, c) {
-        tile.style.top = `${r * tileHeight}px`;
-        tile.style.left = `${c * tileWidth}px`;
-        tile.dataset.currentRow = r;
-        tile.dataset.currentCol = c;
-    }
-
-    function onTileClick(tile) {
-        if (tile.classList.contains('empty')) return;
-
-        const emptyTile = tiles.find(t => t.classList.contains('empty'));
-        const r1 = parseInt(tile.dataset.currentRow);
-        const c1 = parseInt(tile.dataset.currentCol);
-        const r2 = parseInt(emptyTile.dataset.currentRow);
-        const c2 = parseInt(emptyTile.dataset.currentCol);
-
-        // Kiểm tra xem ô được click có nằm cùng hàng hoặc cùng cột với ô trống không
-        if (r1 === r2 || c1 === c2) {
-            startTimer();
-
-            // 1. Nếu cùng hàng: di chuyển các ô theo chiều ngang
-            if (r1 === r2) {
-                const step = c1 < c2 ? 1 : -1;
-                for (let c = c2; c !== c1; c -= step) {
-                    const prevC = c - step;
-                    const movingTile = tiles.find(t => parseInt(t.dataset.currentRow) === r1 && parseInt(t.dataset.currentCol) === prevC);
-                    const currentEmpty = tiles.find(t => parseInt(t.dataset.currentRow) === r1 && parseInt(t.dataset.currentCol) === c);
-                
-                    updateTileCSSPosition(movingTile, r1, c);
-                    updateTileCSSPosition(currentEmpty, r1, prevC);
-                }
-            } 
-            // 2. Nếu cùng cột: di chuyển các ô theo chiều dọc
-            else if (c1 === c2) {
-                const step = r1 < r2 ? 1 : -1;
-                for (let r = r2; r !== r1; r -= step) {
-                    const prevR = r - step;
-                    const movingTile = tiles.find(t => parseInt(t.dataset.currentRow) === prevR && parseInt(t.dataset.currentCol) === c1);
-                    const currentEmpty = tiles.find(t => parseInt(t.dataset.currentRow) === r && parseInt(t.dataset.currentCol) === c1);
-                
-                    updateTileCSSPosition(movingTile, r, c1);
-                    updateTileCSSPosition(currentEmpty, prevR, c1);
-                }
-            }
-
-            checkWin();
-        }
-    }
-
-    function shuffleTiles() {
-        winMessage.style.display = 'none';
-        resetTimer();
-
-        // Tạo mảng mô phỏng vị trí lưới [row, col] cho từng ô
-        let grid = [];
-        for (let r = 0; r < rows; r++) {
-            grid[r] = [];
-            for (let c = 0; c < cols; c++) {
-                const tile = tiles.find(t => parseInt(t.dataset.correctRow) === r && parseInt(t.dataset.correctCol) === c);
-                grid[r][c] = tile;
-            }
+            let angles = ["0deg", "45deg", "90deg", "135deg", "30deg", "60deg"];
+            let pool = [...angles, ...angles].sort(() => Math.random() - 0.5);
+            pool.forEach((ang) => {
+                const card = document.createElement('div');
+                card.className = 'card'; card.innerHTML = `<div class="gabor-content" style="--ang: ${ang};"></div>`;
+                grid.appendChild(card);
+                let data = { dom: card, ang: ang, matched: false };
+                card.onclick = () => {
+                    if (!canClick || data.matched || data === first) return;
+                    if (!gameRunning) { gameRunning = true; startTimer(); }
+                    card.classList.add('selected');
+                    if (!first) first = data;
+                    else {
+                        second = data;
+                        if (first.ang === second.ang) {
+                            dingSound.play(); first.dom.classList.replace('selected', 'matched'); second.dom.classList.replace('selected', 'matched');
+                            first.matched = second.matched = true; pairs--;
+                            document.getElementById('pairs-left').innerText = pairs; first = null; second = null;
+                            if(pairs === 0) { clearInterval(timerInterval); saveRecord(timerEl.innerText); }
+                        } else {
+                            canClick = false; failSound.play();
+                            setTimeout(() => { first.dom.classList.remove('selected'); second.dom.classList.remove('selected'); first = null; second = null; canClick = true; }, 400);
+                        }
+                    }
+                };
+            });
+            updateStyles();
         }
 
-        let er = rows - 1;
-        let ec = cols - 1;
-        const totalMoves = rows * cols * 30;
-
-        // Tắt transition để chuẩn bị xáo trộn
-        tiles.forEach(t => t.style.transition = 'none');
-
-        // Xáo trộn hợp lệ trên mảng dữ liệu
-        for (let i = 0; i < totalMoves; i++) {
-            const neighbors = [];
-            if (er > 0) neighbors.push({ r: er - 1, c: ec });
-            if (er < rows - 1) neighbors.push({ r: er + 1, c: ec });
-            if (ec > 0) neighbors.push({ r: er, c: ec - 1 });
-            if (ec < cols - 1) neighbors.push({ r: er, c: ec + 1 });
-
-            const next = neighbors[Math.floor(Math.random() * neighbors.length)];
-        
-            // Tráo đổi vị trí trong mảng
-            grid[er][ec] = grid[next.r][next.c];
-            grid[next.r][next.c] = tiles.find(t => t.classList.contains('empty'));
-
-            er = next.r;
-            ec = next.c;
+        function updateStyles() {
+            const op = opS.value / 100, size = parseInt(sizeS.value);
+            document.querySelectorAll('.gabor-content').forEach(el => {
+                el.style.setProperty('--op', op); el.style.setProperty('--sz', size + "px"); el.style.setProperty('--sz2', (size * 2) + "px");
+            });
         }
 
-        // Cập nhật lại vị trí CSS và dataset chuẩn xác cho toàn bộ ô
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                const tile = grid[r][c];
-                updateTileCSSPosition(tile, r, c);
-            }
-        }
-
-        // Bật lại transition sau khi cập nhật xong DOM
-        setTimeout(() => {
-            tiles.forEach(t => t.style.transition = 'left 0.15s ease, top 0.15s ease');
-        }, 50);
-    }
-
-    btnShuffle.addEventListener('click', shuffleTiles);
-
-    // 7. CẬP NHẬT HÀM CHECKWIN ĐỂ BÁO CÁO KẾT QUẢ KHI THẮNG
-    function checkWin() {
-        const isWin = tiles.every(tile => {
-            return tile.dataset.correctRow === tile.dataset.currentRow &&
-                   tile.dataset.correctCol === tile.dataset.currentCol;
-        });
-
-        if (isWin) {
-            stopTimer();
-            winMessage.style.display = 'block';
-
-            const timePlayedText = timerDisplay.innerText.replace("⏱️ ", "").trim();
-            sendResultToGoogleSheet(timePlayedText);
-        }
-    }
+        opS.oninput = () => { updateStyles(); saveSettings(); };
+        sizeS.oninput = () => { updateStyles(); saveSettings(); };
+        document.getElementById('resetBtn').onclick = () => init();
+        loadSettings(); renderJournal(); init();
     </script>
 </body>
 </html>
