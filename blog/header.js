@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const headerHTML = `
     <nav class="navbar">
         <a href="../../index.html" class="logo-landing">
-            👁️ ShineVision
+            <img src="../../assets/logoshine.png" alt="ShineVision Logo" style="height: 40px; width: auto;">
         </a>
         <ul class="nav-links">
             <li><a href="../../index.html">Trang chủ</a></li>
