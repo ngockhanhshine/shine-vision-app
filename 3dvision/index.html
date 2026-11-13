@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mô hình mắt 3D</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #243617;
+      color: #f7faef;
+      font: 16px/1.5 system-ui, sans-serif;
+    }
+    main { width: min(100%, 480px); }
+    h1 { margin: 0 0 20px; font-size: clamp(26px, 6vw, 36px); }
+    nav { display: grid; gap: 12px; }
+    a {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 58px;
+      padding: 12px 18px;
+      border: 1px solid #779653;
+      border-radius: 12px;
+      background: #354d23;
+      color: inherit;
+      font-weight: 650;
+      text-decoration: none;
+    }
+    a:hover { background: #415e2b; }
+    a:focus-visible { outline: 3px solid #d5efaa; outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Mô hình mắt 3D</h1>
+    <nav aria-label="Chọn vật cần nhìn">
+      <a href="./diemtron.html">Chấm tròn <span aria-hidden="true">→</span></a>
+      <a href="./congau.html">Con gấu <span aria-hidden="true">→</span></a>
+    </nav>
+  </main>
+</body>
+</html>

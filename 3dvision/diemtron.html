@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mô Hình Mắt 3D: Cơ Chế Điều Tiết & Thị Giác Hai Mắt</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- ES Module Import Map for Three.js & OrbitControls -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      user-select: none;
+      background-color: #243617;
+    }
+    
+    /* Custom Flat Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    #retina-panel[hidden] { display: none; }
+
+    /* Flat Range Slider */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: #e2e8f0;
+      border-radius: 3px;
+      border: 1px solid #cbd5e1;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: #0284c7;
+      cursor: pointer;
+      -webkit-appearance: none;
+      margin-top: -6px;
+      border: 2px solid #ffffff;
+      box-shadow: none;
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+  </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col md:flex-row overflow-hidden select-none">
+
+  <!-- 3D Canvas Area -->
+  <div id="canvas-container" class="relative w-full h-full flex-1 bg-[#243617]">
+    
+    <!-- Top Floating Header - Flat Vector Style -->
+    <header class="absolute top-4 left-4 right-4 z-10 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+      <div class="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-slate-300 pointer-events-auto">
+        <div class="w-8 h-8 rounded-lg bg-sky-100 border border-sky-300 flex items-center justify-center text-sky-600 font-bold text-lg">
+          👁️
+        </div>
+        <div>
+          <h1 class="text-xs font-bold text-slate-900 tracking-wider uppercase">Mô Hình Nhãn Khoa 3D</h1>
+          <p class="text-[11px] text-slate-500 font-medium">Cơ Chế Điều Tiết & Thị Giác Hai Mắt (Nón Ánh Sáng)</p>
+        </div>
+      </div>
+
+      <!-- Quick Status Badge -->
+      <div class="flex items-center gap-2 pointer-events-auto">
+        <div id="status-badge" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span id="status-badge-text">Thị giác 3D hợp thị chuẩn</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Bottom Center Camera Controls Overlay -->
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-300">
+      <button id="btn-cam-3d" class="cam-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 transition" data-cam="3d">
+        Góc 3D Tổng Thể
+      </button>
+      <button id="btn-cam-top" class="cam-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-cam="top">
+        Nhìn Từ Trên (Quy Tụ)
+      </button>
+      <button id="btn-cam-cross" class="cam-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-cam="cross">
+        Mặt Cắt Mắt (Thấu Kính)
+      </button>
+      <button id="btn-cam-front" class="cam-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition" data-cam="front">
+        Góc Chính Diện
+      </button>
+    </div>
+
+    <section id="retina-panel" class="absolute top-24 right-3 z-10 w-56 max-w-[55%] rounded-xl border border-slate-300 bg-white p-2.5 shadow-sm pointer-events-none">
+      <h3 class="mb-2 text-[10px] font-bold uppercase tracking-wide text-slate-600">Hình ảnh võng mạc nhận được</h3>
+      <div class="grid grid-cols-2 gap-2 text-[10px] font-semibold text-slate-700">
+        <figure>
+          <figcaption>Mắt trái thấy</figcaption>
+          <canvas id="retina-right" width="240" height="160" class="block w-full rounded bg-slate-900"></canvas>
+        </figure>
+        <figure>
+          <figcaption>Mắt phải thấy</figcaption>
+          <canvas id="retina-left" width="240" height="160" class="block w-full rounded bg-slate-900"></canvas>
+        </figure>
+        <figure class="col-span-2 mx-auto w-full">
+          <figcaption>Não bộ tiếp nhận</figcaption>
+          <canvas id="retina-brain" width="240" height="160" class="block w-full rounded bg-slate-900"></canvas>
+        </figure>
+      </div>
+      <p id="retina-desc" class="mt-2 text-[10px] leading-tight text-slate-600"></p>
+    </section>
+  </div>
+
+  <!-- Sidebar Controls Panel -->
+  <aside class="w-full md:w-96 bg-white border-t md:border-t-0 md:border-l border-slate-300 p-5 flex flex-col justify-between overflow-y-auto z-20 h-auto md:h-full shrink-0">
+    
+    <div class="space-y-5">
+      <!-- Section Title -->
+      <div class="border-b border-slate-200 pb-3">
+        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <span>🎛️</span> ĐIỀU KHIỂN MÔ PHỎNG
+        </h2>
+        <p class="text-xs text-slate-500 mt-0.5">Tùy chỉnh khoảng cách nhìn & điều kiện khúc xạ</p>
+      </div>
+
+      <!-- Distance Slider Control -->
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+        <div class="flex justify-between items-center">
+          <label class="text-xs font-bold text-slate-700">Khoảng cách vật thể (Target)</label>
+          <span id="slider-dist-val" class="text-xs font-bold text-sky-700 bg-sky-100 px-2.5 py-1 rounded-md border border-sky-300">50 cm</span>
+        </div>
+
+        <input type="range" id="distance-slider" min="10" max="600" value="50" class="w-full">
+
+        <!-- Quick Distance Buttons -->
+        <div class="grid grid-cols-4 gap-1.5 pt-1">
+          <button id="btn-dist-25" class="px-2 py-1 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-[11px] rounded-md transition font-semibold">25 cm</button>
+          <button id="btn-dist-60" class="px-2 py-1 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-[11px] rounded-md transition font-semibold">60 cm</button>
+          <button id="btn-dist-100" class="px-2 py-1 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-[11px] rounded-md transition font-semibold">1 m</button>
+          <button id="btn-dist-600" class="px-2 py-1 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-[11px] rounded-md transition font-semibold">6 m (Xa)</button>
+        </div>
+      </div>
+
+      <section class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+        <div class="flex justify-between items-center gap-2">
+          <label class="flex items-center gap-2 text-xs font-bold text-slate-700">
+            <input type="checkbox" id="wear-glasses"> Đeo kính
+          </label>
+          <output id="glasses-value" for="glasses-power" class="text-xs font-bold text-sky-700">0,00 D</output>
+        </div>
+        <label for="glasses-power" class="text-[11px] text-slate-600">Độ cầu hai mắt</label>
+        <input type="range" id="glasses-power" min="-10" max="10" step="0.25" value="0" disabled
+          class="w-full disabled:opacity-40">
+        <div class="flex justify-between text-[10px] text-slate-500"><span>−10,00 D</span><span>+10,00 D</span></div>
+        <p id="focus-status" role="status" class="text-[11px] font-semibold text-slate-700">Tiêu điểm trên võng mạc.</p>
+        <p class="text-[10px] text-slate-500">Hai mắt dùng cùng độ cầu. Mô hình bỏ qua khoảng cách đỉnh kính và tác động của kính lên quy tụ.</p>
+      </section>
+
+      <!-- Real-time Diagnostics Panel -->
+      <div class="bg-white p-4 rounded-xl border border-slate-300 pointer-events-auto space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Thông Số Thời Gian Thực</h3>
+          <span class="text-sky-600 text-xs font-mono font-bold">PHYSIOLOGY</span>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+            <span class="text-slate-500 block text-[10px] font-medium">Khoảng Cách Vật</span>
+            <span id="hud-distance" class="text-sm font-bold text-sky-700">50 cm</span>
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+            <span class="text-slate-500 block text-[10px] font-medium">Điều tiết mô phỏng</span>
+            <span id="hud-diopter" class="text-sm font-bold text-emerald-700">+2.00 D</span>
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+            <span class="text-slate-500 block text-[10px] font-medium">Góc Quy Tụ</span>
+            <span id="hud-angle" class="text-sm font-bold text-amber-700">7.3° (12.8 Δ)</span>
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+            <span class="text-slate-500 block text-[10px] font-medium">Kích Thước Đồng Tử</span>
+            <span id="hud-pupil" class="text-sm font-bold text-indigo-700">3.8 mm</span>
+          </div>
+        </div>
+
+        <div class="space-y-1.5 pt-1 text-xs">
+          <div class="flex justify-between text-slate-600">
+            <span class="text-slate-500">Cơ thể mi:</span>
+            <span id="hud-ciliary" class="font-semibold text-emerald-700">Co nhẹ</span>
+          </div>
+          <div class="flex justify-between text-slate-600">
+            <span class="text-slate-500">Dây chằng Zinn:</span>
+            <span id="hud-zonules" class="font-semibold text-emerald-700">Hơi trùng</span>
+          </div>
+          <div class="flex justify-between text-slate-600">
+            <span class="text-slate-500">Thủy tinh thể:</span>
+            <span id="hud-lens" class="font-semibold text-emerald-700">Khối Elip phồng vừa</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Simulation Modes / Conditions -->
+      <div class="space-y-2">
+        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+          Chế Độ Thị Giác & Bệnh Lý
+        </label>
+        
+        <div class="space-y-2">
+          <!-- Option 1: Normal -->
+          <label class="mode-card flex items-start gap-2.5 p-3 rounded-xl border border-sky-400 bg-sky-50/60 cursor-pointer transition">
+            <input type="radio" name="vision-mode" value="normal" checked class="mt-0.5 text-sky-600 focus:ring-0">
+            <div>
+              <div class="text-xs font-bold text-slate-900">Bình Thường (Chính Thị & Hợp Thị)</div>
+              <div class="text-[11px] text-slate-600 mt-0.5 leading-snug">Nón 1 từ vật phân kỳ tới thấu kính; Nón 2 hội tụ đỉnh nhọn đúng hoàng điểm.</div>
+            </div>
+          </label>
+
+          <!-- Option 2: Presbyopia -->
+          <label class="mode-card flex items-start gap-2.5 p-3 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+            <input type="radio" name="vision-mode" value="presbyopia" class="mt-0.5 text-sky-600 focus:ring-0">
+            <div>
+              <div class="text-xs font-bold text-amber-700">Lão Thị (Presbyopia / Kém Điều Tiết)</div>
+              <div class="text-[11px] text-slate-600 mt-0.5 leading-snug">Thủy tinh thể kém phồng ➔ Đỉnh nhọn Nón 2 nằm sau võng mạc gây mờ khi nhìn gần.</div>
+            </div>
+          </label>
+
+          <!-- Option 3: Myopia -->
+          <label class="mode-card flex items-start gap-2.5 p-3 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+            <input type="radio" name="vision-mode" value="myopia" class="mt-0.5 text-sky-600 focus:ring-0">
+            <div>
+              <div class="text-xs font-bold text-red-700">Cận thị (−3,00 D)</div>
+              <div class="text-[11px] text-slate-600 mt-0.5 leading-snug">Mô phỏng hai mắt cận −3,00 D. Khi nhìn xa và chưa đeo kính, tiêu điểm nằm trước võng mạc.</div>
+            </div>
+          </label>
+
+        </div>
+      </div>
+
+      <section class="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div class="flex items-center justify-between gap-2">
+          <h3 class="text-xs font-bold text-slate-800">Hướng nhìn từng mắt</h3>
+          <button type="button" id="reset-gaze" class="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-sky-700">Về 0°</button>
+        </div>
+        <p class="text-[11px] text-slate-600">Kéo chấm xanh trong cảnh 3D để di chuyển vật. Ở 0°, mắt tự hướng thẳng vào vật.</p>
+        <fieldset class="space-y-1"><legend class="text-xs font-semibold text-slate-700">Mắt phải</legend>
+          <label for="left-yaw" class="flex justify-between text-[11px] text-slate-600">Ngang · trái (−) / phải (+)<output id="left-yaw-value" for="left-yaw" class="font-semibold">0°</output></label>
+          <input id="left-yaw" type="range" min="-25" max="25" step="0.5" value="0" class="w-full">
+          <label for="left-pitch" class="flex justify-between text-[11px] text-slate-600">Dọc · dưới (−) / trên (+)<output id="left-pitch-value" for="left-pitch" class="font-semibold">0°</output></label>
+          <input id="left-pitch" type="range" min="-25" max="25" step="0.5" value="0" class="w-full">
+        </fieldset>
+        <fieldset class="space-y-1"><legend class="text-xs font-semibold text-slate-700">Mắt trái</legend>
+          <label for="right-yaw" class="flex justify-between text-[11px] text-slate-600">Ngang · trái (−) / phải (+)<output id="right-yaw-value" for="right-yaw" class="font-semibold">0°</output></label>
+          <input id="right-yaw" type="range" min="-25" max="25" step="0.5" value="0" class="w-full">
+          <label for="right-pitch" class="flex justify-between text-[11px] text-slate-600">Dọc · dưới (−) / trên (+)<output id="right-pitch-value" for="right-pitch" class="font-semibold">0°</output></label>
+          <input id="right-pitch" type="range" min="-25" max="25" step="0.5" value="0" class="w-full">
+        </fieldset>
+      </section>
+
+      <!-- Visibility Toggles -->
+      <div class="space-y-2 pt-3 border-t border-slate-200">
+        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+          Tùy Chọn Hiển Thị 3D
+        </label>
+        
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <label class="col-span-2 flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100">
+            <input type="checkbox" id="toggle-retina" checked>
+            <span class="text-slate-700 font-medium">Hình ảnh võng mạc</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100">
+            <input type="checkbox" id="toggle-rays" checked class="rounded text-sky-600 focus:ring-0">
+            <span class="text-slate-700 font-medium">Nón Ánh Sáng</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100">
+            <input type="checkbox" id="toggle-cutaway" checked class="rounded text-sky-600 focus:ring-0">
+            <span class="text-slate-700 font-medium">Mặt Cắt Giải Phẫu</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100">
+            <input type="checkbox" id="toggle-muscles" checked class="rounded text-sky-600 focus:ring-0">
+            <span class="text-slate-700 font-medium">Cơ Vận Nhãn</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100">
+            <input type="checkbox" id="toggle-cone" class="rounded text-sky-600 focus:ring-0">
+            <span class="text-slate-700 font-medium">Trục nhìn</span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Educational Footer Note -->
+    <div class="mt-5 pt-3 border-t border-slate-200 text-[11px] text-slate-500 leading-normal space-y-1">
+      <div class="font-bold text-slate-700">💡 Quy Tắc Khúc Xạ 2 Nón Ánh Sáng:</div>
+      <p>• <strong>Nón 1 (Tới Thấu kính):</strong> Đỉnh nhọn ở Vật thể ➔ Đáy mở rộng bằng chu vi Thủy tinh thể.</p>
+      <p>• <strong>Nón 2 (Tới Võng mạc):</strong> Đáy trùng Thủy tinh thể ➔ Thu hẹp về tiêu điểm. Khi đủ điều tiết và nhìn thẳng vào vật, đỉnh nằm tại hoàng điểm.</p>
+    </div>
+  </aside>
+
+  <!-- JavaScript Module Logic -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // --- State Management ---
+    const state = {
+      distance: 50, // cm
+      ipd: 6.4, // Interpupillary distance in 3D units
+      mode: 'normal', // 'normal', 'presbyopia', 'myopia'
+      showRays: true,
+      showCutaway: true,
+      showMuscles: true,
+      showCone: false,
+      gaze: { left: { yaw: 0, pitch: 0 }, right: { yaw: 0, pitch: 0 } },
+      wearGlasses: false,
+      glassesPower: 0,
+      camPreset: '3d'
+    };
+
+    // --- Three.js Globals ---
+    let scene, camera, renderer, controls;
+    let eyeLeft, eyeRight;
+    let targetObject;
+    let rayGroupLeft, rayGroupRight;
+    let axisLeft, axisRight, glasses;
+
+    // References to internal anatomical meshes for live deformation
+    const leftParts = {};
+    const rightParts = {};
+
+    // Map Real Distance (10cm..600cm) -> 3D Scene Z position (7..42 units)
+    function mapRealTo3DDist(cm) {
+      const minCm = 10, maxCm = 600;
+      const minZ = 7, maxZ = 42;
+      const norm = (Math.log(cm) - Math.log(minCm)) / (Math.log(maxCm) - Math.log(minCm));
+      return minZ + norm * (maxZ - minZ);
+    }
+
+    // --- 1. Target Object Creation ---
+    function createTargetObject() {
+      targetObject = new THREE.Group();
+      
+      // Target center sphere
+      const sphereGeo = new THREE.SphereGeometry(0.35, 32, 32);
+      const sphereMat = new THREE.MeshStandardMaterial({
+        color: 0x0284c7,
+        roughness: 0.2,
+        metalness: 0.5,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.3
+      });
+      const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+      targetObject.add(sphere);
+
+      // Target outer target rings
+      const ringGeo = new THREE.RingGeometry(0.5, 0.65, 32);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x0284c7, side: THREE.DoubleSide });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      targetObject.add(ring);
+
+      scene.add(targetObject);
+    }
+
+    function createSightAxis(eye) {
+      const geo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 2), new THREE.Vector3(0, 0, 20)
+      ]);
+      const axis = new THREE.Line(geo, new THREE.LineDashedMaterial({
+        color: 0x64748b, dashSize: 0.4, gapSize: 0.25
+      }));
+      axis.computeLineDistances();
+      eye.add(axis);
+      return axis;
+    }
+
+    function createGlasses() {
+      const group = new THREE.Group();
+      group.position.z = 3.55;
+      const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x334155 });
+      const glassMaterial = new THREE.MeshBasicMaterial({
+        color: 0x67e8f9, transparent: true, opacity: 0.18,
+        side: THREE.DoubleSide, depthWrite: false
+      });
+      const lenses = [-state.ipd / 2, state.ipd / 2].map(x => {
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(1.65, 0.065, 10, 64), frameMaterial);
+        rim.position.x = x;
+        group.add(rim);
+        const lens = new THREE.Mesh(new THREE.BufferGeometry(), glassMaterial);
+        lens.rotation.x = Math.PI / 2;
+        lens.position.x = x;
+        group.add(lens);
+        return lens;
+      });
+      const bridge = new THREE.Mesh(new THREE.BoxGeometry(state.ipd - 3.3, 0.12, 0.13), frameMaterial);
+      group.add(bridge);
+      scene.add(group);
+      return { group, lenses, renderedPower: null };
+    }
+
+    function updateGlasses() {
+      glasses.group.visible = state.wearGlasses;
+      if (!state.wearGlasses || glasses.renderedPower === state.glassesPower) return;
+      const power = state.glassesPower / 10;
+      const profile = [];
+      for (const side of [-1, 1]) {
+        for (let i = 0; i <= 12; i++) {
+          const radiusFraction = (side === -1 ? i : 12 - i) / 12;
+          const halfThickness = 0.08 + 0.24 * (power >= 0
+            ? power * (1 - radiusFraction ** 2) : -power * radiusFraction ** 2);
+          profile.push(new THREE.Vector2(1.65 * radiusFraction, side * halfThickness));
+        }
+      }
+      const geometry = new THREE.LatheGeometry(profile, 48);
+      glasses.lenses[0].geometry.dispose();
+      glasses.lenses[1].geometry.dispose();
+      glasses.lenses[0].geometry = geometry;
+      glasses.lenses[1].geometry = geometry.clone();
+      glasses.renderedPower = state.glassesPower;
+    }
+
+    function getOptics() {
+      const power = state.wearGlasses ? state.glassesPower : 0;
+      const refractiveError = state.mode === 'myopia' ? -3 : 0;
+      const demand = 100 / state.distance + refractiveError - power;
+      const accommodation = THREE.MathUtils.clamp(demand, 0, state.mode === 'presbyopia' ? 100 / 45 : 10);
+      return { accommodation, residual: demand - accommodation };
+    }
+
+    function describeFocus(residual) {
+      if (residual > 0.0001) return 'Tiêu điểm sau võng mạc';
+      if (residual < -0.0001) return 'Tiêu điểm trước võng mạc';
+      return 'Tiêu điểm trên võng mạc';
+    }
+
+    // --- 3. Eyeball Anatomy Builder ---
+    function createEyeball(partsObj, posX) {
+      const eyeGroup = new THREE.Group();
+      eyeGroup.position.set(posX, 0, 0);
+
+      const radius = 2.2; // Standard 3D eye radius
+
+      // 1. Sclera Outer Shell (Củng mạc - Cutaway hemisphere)
+      const scleraGeo = new THREE.SphereGeometry(radius, 36, 36, 0, Math.PI * 2, 0, Math.PI * 0.75);
+      const scleraMat = new THREE.MeshStandardMaterial({
+        color: 0xf8fafc,
+        roughness: 0.3,
+        metalness: 0.05,
+        transparent: true,
+        opacity: 0.35,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      const sclera = new THREE.Mesh(scleraGeo, scleraMat);
+      eyeGroup.add(sclera);
+      partsObj.sclera = sclera;
+
+      // 2. Cornea Dome (Giác mạc)
+      const corneaGeo = new THREE.SphereGeometry(radius * 0.55, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
+      const corneaMat = new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.45,
+        roughness: 0.1,
+        metalness: 0.1,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      const cornea = new THREE.Mesh(corneaGeo, corneaMat);
+      cornea.rotation.x = Math.PI / 2;
+      cornea.position.set(0, 0, radius * 0.82);
+      eyeGroup.add(cornea);
+
+      // 3. Iris Ring (Mống mắt)
+      const irisGeo = new THREE.RingGeometry(0.5, 1.25, 36);
+      const irisMat = new THREE.MeshStandardMaterial({
+        color: 0x0284c7,
+        roughness: 0.4,
+        side: THREE.DoubleSide
+      });
+      const iris = new THREE.Mesh(irisGeo, irisMat);
+      iris.position.set(0, 0, 1.4);
+      eyeGroup.add(iris);
+      partsObj.iris = iris;
+
+      // 4. Pupil Aperture (Đồng tử)
+      const pupilGeo = new THREE.CircleGeometry(0.5, 36);
+      const pupilMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+      const pupil = new THREE.Mesh(pupilGeo, pupilMat);
+      pupil.position.set(0, 0, 1.41);
+      eyeGroup.add(pupil);
+      partsObj.pupil = pupil;
+
+      // 5. Crystalline Lens (Thủy tinh thể - Biconvex Ellipsoid Geometry)
+      // Base sphere scaled dynamically along Z-axis for curvature
+      const lensGeo = new THREE.SphereGeometry(0.85, 36, 36);
+      const lensMat = new THREE.MeshStandardMaterial({
+        color: 0xbae6fd,
+        transparent: true,
+        opacity: 0.75,
+        roughness: 0.1,
+        metalness: 0.1,
+        depthWrite: true
+      });
+      const lens = new THREE.Mesh(lensGeo, lensMat);
+      // Default flat state (Thickness Z = 0.4, Radius X/Y = 1.0)
+      lens.scale.set(1.0, 1.0, 0.42);
+      lens.position.set(0, 0, 1.0);
+      eyeGroup.add(lens);
+      partsObj.lens = lens;
+
+      // 6. Ciliary Body (Cơ thể mi - Ring around lens)
+      const ciliaryGeo = new THREE.TorusGeometry(1.05, 0.12, 16, 36);
+      const ciliaryMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.5 });
+      const ciliary = new THREE.Mesh(ciliaryGeo, ciliaryMat);
+      ciliary.position.set(0, 0, 1.0);
+      eyeGroup.add(ciliary);
+      partsObj.ciliary = ciliary;
+
+      // 7. Zonules of Zinn (Dây chằng Zinn)
+      const zonulesGroup = new THREE.Group();
+      const numZonules = 24;
+      const zonuleMat = new THREE.LineBasicMaterial({ color: 0x0284c7, transparent: true, opacity: 0.8 });
+      for (let i = 0; i < numZonules; i++) {
+        const angle = (i / numZonules) * Math.PI * 2;
+        const innerPt = new THREE.Vector3(Math.cos(angle) * 0.85, Math.sin(angle) * 0.85, 1.0);
+        const outerPt = new THREE.Vector3(Math.cos(angle) * 1.05, Math.sin(angle) * 1.05, 1.0);
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([innerPt, outerPt]);
+        const line = new THREE.Line(lineGeo, zonuleMat);
+        zonulesGroup.add(line);
+      }
+      eyeGroup.add(zonulesGroup);
+      partsObj.zonules = zonulesGroup;
+
+      // 8. Posterior Retina Wall (Võng mạc)
+      const retinaGeo = new THREE.SphereGeometry(radius * 0.96, 32, 16, 0, Math.PI * 2, Math.PI * 0.5, Math.PI * 0.5);
+      const retinaMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, side: THREE.BackSide, roughness: 0.8 });
+      const retina = new THREE.Mesh(retinaGeo, retinaMat);
+      retina.rotation.x = Math.PI / 2;
+      eyeGroup.add(retina);
+
+      // Fovea Centralis Spot (Hoàng điểm)
+      const foveaGeo = new THREE.SphereGeometry(0.2, 16, 16);
+      const foveaMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+      const fovea = new THREE.Mesh(foveaGeo, foveaMat);
+      fovea.position.set(0, 0, -radius * 0.96);
+      eyeGroup.add(fovea);
+      partsObj.fovea = fovea;
+
+      // 9. Extraocular Muscles (Cơ vận nhãn - Medial & Lateral Rectus)
+      const muscleMat = new THREE.MeshStandardMaterial({ color: 0xbe123c, roughness: 0.6 });
+      const innerDir = posX < 0 ? 1 : -1;
+      
+      // Medial Rectus (Cơ thẳng trong)
+      const mrGeo = new THREE.CylinderGeometry(0.2, 0.25, 3.5, 16);
+      const mr = new THREE.Mesh(mrGeo, muscleMat);
+      mr.position.set(innerDir * 1.8, 0, -1.2);
+      mr.rotation.z = innerDir * Math.PI * 0.15;
+      mr.rotation.x = Math.PI / 2;
+      eyeGroup.add(mr);
+      partsObj.muscleMedial = mr;
+
+      // Lateral Rectus (Cơ thẳng ngoài)
+      const lr = new THREE.Mesh(mrGeo, muscleMat);
+      lr.position.set(-innerDir * 1.8, 0, -1.2);
+      lr.rotation.z = -innerDir * Math.PI * 0.15;
+      lr.rotation.x = Math.PI / 2;
+      eyeGroup.add(lr);
+      partsObj.muscleLateral = lr;
+
+      return eyeGroup;
+    }
+
+    // Both cones share the same rim in the actual plane of the crystalline lens.
+    function createLightCone(apex, rim, material) {
+      const positions = [];
+      for (let i = 0; i < rim.length; i++) {
+        const next = rim[(i + 1) % rim.length];
+        positions.push(...apex.toArray(), ...rim[i].toArray(), ...next.toArray());
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      return new THREE.Mesh(geometry, material);
+    }
+
+    function updateLightRays(optics) {
+      for (const group of [rayGroupLeft, rayGroupRight]) {
+        const materials = new Set();
+        for (const mesh of [...group.children]) {
+          mesh.geometry.dispose();
+          materials.add(mesh.material);
+          group.remove(mesh);
+        }
+        materials.forEach(material => material.dispose());
+      }
+      if (!state.showRays) return;
+
+      const target = targetObject.position;
+      for (const [eye, parts, group] of [
+        [eyeLeft, leftParts, rayGroupLeft], [eyeRight, rightParts, rayGroupRight]
+      ]) {
+        const lens = parts.lens.getWorldPosition(new THREE.Vector3());
+        const fovea = parts.fovea.getWorldPosition(new THREE.Vector3());
+        const center = eye.getWorldPosition(new THREE.Vector3());
+        const direction = lens.clone().sub(target).normalize();
+        const offset = lens.clone().sub(center);
+        const projection = offset.dot(direction);
+        const radius = fovea.distanceTo(center);
+        const retinalDistance = -projection + Math.sqrt(projection ** 2 + radius ** 2 - offset.lengthSq());
+        // Residual vergence shifts the apex in the schematic scene.
+        const focusDistance = retinalDistance / (1 - 0.025 * optics.residual);
+        const focus = lens.clone().addScaledVector(direction, focusDistance);
+        const rim = Array.from({ length: 48 }, (_, index) => {
+          const angle = index / 48 * Math.PI * 2;
+          return parts.lens.localToWorld(new THREE.Vector3(0.85 * Math.cos(angle), 0.85 * Math.sin(angle), 0));
+        });
+
+        const blurred = Math.abs(optics.residual) > 0.0001;
+        const material = new THREE.MeshBasicMaterial({
+          color: blurred ? 0xd97706 : 0x0284c7,
+          transparent: true, opacity: 0.26,
+          side: THREE.DoubleSide, depthWrite: false
+        });
+        group.add(createLightCone(target, rim, material), createLightCone(focus, rim, material));
+      }
+    }
+
+    // --- 5. Main Simulation Update Function ---
+    function updateSimulation() {
+      const d = state.distance;
+      const targetZ = mapRealTo3DDist(d);
+
+      // 1. Position Target Object
+      targetObject.position.z = targetZ;
+
+      const leftView = aimEye(eyeLeft, state.gaze.left);
+      const rightView = aimEye(eyeRight, state.gaze.right);
+      const angle = leftView.direction.angleTo(rightView.direction);
+      const split = Math.hypot(leftView.x - rightView.x, leftView.y - rightView.y) > 0.5;
+
+      // The crystalline lens responds to the demand remaining after spectacle power.
+      const optics = getOptics();
+      const normNear = optics.accommodation / 10;
+      const lensThicknessZ = 0.42 + normNear * 0.50;
+      const lensEquatorXY = 1 - normNear * 0.12;
+      const ciliaryScale = 1 - normNear * 0.18;
+      const pupilRadius = 0.5 - normNear * 0.22;
+
+      [leftParts, rightParts].forEach(parts => {
+        if (parts.lens) {
+          parts.lens.scale.set(lensEquatorXY, lensEquatorXY, lensThicknessZ);
+        }
+        if (parts.ciliary) parts.ciliary.scale.set(ciliaryScale, ciliaryScale, 1.0);
+        parts.zonules.children.forEach((line, i, lines) => {
+          const angle = i / lines.length * Math.PI * 2;
+          const positions = line.geometry.attributes.position;
+          positions.setXYZ(0, Math.cos(angle) * 0.85 * lensEquatorXY, Math.sin(angle) * 0.85 * lensEquatorXY, 1);
+          positions.setXYZ(1, Math.cos(angle) * 1.05 * ciliaryScale, Math.sin(angle) * 1.05 * ciliaryScale, 1);
+          positions.needsUpdate = true;
+        });
+        if (parts.pupil) parts.pupil.scale.setScalar(pupilRadius / 0.5);
+        if (parts.iris) parts.iris.scale.setScalar(0.7 + (pupilRadius / 0.5) * 0.3);
+
+        if (parts.sclera) {
+          parts.sclera.material.opacity = state.showCutaway ? 0.35 : 0.95;
+        }
+        if (parts.muscleMedial && parts.muscleLateral) {
+          parts.muscleMedial.visible = state.showMuscles;
+          parts.muscleLateral.visible = state.showMuscles;
+        }
+      });
+
+      axisLeft.visible = axisRight.visible = state.showCone;
+      updateGlasses();
+      updateLightRays(optics);
+      updateHUD(d, optics, angle, split);
+      drawRetinaCanvas(optics, leftView, rightView, split);
+    }
+
+    // --- 6. HUD Dashboard Updates ---
+    function updateHUD(distCm, optics, totalConvAngleRad, split) {
+      document.getElementById('hud-distance').textContent = `${Math.round(distCm)} cm`;
+      document.getElementById('slider-dist-val').textContent = `${Math.round(distCm)} cm`;
+      document.getElementById('hud-diopter').textContent = `${optics.accommodation.toFixed(2)} D`;
+      
+      const angleDeg = (totalConvAngleRad * (180 / Math.PI)).toFixed(1);
+      const prismDiopters = (200 * Math.tan(totalConvAngleRad / 2)).toFixed(1);
+      document.getElementById('hud-angle').textContent = `${angleDeg}° (${prismDiopters} Δ)`;
+
+      const pupilMm = (5 - optics.accommodation * 0.22).toFixed(1);
+      document.getElementById('hud-pupil').textContent = `${pupilMm} mm`;
+
+      const ciliaryEl = document.getElementById('hud-ciliary');
+      const zonulesEl = document.getElementById('hud-zonules');
+      const lensEl = document.getElementById('hud-lens');
+      const badgeEl = document.getElementById('status-badge');
+      const badgeText = document.getElementById('status-badge-text');
+
+      if (optics.accommodation > 3.3) {
+        ciliaryEl.textContent = "Co mạnh (Look Near)";
+        ciliaryEl.className = "font-semibold text-amber-700";
+        zonulesEl.textContent = "Trùng tối đa";
+        zonulesEl.className = "font-semibold text-sky-700";
+        lensEl.textContent = "Khối Elip phồng dày";
+        lensEl.className = "font-semibold text-emerald-700";
+      } else if (optics.accommodation < 0.34) {
+        ciliaryEl.textContent = "Thư giãn (Look Far)";
+        ciliaryEl.className = "font-semibold text-sky-700";
+        zonulesEl.textContent = "Căng chặt";
+        zonulesEl.className = "font-semibold text-amber-700";
+        lensEl.textContent = "Thủy tinh thể dẹt hơn";
+        lensEl.className = "font-semibold text-slate-600";
+      } else {
+        ciliaryEl.textContent = "Co vừa";
+        ciliaryEl.className = "font-semibold text-emerald-700";
+        zonulesEl.textContent = "Hơi trùng";
+        zonulesEl.className = "font-semibold text-emerald-700";
+        lensEl.textContent = "Khối Elip phồng vừa";
+        lensEl.className = "font-semibold text-emerald-700";
+      }
+
+      const focusDescription = describeFocus(optics.residual);
+      const blurred = Math.abs(optics.residual) > 0.0001;
+      document.getElementById('focus-status').textContent = focusDescription + '.';
+
+      if (blurred || !split) {
+        badgeEl.className = blurred
+          ? "px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-300"
+          : "px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300";
+        badgeText.textContent = blurred ? focusDescription : "Hai mắt cùng lấy nét trên võng mạc";
+      } else {
+        badgeEl.className = "px-3 py-1.5 rounded-xl text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-300 flex items-center gap-2";
+        badgeText.textContent = "Hai ảnh lệch nhau trong mô phỏng";
+      }
+    }
+
+    function aimEye(eye, gaze) {
+      eye.lookAt(targetObject.position);
+      eye.rotateY(THREE.MathUtils.degToRad(-gaze.yaw));
+      eye.rotateX(THREE.MathUtils.degToRad(-gaze.pitch));
+      const target = eye.worldToLocal(targetObject.position.clone());
+      const pixelsPerSlope = 145;
+      return {
+        x: -target.x / target.z * pixelsPerSlope,
+        y: -target.y / target.z * pixelsPerSlope,
+        direction: new THREE.Vector3(0, 0, 1).applyQuaternion(eye.quaternion)
+      };
+    }
+
+    function drawRetinaCanvas(optics, leftView, rightView, split) {
+      if (document.getElementById('retina-panel').hidden) return;
+      const blurred = Math.abs(optics.residual) > 0.0001;
+      const left = { ...leftView, color: '#38bdf8' };
+      const right = { ...rightView, color: '#fb7185' };
+      const fused = { x: (left.x + right.x) / 2, y: (left.y + right.y) / 2, color: '#e2e8f0' };
+      const panels = [
+        ['retina-left', [left]], ['retina-right', [right]],
+        ['retina-brain', split ? [left, right] : [fused]]
+      ];
+      for (const [id, images] of panels) {
+        const canvas = document.getElementById(id);
+        const ctx = canvas.getContext('2d');
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#475569';
+        ctx.beginPath();
+        ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height);
+        ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy);
+        ctx.stroke();
+
+        ctx.globalCompositeOperation = 'screen';
+        for (const image of images) {
+          const x = cx + image.x;
+          const y = cy + image.y;
+          const radius = blurred ? Math.min(24, 8 + Math.abs(optics.residual) * 3) : 7;
+          ctx.fillStyle = image.color;
+          if (blurred) {
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            gradient.addColorStop(0, image.color);
+            gradient.addColorStop(1, image.color + '00');
+            ctx.fillStyle = gradient;
+          }
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      document.getElementById('retina-desc').textContent = split
+        ? 'Hai vị trí ảnh lệch nhau khi chồng lên nhau.'
+        : blurred ? 'Hai vị trí ảnh trùng nhau. ' + describeFocus(optics.residual) + '.'
+          : 'Hai vị trí ảnh trùng nhau.';
+    }
+
+    function setupTargetDrag() {
+      const canvas = renderer.domElement;
+      const slider = document.getElementById('distance-slider');
+      const raycaster = new THREE.Raycaster();
+      const plane = new THREE.Plane();
+      const pointer = new THREE.Vector2();
+      const hit = new THREE.Vector3();
+      const offset = new THREE.Vector3();
+      let activePointer = null;
+
+      function updatePointerRay(event) {
+        const bounds = canvas.getBoundingClientRect();
+        pointer.set(2 * (event.clientX - bounds.left) / bounds.width - 1,
+          1 - 2 * (event.clientY - bounds.top) / bounds.height);
+        raycaster.setFromCamera(pointer, camera);
+      }
+
+      canvas.addEventListener('pointerdown', event => {
+        if (event.button !== 0 || activePointer !== null) return;
+        updatePointerRay(event);
+        if (!raycaster.intersectObject(targetObject, true).length) return;
+        plane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()), targetObject.position);
+        if (!raycaster.ray.intersectPlane(plane, hit)) return;
+        offset.copy(targetObject.position).sub(hit);
+        activePointer = event.pointerId;
+        controls.enabled = false;
+        canvas.setPointerCapture(activePointer);
+        canvas.style.cursor = 'grabbing';
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }, { capture: true });
+
+      canvas.addEventListener('pointermove', event => {
+        if (activePointer !== null && event.pointerId !== activePointer) return;
+        updatePointerRay(event);
+        if (activePointer === null) {
+          canvas.style.cursor = raycaster.intersectObject(targetObject, true).length ? 'grab' : '';
+          return;
+        }
+        if (!raycaster.ray.intersectPlane(plane, hit)) return;
+        hit.add(offset);
+        targetObject.position.x = hit.x;
+        targetObject.position.y = hit.y;
+        const fraction = THREE.MathUtils.clamp((hit.z - 7) / 35, 0, 1);
+        state.distance = Math.round(10 * 60 ** fraction);
+        slider.value = state.distance;
+        updateSimulation();
+      });
+
+      function finishDrag(event) {
+        if (event.pointerId !== activePointer) return;
+        activePointer = null;
+        controls.enabled = true;
+        canvas.style.cursor = '';
+      }
+      for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+        canvas.addEventListener(type, finishDrag);
+      }
+    }
+
+    // --- 8. Camera Views Controller ---
+    function setCameraPreset(preset) {
+      state.camPreset = preset;
+
+      document.querySelectorAll('.cam-btn').forEach(btn => {
+        if (btn.dataset.cam === preset) {
+          btn.className = "cam-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 transition";
+        } else {
+          btn.className = "cam-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition";
+        }
+      });
+
+      const targetZ = mapRealTo3DDist(state.distance);
+
+      if (preset === '3d') {
+        animateCamera(new THREE.Vector3(16, 18 + targetZ * 0.25, 10 + targetZ), new THREE.Vector3(0, 0, targetZ * 0.5));
+      } else if (preset === 'top') {
+        animateCamera(new THREE.Vector3(0, Math.max(22, targetZ * 1.65), targetZ * 0.5 + 0.01), new THREE.Vector3(0, 0, targetZ * 0.5));
+      } else if (preset === 'cross') {
+        animateCamera(new THREE.Vector3(-3.2, 0.4, 5.0), new THREE.Vector3(-3.2, 0, 0));
+      } else if (preset === 'front') {
+        animateCamera(new THREE.Vector3(0, 0, 16), new THREE.Vector3(0, 0, 0));
+      }
+    }
+
+    function animateCamera(newPos, newTarget) {
+      const startPos = camera.position.clone();
+      const startTarget = controls.target.clone();
+      let startTime = null;
+      const duration = 750;
+
+      function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+
+        camera.position.lerpVectors(startPos, newPos, ease);
+        controls.target.lerpVectors(startTarget, newTarget, ease);
+        controls.update();
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        }
+      }
+      requestAnimationFrame(step);
+    }
+
+    // --- 9. Scene Initialization ---
+    function init3D() {
+      const container = document.getElementById('canvas-container');
+      
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x243617);
+      scene.fog = new THREE.FogExp2(0x243617, 0.012);
+
+      camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+      camera.position.set(16, 18 + mapRealTo3DDist(state.distance) * 0.25, 10 + mapRealTo3DDist(state.distance));
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.target.set(0, 0, mapRealTo3DDist(state.distance) * 0.5);
+      controls.update();
+
+      // Lighting Setup
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+      scene.add(ambientLight);
+
+      const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.0);
+      dirLight1.position.set(10, 20, 15);
+      scene.add(dirLight1);
+
+      const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.6);
+      dirLight2.position.set(-10, -10, -10);
+      scene.add(dirLight2);
+
+      const grid = new THREE.GridHelper(80, 40, 0x607844, 0x394d28);
+      grid.position.y = -3;
+      scene.add(grid);
+
+      // Create Scene Components
+      createTargetObject();
+
+      const eyeSpacing = state.ipd;
+      eyeLeft = createEyeball(leftParts, -eyeSpacing / 2);
+      eyeRight = createEyeball(rightParts, eyeSpacing / 2);
+      scene.add(eyeLeft);
+      scene.add(eyeRight);
+
+      rayGroupLeft = new THREE.Group();
+      rayGroupRight = new THREE.Group();
+      scene.add(rayGroupLeft);
+      scene.add(rayGroupRight);
+
+      axisLeft = createSightAxis(eyeLeft);
+      axisRight = createSightAxis(eyeRight);
+      glasses = createGlasses();
+
+      window.addEventListener('resize', onWindowResize);
+
+      updateSimulation();
+      animate();
+    }
+
+    // --- 10. Event Listeners ---
+    function setupEventListeners() {
+      setupTargetDrag();
+      document.getElementById('toggle-retina').addEventListener('change', event => {
+        document.getElementById('retina-panel').hidden = !event.target.checked;
+        updateSimulation();
+      });
+
+      const gazeInputs = [];
+      for (const [side, gaze] of Object.entries(state.gaze)) {
+        for (const axis of Object.keys(gaze)) {
+          const id = `${side}-${axis}`;
+          const input = document.getElementById(id);
+          const output = document.getElementById(id + '-value');
+          gazeInputs.push({ input, output, gaze, axis });
+          input.addEventListener('input', () => {
+            gaze[axis] = Number(input.value);
+            output.value = gaze[axis] + '°';
+            updateSimulation();
+          });
+        }
+      }
+      document.getElementById('reset-gaze').addEventListener('click', () => {
+        for (const { input, output, gaze, axis } of gazeInputs) {
+          gaze[axis] = 0;
+          input.value = 0;
+          output.value = '0°';
+        }
+        updateSimulation();
+      });
+
+      const glassesToggle = document.getElementById('wear-glasses');
+      const powerSlider = document.getElementById('glasses-power');
+      function syncGlassesControls() {
+        state.wearGlasses = glassesToggle.checked;
+        state.glassesPower = Number(powerSlider.value);
+        powerSlider.disabled = !state.wearGlasses;
+        const value = state.glassesPower.toLocaleString('vi-VN', {
+          minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'exceptZero'
+        });
+        document.getElementById('glasses-value').value = value.replace('-', '−') + ' D';
+        updateSimulation();
+      }
+      glassesToggle.addEventListener('change', syncGlassesControls);
+      powerSlider.addEventListener('input', syncGlassesControls);
+
+      const slider = document.getElementById('distance-slider');
+      slider.addEventListener('input', (e) => {
+        state.distance = parseFloat(e.target.value);
+        updateSimulation();
+      });
+
+      document.getElementById('btn-dist-25').addEventListener('click', () => { slider.value = 25; state.distance = 25; updateSimulation(); });
+      document.getElementById('btn-dist-60').addEventListener('click', () => { slider.value = 60; state.distance = 60; updateSimulation(); });
+      document.getElementById('btn-dist-100').addEventListener('click', () => { slider.value = 100; state.distance = 100; updateSimulation(); });
+      document.getElementById('btn-dist-600').addEventListener('click', () => { slider.value = 600; state.distance = 600; updateSimulation(); });
+
+      document.querySelectorAll('input[name="vision-mode"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          state.mode = e.target.value;
+
+          document.querySelectorAll('.mode-card').forEach(card => {
+            const r = card.querySelector('input');
+            if (r.checked) {
+              card.className = "mode-card flex items-start gap-2.5 p-3 rounded-xl border border-sky-400 bg-sky-50/60 cursor-pointer transition";
+            } else {
+              card.className = "mode-card flex items-start gap-2.5 p-3 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 cursor-pointer transition";
+            }
+          });
+
+          updateSimulation();
+        });
+      });
+
+      document.getElementById('toggle-rays').addEventListener('change', (e) => { state.showRays = e.target.checked; updateSimulation(); });
+      document.getElementById('toggle-cutaway').addEventListener('change', (e) => { state.showCutaway = e.target.checked; updateSimulation(); });
+      document.getElementById('toggle-muscles').addEventListener('change', (e) => { state.showMuscles = e.target.checked; updateSimulation(); });
+      document.getElementById('toggle-cone').addEventListener('change', (e) => { state.showCone = e.target.checked; updateSimulation(); });
+
+      document.getElementById('btn-cam-3d').addEventListener('click', () => setCameraPreset('3d'));
+      document.getElementById('btn-cam-top').addEventListener('click', () => setCameraPreset('top'));
+      document.getElementById('btn-cam-cross').addEventListener('click', () => setCameraPreset('cross'));
+      document.getElementById('btn-cam-front').addEventListener('click', () => setCameraPreset('front'));
+    }
+
+    function onWindowResize() {
+      const container = document.getElementById('canvas-container');
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (targetObject) {
+        targetObject.children[1].rotation.z += 0.01;
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    window.onload = function() {
+      init3D();
+      setupEventListeners();
+    };
+  </script>
+</body>
+</html>
