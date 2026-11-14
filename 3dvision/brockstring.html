@@ -294,11 +294,11 @@
             <span class="text-slate-700 font-medium">Mặt Cắt Giải Phẫu</span>
           </label>
           <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100">
-            <input type="checkbox" id="toggle-muscles" checked class="rounded text-sky-600 focus:ring-0">
+            <input type="checkbox" id="toggle-muscles" class="rounded text-sky-600 focus:ring-0">
             <span class="text-slate-700 font-medium">Cơ Vận Nhãn</span>
           </label>
           <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100">
-            <input type="checkbox" id="toggle-cone" class="rounded text-sky-600 focus:ring-0">
+            <input type="checkbox" id="toggle-cone" checked class="rounded text-sky-600 focus:ring-0">
             <span class="text-slate-700 font-medium">Trục nhìn</span>
           </label>
         </div>
@@ -326,8 +326,8 @@
       mode: 'normal', // 'normal', 'presbyopia', 'myopia'
       showRays: true,
       showCutaway: true,
-      showMuscles: true,
-      showCone: false,
+      showMuscles: false,
+      showCone: true,
       gaze: { left: { yaw: 0, pitch: 0 }, right: { yaw: 0, pitch: 0 } },
       camPreset: '3d'
     };
