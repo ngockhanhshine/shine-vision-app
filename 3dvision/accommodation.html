@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mô Phỏng Cơ Chế Điều Tiết Của Mắt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden select-none">
+
+    <!-- Canvas Toàn Màn Hình -->
+    <canvas id="opticsCanvas"></canvas>
+
+    <!-- Nhãn Trạng Thái Thị Giác Góc Trên Bên Trái -->
+    <div id="statusBadge" class="fixed top-4 left-4 z-10 flex items-center gap-2.5 px-4 py-2 rounded-full backdrop-blur-md border shadow-lg transition-colors duration-200 bg-emerald-950/80 border-emerald-500/40 text-emerald-300">
+        <span id="statusDot" class="w-3 h-3 rounded-full bg-emerald-400 shrink-0"></span>
+        <span id="statusText" class="text-sm sm:text-base font-bold tracking-wide">Nhìn rõ</span>
+    </div>
+
+    <!-- Cụm Điều Khiển Nổi Tối Giản Góc Trên Bên Phải -->
+    <div class="fixed top-4 right-4 z-10 flex flex-wrap items-center justify-end gap-2 bg-slate-900/85 backdrop-blur-md border border-slate-700/70 p-2 rounded-2xl shadow-xl">
+        
+        <!-- 1. Tick có kính hay không -->
+        <label for="chkGlasses" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 cursor-pointer transition">
+            <input type="checkbox" id="chkGlasses" class="w-4 h-4 rounded accent-sky-500 cursor-pointer">
+            <span class="text-xs sm:text-sm font-semibold text-slate-100">Đeo kính</span>
+        </label>
+
+        <!-- 2. Chọn Kính cận hay Kính viễn -->
+        <div id="glassesTypeGroup" class="flex items-center bg-slate-950/70 p-1 rounded-xl border border-slate-800 opacity-45 pointer-events-none transition-opacity duration-200">
+            <button type="button" id="btnMyopia" onclick="setGlassesType('myopia')" class="px-3 py-1 rounded-lg text-xs sm:text-sm font-semibold transition bg-sky-600 text-white shadow-sm">
+                Kính cận
+            </button>
+            <button type="button" id="btnHyperopia" onclick="setGlassesType('hyperopia')" class="px-3 py-1 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-400 hover:text-slate-200">
+                Kính viễn
+            </button>
+        </div>
+
+        <!-- 3. Nút Tự động điều tiết -->
+        <button type="button" id="btnAutoAccom" onclick="toggleAutoAccom()" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border transition bg-slate-800/90 border-slate-700/80 text-slate-300 hover:bg-slate-800">
+            Tự động điều tiết
+        </button>
+    </div>
+
+    <!-- Gợi ý thao tác kéo thả siêu gọn góc dưới -->
+    <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none px-3.5 py-1.5 rounded-full bg-slate-900/65 backdrop-blur-sm border border-slate-800/80 text-[11px] sm:text-xs text-slate-400 whitespace-nowrap">
+        Kéo <span class="text-amber-400 font-semibold">Cây nến</span> hoặc <span class="text-rose-400 font-semibold">Tiêu điểm F</span> dọc theo trục chính
+    </div>
+
+    <script>
+        const canvas = document.getElementById('opticsCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Hệ tọa độ không gian quang học (tự động co giãn vừa khít màn hình thực tế)
+        let viewW = window.innerWidth;
+        let viewH = window.innerHeight;
+        let scaleFactor = 1;
+
+        // Tọa độ chuẩn trong không gian logic (1200 x 640)
+        const BASE_W = 1200;
+        const BASE_H = 640;
+        const AXIS_Y = BASE_H / 2;
+
+        // Vị trí các thành phần giải phẫu mắt
+        const OPTIC_CENTER_X = 760;        // Quang tâm O của Thủy tinh thể
+        const RETINA_VERTEX_X = 990;       // Đỉnh võng mạc (Khoảng cách d' chuẩn = 230px)
+        const RETINA_RADIUS = 155;         // Bán kính cung tròn võng mạc
+        const RETINA_ARC_CENTER_X = RETINA_VERTEX_X - RETINA_RADIUS;
+        const GLASSES_X = OPTIC_CENTER_X - 95; // Vị trí kính đeo trước mắt
+
+        // Giới hạn kéo thả
+        const CANDLE_MIN_DIST = 125;
+        const CANDLE_MAX_DIST = 660;
+        const CANDLE_HEIGHT = 120;
+
+        const FOCAL_MIN = 75;    // Công suất cao nhất (F gần O -> Thủy tinh thể đỏ, phồng)
+        const FOCAL_MAX = 205;   // Công suất thấp nhất (F xa O -> Thủy tinh thể xanh, dẹt)
+
+        // Trạng thái ứng dụng
+        const state = {
+            candleDist: 420,
+            baseFocalLength: 148.6, // Hội tụ chuẩn trên võng mạc ở khoảng cách ban đầu
+            wearGlasses: false,
+            glassesType: 'myopia',  // 'myopia' (+20% F) | 'hyperopia' (-10% F)
+            autoAccommodate: false,
+            dragging: null,         // 'candle' | 'focus' | null
+            hoverTarget: null,      // 'candle' | 'focus' | null
+            flamePhase: 0
+        };
+
+        // Tham chiếu DOM
+        const chkGlasses = document.getElementById('chkGlasses');
+        const glassesTypeGroup = document.getElementById('glassesTypeGroup');
+        const btnMyopia = document.getElementById('btnMyopia');
+        const btnHyperopia = document.getElementById('btnHyperopia');
+        const btnAutoAccom = document.getElementById('btnAutoAccom');
+        const statusBadge = document.getElementById('statusBadge');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        /**
+         * Tính tiêu cự hiệu dụng (F') sau khi áp dụng kính điều chỉnh (nếu có)
+         * - Kính cận: đẩy tiêu điểm F lùi ra xa 20% (* 1.20)
+         * - Kính viễn: đẩy tiêu điểm F lại gần 10% (* 0.90)
+         */
+        function getEffectiveFocalLength() {
+            if (!state.wearGlasses) return state.baseFocalLength;
+            return state.glassesType === 'myopia'
+                ? state.baseFocalLength * 1.20
+                : state.baseFocalLength * 0.90;
+        }
+
+        /**
+         * Tính giao điểm chính xác giữa Tia 2 (đi qua quang tâm O) và cung tròn Võng mạc (nửa bên phải)
+         */
+        function getRay2RetinaIntersection(d) {
+            // Phương trình Tia 2 từ Quang tâm (OPTIC_CENTER_X, AXIS_Y): y - AXIS_Y = m * (x - OPTIC_CENTER_X)
+            const m = CANDLE_HEIGHT / d;
+            // Đặt u = x - OPTIC_CENTER_X (u > 0). Cung tròn võng mạc: (u + RETINA_ARC_CENTER_X - OPTIC_CENTER_X)^2 + (m*u)^2 = R^2
+            const dxCenter = OPTIC_CENTER_X - RETINA_ARC_CENTER_X;
+            const A = 1 + m * m;
+            const B = 2 * dxCenter;
+            const C = dxCenter * dxCenter - RETINA_RADIUS * RETINA_RADIUS;
+
+            const discriminant = B * B - 4 * A * C;
+            if (discriminant < 0) {
+                return { x: RETINA_VERTEX_X, y: AXIS_Y + m * (RETINA_VERTEX_X - OPTIC_CENTER_X) };
+            }
+
+            const u = (-B + Math.sqrt(discriminant)) / (2 * A);
+            return {
+                x: OPTIC_CENTER_X + u,
+                y: AXIS_Y + m * u
+            };
+        }
+
+        /**
+         * Tính toán quang học hình học & xác định trạng thái hội tụ
+         */
+        function computeOptics() {
+            const d = state.candleDist;
+            const candleX = OPTIC_CENTER_X - d;
+            const candleTopY = AXIS_Y - CANDLE_HEIGHT;
+
+            // Tọa độ R_target nằm ngay trên đường cong cung tròn Võng mạc dọc theo Tia 2
+            const retinaTarget = getRay2RetinaIntersection(d);
+
+            // Tự động điều tiết để điểm I trùng khít 100% lên cung tròn Võng mạc (R_target)
+            if (state.autoAccommodate) {
+                const targetImageDist = retinaTarget.x - OPTIC_CENTER_X;
+                const requiredEffectiveF = (d * targetImageDist) / (d + targetImageDist);
+                const multiplier = !state.wearGlasses
+                    ? 1.0
+                    : (state.glassesType === 'myopia' ? 1.20 : 0.90);
+
+                const idealBaseF = requiredEffectiveF / multiplier;
+                state.baseFocalLength = Math.max(FOCAL_MIN, Math.min(FOCAL_MAX, idealBaseF));
+            }
+
+            const fEff = getEffectiveFocalLength();
+            const focusEffX = OPTIC_CENTER_X + fEff;
+            const focusBaseX = OPTIC_CENTER_X + state.baseFocalLength;
+
+            // Giao điểm I của Tia 1 và Tia 2: 1/f = 1/d + 1/d' => d' = (d * f) / (d - f)
+            let imageDist, imageX, imageY;
+            if (Math.abs(d - fEff) < 0.5) {
+                imageDist = 9999;
+                imageX = OPTIC_CENTER_X + 9999;
+                imageY = AXIS_Y + 9999;
+            } else {
+                imageDist = (d * fEff) / (d - fEff);
+                imageX = OPTIC_CENTER_X + imageDist;
+                imageY = AXIS_Y + CANDLE_HEIGHT * (imageDist / d);
+            }
+
+            // So sánh trực tiếp tọa độ X của điểm hội tụ I với giao điểm của Tia 2 trên cung tròn võng mạc (retinaTarget.x)
+            const diffX = imageX - retinaTarget.x;
+            const tolerance = 3.5;
+
+            let visionStatus = 'clear';
+            if (imageDist < 0 || diffX > tolerance) {
+                visionStatus = 'hyperopia'; // Hội tụ sau võng mạc -> Viễn thị (Tím)
+            } else if (diffX < -tolerance) {
+                visionStatus = 'myopia';    // Hội tụ trước võng mạc -> Cận thị (Đỏ)
+            } else {
+                visionStatus = 'clear';     // Nằm ngay trên cung tròn võng mạc -> Nhìn rõ (Xanh lá)
+            }
+
+            return {
+                candleX,
+                candleTopY,
+                focusEffX,
+                focusBaseX,
+                imageX,
+                imageY,
+                retinaTarget,
+                visionStatus
+            };
+        }
+
+        /**
+         * Tính màu sắc Gradient của Thủy tinh thể theo công suất khúc xạ
+         * Tiêu điểm F càng gần Quang tâm O => công suất càng cao => tiến dần tới màu Đỏ
+         */
+        function getLensColorInfo(fBase) {
+            const ratio = Math.max(0, Math.min(1, (FOCAL_MAX - fBase) / (FOCAL_MAX - FOCAL_MIN)));
+            // Hue: 195 (Xanh Cyan mát) -> 45 (Vàng cam) -> 0 (Đỏ rực)
+            const hue = ratio < 0.5
+                ? 195 - (ratio * 2) * (195 - 45)
+                : 45 - ((ratio - 0.5) * 2) * 45;
+
+            return {
+                ratio,
+                coreColor: `hsla(${hue}, 90%, 62%, 0.82)`,
+                edgeColor: `hsla(${hue}, 92%, 42%, 0.94)`,
+                strokeColor: `hsl(${hue}, 95%, 74%)`,
+                glowColor: `hsla(${hue}, 95%, 52%, 0.38)`
+            };
+        }
+
+        /**
+         * Vẽ toàn bộ mô hình quang học
+         */
+        function render() {
+            const optics = computeOptics();
+            updateStatusBadge(optics.visionStatus);
+
+            // Xóa toàn màn hình
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            const bgGrad = ctx.createRadialGradient(canvas.width * 0.55, canvas.height * 0.5, 40, canvas.width * 0.5, canvas.height * 0.5, Math.max(canvas.width, canvas.height) * 0.7);
+            bgGrad.addColorStop(0, '#0f172a');
+            bgGrad.addColorStop(1, '#020617');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+
+            // Lưới nền mảnh
+            drawSubtleGrid();
+
+            // 1. Nhãn cầu & Cung võng mạc
+            drawEyeballAndRetina(optics.visionStatus);
+
+            // 2. Trục chính
+            drawOpticalAxis();
+
+            // 3. Kính điều chỉnh (nếu tick Đeo kính)
+            if (state.wearGlasses) {
+                drawGlasses();
+            }
+
+            // 4. Thủy tinh thể elip tròn (đổi màu & độ phồng theo F)
+            drawCrystallineLens();
+
+            // 5. Cây nến đứng thẳng (chân chạm trục chính)
+            drawCandle(optics.candleX, AXIS_Y, CANDLE_HEIGHT);
+
+            // 6. Đường đi Tia 1, Tia 2 và Điểm hội tụ I
+            drawLightRaysAndImage(optics);
+
+            // 7. Tiêu điểm F
+            drawFocalPoints(optics);
+        }
+
+        function drawSubtleGrid() {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.05)';
+            ctx.lineWidth = 1;
+            const step = 50;
+            for (let x = -200; x <= BASE_W + 200; x += step) {
+                ctx.beginPath();
+                ctx.moveTo(x, -200);
+                ctx.lineTo(x, BASE_H + 200);
+                ctx.stroke();
+            }
+            for (let y = -200; y <= BASE_H + 200; y += step) {
+                ctx.beginPath();
+                ctx.moveTo(-200, y);
+                ctx.lineTo(BASE_W + 200, y);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        function drawEyeballAndRetina(visionStatus) {
+            ctx.save();
+
+            // Đường bao nhãn cầu mờ tạo hình khối mắt
+            ctx.beginPath();
+            ctx.arc(RETINA_ARC_CENTER_X, AXIS_Y, RETINA_RADIUS + 16, -Math.PI * 0.74, Math.PI * 0.74, false);
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.14)';
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // Giác mạc phía trước
+            ctx.beginPath();
+            ctx.arc(OPTIC_CENTER_X + 28, AXIS_Y, 105, Math.PI * 0.68, Math.PI * 1.32, false);
+            ctx.strokeStyle = 'rgba(125, 211, 252, 0.2)';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Cung tròn Võng mạc phía sau thấu kính
+            if (visionStatus === 'clear') {
+                ctx.shadowColor = '#16a34a';
+                ctx.shadowBlur = 18;
+            }
+            ctx.beginPath();
+            ctx.arc(RETINA_ARC_CENTER_X, AXIS_Y, RETINA_RADIUS, -Math.PI * 0.46, Math.PI * 0.46, false);
+            ctx.strokeStyle = visionStatus === 'clear' ? '#22c55e' : '#f59e0b';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Nhãn Võng mạc
+            ctx.fillStyle = visionStatus === 'clear' ? '#4ade80' : '#fbbf24';
+            ctx.font = '600 14px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Võng mạc', RETINA_VERTEX_X - 16, AXIS_Y - RETINA_RADIUS - 14);
+
+            ctx.restore();
+        }
+
+        function drawOpticalAxis() {
+            ctx.save();
+            ctx.beginPath();
+            ctx.setLineDash([9, 7]);
+            ctx.moveTo(-150, AXIS_Y);
+            ctx.lineTo(BASE_W + 150, AXIS_Y);
+            ctx.strokeStyle = 'rgba(226, 232, 240, 0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+        }
+
+        function drawGlasses() {
+            ctx.save();
+            const h = 132;
+            const x = GLASSES_X;
+
+            ctx.shadowColor = 'rgba(56, 189, 248, 0.35)';
+            ctx.shadowBlur = 14;
+
+            const grad = ctx.createLinearGradient(x - 18, AXIS_Y - h, x + 18, AXIS_Y + h);
+            grad.addColorStop(0, 'rgba(186, 230, 253, 0.45)');
+            grad.addColorStop(0.5, 'rgba(224, 242, 254, 0.18)');
+            grad.addColorStop(1, 'rgba(125, 211, 252, 0.45)');
+
+            ctx.fillStyle = grad;
+            ctx.strokeStyle = '#7dd3fc';
+            ctx.lineWidth = 2.2;
+
+            ctx.beginPath();
+            if (state.glassesType === 'myopia') {
+                // Kính cận: Phần bụng nhỏ hơn phần rìa (lõm)
+                const edgeHalfW = 16;
+                const waistHalfW = 4.5;
+                ctx.moveTo(x - edgeHalfW, AXIS_Y - h);
+                ctx.lineTo(x + edgeHalfW, AXIS_Y - h);
+                ctx.quadraticCurveTo(x + waistHalfW, AXIS_Y, x + edgeHalfW, AXIS_Y + h);
+                ctx.lineTo(x - edgeHalfW, AXIS_Y + h);
+                ctx.quadraticCurveTo(x - waistHalfW, AXIS_Y, x - edgeHalfW, AXIS_Y - h);
+            } else {
+                // Kính viễn: Phần bụng rộng hơn phần rìa (lồi)
+                const edgeHalfW = 4.5;
+                const bellyHalfW = 21;
+                ctx.moveTo(x - edgeHalfW, AXIS_Y - h);
+                ctx.lineTo(x + edgeHalfW, AXIS_Y - h);
+                ctx.quadraticCurveTo(x + bellyHalfW, AXIS_Y, x + edgeHalfW, AXIS_Y + h);
+                ctx.lineTo(x - edgeHalfW, AXIS_Y + h);
+                ctx.quadraticCurveTo(x - bellyHalfW, AXIS_Y, x - edgeHalfW, AXIS_Y - h);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#bae6fd';
+            ctx.font = '600 13px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(state.glassesType === 'myopia' ? 'Kính cận' : 'Kính viễn', x, AXIS_Y - h - 12);
+
+            ctx.restore();
+        }
+
+        function drawCrystallineLens() {
+            ctx.save();
+            const colorInfo = getLensColorInfo(state.baseFocalLength);
+
+            // Thủy tinh thể phồng lên khi công suất tăng (F tiến gần O)
+            const rx = 18 + colorInfo.ratio * 22;
+            const ry = 122 - colorInfo.ratio * 6;
+
+            // Dây treo thủy tinh thể
+            ctx.strokeStyle = 'rgba(203, 213, 225, 0.3)';
+            ctx.lineWidth = 1.5;
+            for (const offset of [-7, 0, 7]) {
+                ctx.beginPath();
+                ctx.moveTo(OPTIC_CENTER_X + offset * 0.5, AXIS_Y - ry);
+                ctx.lineTo(OPTIC_CENTER_X + offset, AXIS_Y - 144);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(OPTIC_CENTER_X + offset * 0.5, AXIS_Y + ry);
+                ctx.lineTo(OPTIC_CENTER_X + offset, AXIS_Y + 144);
+                ctx.stroke();
+            }
+
+            // Elip Thủy tinh thể với Gradient theo công suất khúc xạ
+            const lensGrad = ctx.createRadialGradient(
+                OPTIC_CENTER_X - rx * 0.25, AXIS_Y - ry * 0.2, 6,
+                OPTIC_CENTER_X, AXIS_Y, Math.max(rx, ry)
+            );
+            lensGrad.addColorStop(0, colorInfo.coreColor);
+            lensGrad.addColorStop(1, colorInfo.edgeColor);
+
+            ctx.shadowColor = colorInfo.glowColor;
+            ctx.shadowBlur = 22;
+
+            ctx.beginPath();
+            ctx.ellipse(OPTIC_CENTER_X, AXIS_Y, rx, ry, 0, 0, Math.PI * 2);
+            ctx.fillStyle = lensGrad;
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = colorInfo.strokeColor;
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+
+            // Mặt phẳng chính thấu kính
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.moveTo(OPTIC_CENTER_X, AXIS_Y - ry - 10);
+            ctx.lineTo(OPTIC_CENTER_X, AXIS_Y + ry + 10);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Quang tâm O tại trung tâm TTT
+            ctx.beginPath();
+            ctx.arc(OPTIC_CENTER_X, AXIS_Y, 4.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 14px Inter, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText('O', OPTIC_CENTER_X - 9, AXIS_Y + 18);
+
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '600 14px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Thủy tinh thể', OPTIC_CENTER_X, AXIS_Y - 154);
+
+            ctx.restore();
+        }
+
+        function drawCandle(x, baseY, totalHeight) {
+            ctx.save();
+            const isHovered = state.hoverTarget === 'candle' || state.dragging === 'candle';
+
+            if (isHovered) {
+                ctx.beginPath();
+                ctx.roundRect(x - 26, baseY - totalHeight - 16, 52, totalHeight + 34, 14);
+                ctx.fillStyle = 'rgba(251, 191, 36, 0.14)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.55)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            const flameH = 32;
+            const bodyH = totalHeight - flameH;
+            const bodyW = 20;
+
+            // Thân nến (chân chạm trục chính baseY)
+            const bodyGrad = ctx.createLinearGradient(x - bodyW / 2, 0, x + bodyW / 2, 0);
+            bodyGrad.addColorStop(0, '#f8fafc');
+            bodyGrad.addColorStop(0.5, '#e2e8f0');
+            bodyGrad.addColorStop(1, '#94a3b8');
+
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.roundRect(x - bodyW / 2, baseY - bodyH, bodyW, bodyH, [3, 3, 1, 1]);
+            ctx.fill();
+
+            // Bấc nến
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, baseY - bodyH);
+            ctx.lineTo(x, baseY - bodyH - 6);
+            ctx.stroke();
+
+            // Ngọn lửa
+            const topY = baseY - totalHeight;
+            const wickY = baseY - bodyH - 4;
+            const sway = Math.sin(state.flamePhase) * 1.6;
+
+            ctx.shadowColor = '#f59e0b';
+            ctx.shadowBlur = 20;
+
+            const flameGrad = ctx.createLinearGradient(x, topY, x, wickY);
+            flameGrad.addColorStop(0, '#fef08a');
+            flameGrad.addColorStop(0.45, '#f59e0b');
+            flameGrad.addColorStop(1, '#ea580c');
+
+            ctx.fillStyle = flameGrad;
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.quadraticCurveTo(x + 12 + sway, wickY - flameH * 0.35, x, wickY);
+            ctx.quadraticCurveTo(x - 12 + sway, wickY - flameH * 0.35, x, topY);
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fffbeb';
+            ctx.beginPath();
+            ctx.moveTo(x, topY + 10);
+            ctx.quadraticCurveTo(x + 5 + sway * 0.5, wickY - 4, x, wickY - 1);
+            ctx.quadraticCurveTo(x - 5 + sway * 0.5, wickY - 4, x, topY + 10);
+            ctx.fill();
+
+            // Chấm đỉnh ngọn nến
+            ctx.beginPath();
+            ctx.arc(x, topY, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+            // Tay nắm kéo thả trên trục chính
+            ctx.beginPath();
+            ctx.arc(x, baseY, isHovered ? 7.5 : 5.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawLightRaysAndImage(optics) {
+            ctx.save();
+            const { candleX, candleTopY, focusEffX, imageX, retinaTarget, visionStatus } = optics;
+
+            let statusColor = '#16a34a'; // Xanh lá: Nhìn rõ
+            if (visionStatus === 'myopia') statusColor = '#dc2626';    // Đỏ: Cận thị
+            if (visionStatus === 'hyperopia') statusColor = '#9333ea'; // Tím: Viễn thị
+
+            const endX = Math.max(RETINA_VERTEX_X + 120, Math.min(BASE_W + 100, imageX + 55));
+
+            // Đánh dấu điểm đích R_target trên cung tròn võng mạc khi bật Tự động điều tiết
+            if (state.autoAccommodate) {
+                ctx.beginPath();
+                ctx.arc(retinaTarget.x, retinaTarget.y, 11, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(74, 222, 128, 0.55)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // TIA 1: Song song trục chính từ đỉnh nến -> Thấu kính -> Qua tiêu điểm F
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2.4;
+
+            ctx.beginPath();
+            ctx.moveTo(candleX, candleTopY);
+            ctx.lineTo(OPTIC_CENTER_X, candleTopY);
+            ctx.stroke();
+            drawArrowHead((candleX + OPTIC_CENTER_X) / 2, candleTopY, 0, '#38bdf8');
+
+            const slope1 = (AXIS_Y - candleTopY) / (focusEffX - OPTIC_CENTER_X);
+            const ray1EndY = candleTopY + slope1 * (endX - OPTIC_CENTER_X);
+
+            ctx.beginPath();
+            ctx.moveTo(OPTIC_CENTER_X, candleTopY);
+            ctx.lineTo(endX, ray1EndY);
+            ctx.stroke();
+            const mid1X = (OPTIC_CENTER_X + focusEffX) / 2;
+            const mid1Y = candleTopY + slope1 * (mid1X - OPTIC_CENTER_X);
+            drawArrowHead(mid1X, mid1Y, Math.atan(slope1), '#38bdf8');
+
+            // TIA 2: Từ đỉnh nến xuyên thẳng qua Quang tâm O
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2.4;
+
+            const slope2 = (AXIS_Y - candleTopY) / (OPTIC_CENTER_X - candleX);
+            const ray2EndY = candleTopY + slope2 * (endX - candleX);
+
+            ctx.beginPath();
+            ctx.moveTo(candleX, candleTopY);
+            ctx.lineTo(endX, ray2EndY);
+            ctx.stroke();
+            drawArrowHead((candleX + OPTIC_CENTER_X) / 2, (candleTopY + AXIS_Y) / 2, Math.atan(slope2), '#fbbf24');
+
+            // Điểm hội tụ I (Giao của Tia 1 và Tia 2)
+            if (imageX > OPTIC_CENTER_X && imageX < BASE_W + 250) {
+                const clampedIX = Math.min(BASE_W + 80, imageX);
+                const clampedIY = candleTopY + slope2 * (clampedIX - candleX);
+
+                // Đường gióng ảnh ngược từ trục chính tới điểm I
+                ctx.beginPath();
+                ctx.setLineDash([4, 4]);
+                ctx.moveTo(clampedIX, AXIS_Y);
+                ctx.lineTo(clampedIX, clampedIY);
+                ctx.strokeStyle = statusColor;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Điểm sáng I
+                ctx.shadowColor = statusColor;
+                ctx.shadowBlur = 18;
+                ctx.beginPath();
+                ctx.arc(clampedIX, clampedIY, 7.5, 0, Math.PI * 2);
+                ctx.fillStyle = statusColor;
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 14px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('I', clampedIX + 12, clampedIY + 5);
+            }
+
+            ctx.restore();
+        }
+
+        function drawArrowHead(x, y, angle, color) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(6, 0);
+            ctx.lineTo(-4, -4.5);
+            ctx.lineTo(-4, 4.5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawFocalPoints(optics) {
+            ctx.save();
+            const { focusBaseX, focusEffX } = optics;
+            const isHovered = state.hoverTarget === 'focus' || state.dragging === 'focus';
+
+            // Nếu đang đeo kính, hiển thị thêm điểm F' sau khi kính làm dịch chuyển tiêu điểm
+            if (state.wearGlasses && Math.abs(focusEffX - focusBaseX) > 2) {
+                ctx.beginPath();
+                ctx.moveTo(focusBaseX, AXIS_Y);
+                ctx.lineTo(focusEffX, AXIS_Y);
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(focusEffX, AXIS_Y, 5.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#38bdf8';
+                ctx.fill();
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.fillStyle = '#7dd3fc';
+                ctx.font = 'bold 13px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText("F'", focusEffX, AXIS_Y - 13);
+            }
+
+            // Vòng halo khi hover/kéo tiêu điểm F
+            if (isHovered) {
+                ctx.beginPath();
+                ctx.arc(focusBaseX, AXIS_Y, 16, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(244, 63, 94, 0.25)';
+                ctx.fill();
+            }
+
+            // Điểm F trên trục chính
+            ctx.beginPath();
+            ctx.arc(focusBaseX, AXIS_Y, isHovered ? 8.5 : 7, 0, Math.PI * 2);
+            ctx.fillStyle = '#f43f5e';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fda4af';
+            ctx.font = 'bold 14px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('F', focusBaseX, AXIS_Y + 24);
+
+            ctx.restore();
+        }
+
+        /**
+         * Cập nhật nhãn trạng thái thị giác tinh gọn ở góc trên bên trái
+         */
+        function updateStatusBadge(visionStatus) {
+            if (visionStatus === 'clear') {
+                statusBadge.className = 'fixed top-4 left-4 z-10 flex items-center gap-2.5 px-4 py-2 rounded-full backdrop-blur-md border shadow-lg transition-colors duration-200 bg-emerald-950/85 border-emerald-500/50 text-emerald-300';
+                statusDot.className = 'w-3 h-3 rounded-full bg-emerald-400 shrink-0';
+                statusText.textContent = 'Nhìn rõ';
+            } else if (visionStatus === 'myopia') {
+                statusBadge.className = 'fixed top-4 left-4 z-10 flex items-center gap-2.5 px-4 py-2 rounded-full backdrop-blur-md border shadow-lg transition-colors duration-200 bg-red-950/85 border-red-500/50 text-red-300';
+                statusDot.className = 'w-3 h-3 rounded-full bg-red-500 shrink-0 animate-ping';
+                statusText.textContent = 'Nhìn mờ - Cận thị';
+            } else {
+                statusBadge.className = 'fixed top-4 left-4 z-10 flex items-center gap-2.5 px-4 py-2 rounded-full backdrop-blur-md border shadow-lg transition-colors duration-200 bg-purple-950/85 border-purple-500/50 text-purple-300';
+                statusDot.className = 'w-3 h-3 rounded-full bg-purple-400 shrink-0 animate-ping';
+                statusText.textContent = 'Nhìn mờ - Viễn thị';
+            }
+        }
+
+        /**
+         * Chuyển đổi tọa độ chuột/chạm sang hệ tọa độ quang học BASE_W x BASE_H
+         */
+        function screenToWorld(clientX, clientY) {
+            const offsetX = (viewW - BASE_W * scaleFactor) / 2;
+            const offsetY = (viewH - BASE_H * scaleFactor) / 2;
+            return {
+                x: (clientX - offsetX) / scaleFactor,
+                y: (clientY - offsetY) / scaleFactor
+            };
+        }
+
+        function handlePointerDown(x, y) {
+            const candleX = OPTIC_CENTER_X - state.candleDist;
+            const focusX = OPTIC_CENTER_X + state.baseFocalLength;
+
+            // Ưu tiên nắm kéo Tiêu điểm F
+            if (Math.hypot(x - focusX, y - AXIS_Y) <= 28) {
+                state.dragging = 'focus';
+                if (state.autoAccommodate) setAutoAccom(false);
+                return;
+            }
+
+            // Nắm kéo Cây nến
+            if (Math.abs(x - candleX) <= 34 && y >= AXIS_Y - CANDLE_HEIGHT - 24 && y <= AXIS_Y + 28) {
+                state.dragging = 'candle';
+                return;
+            }
+        }
+
+        function handlePointerMove(x, y) {
+            if (state.dragging === 'candle') {
+                state.candleDist = Math.max(CANDLE_MIN_DIST, Math.min(CANDLE_MAX_DIST, OPTIC_CENTER_X - x));
+                return;
+            }
+
+            if (state.dragging === 'focus') {
+                state.baseFocalLength = Math.max(FOCAL_MIN, Math.min(FOCAL_MAX, x - OPTIC_CENTER_X));
+                return;
+            }
+
+            const candleX = OPTIC_CENTER_X - state.candleDist;
+            const focusX = OPTIC_CENTER_X + state.baseFocalLength;
+
+            if (Math.hypot(x - focusX, y - AXIS_Y) <= 26) {
+                state.hoverTarget = 'focus';
+                canvas.style.cursor = 'ew-resize';
+            } else if (Math.abs(x - candleX) <= 32 && y >= AXIS_Y - CANDLE_HEIGHT - 24 && y <= AXIS_Y + 28) {
+                state.hoverTarget = 'candle';
+                canvas.style.cursor = 'grab';
+            } else {
+                state.hoverTarget = null;
+                canvas.style.cursor = 'default';
+            }
+        }
+
+        function handlePointerUp() {
+            state.dragging = null;
+            if (state.hoverTarget === 'candle') canvas.style.cursor = 'grab';
+        }
+
+        // Sự kiện chuột
+        canvas.addEventListener('mousedown', (e) => {
+            const pt = screenToWorld(e.clientX, e.clientY);
+            handlePointerDown(pt.x, pt.y);
+            if (state.dragging === 'candle') canvas.style.cursor = 'grabbing';
+        });
+        window.addEventListener('mousemove', (e) => {
+            const pt = screenToWorld(e.clientX, e.clientY);
+            handlePointerMove(pt.x, pt.y);
+        });
+        window.addEventListener('mouseup', handlePointerUp);
+
+        // Sự kiện cảm ứng (Touch)
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                const pt = screenToWorld(e.touches[0].clientX, e.touches[0].clientY);
+                handlePointerDown(pt.x, pt.y);
+            }
+        }, { passive: true });
+        window.addEventListener('touchmove', (e) => {
+            if (state.dragging && e.touches.length > 0) {
+                const pt = screenToWorld(e.touches[0].clientX, e.touches[0].clientY);
+                handlePointerMove(pt.x, pt.y);
+            }
+        }, { passive: true });
+        window.addEventListener('touchend', handlePointerUp);
+
+        // Điều khiển Đeo kính & Loại kính
+        chkGlasses.addEventListener('change', (e) => {
+            state.wearGlasses = e.target.checked;
+            if (state.wearGlasses) {
+                glassesTypeGroup.classList.remove('opacity-45', 'pointer-events-none');
+            } else {
+                glassesTypeGroup.classList.add('opacity-45', 'pointer-events-none');
+            }
+        });
+
+        function setGlassesType(type) {
+            state.glassesType = type;
+            if (type === 'myopia') {
+                btnMyopia.className = 'px-3 py-1 rounded-lg text-xs sm:text-sm font-semibold transition bg-sky-600 text-white shadow-sm';
+                btnHyperopia.className = 'px-3 py-1 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-400 hover:text-slate-200';
+            } else {
+                btnHyperopia.className = 'px-3 py-1 rounded-lg text-xs sm:text-sm font-semibold transition bg-purple-600 text-white shadow-sm';
+                btnMyopia.className = 'px-3 py-1 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-400 hover:text-slate-200';
+            }
+        }
+
+        function setAutoAccom(enabled) {
+            state.autoAccommodate = enabled;
+            if (enabled) {
+                btnAutoAccom.className = 'px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border transition bg-emerald-600 border-emerald-500 text-white shadow-sm';
+            } else {
+                btnAutoAccom.className = 'px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border transition bg-slate-800/90 border-slate-700/80 text-slate-300 hover:bg-slate-800';
+            }
+        }
+
+        function toggleAutoAccom() {
+            setAutoAccom(!state.autoAccommodate);
+        }
+
+        /**
+         * Cập nhật kích thước Canvas toàn màn hình 100vw x 100vh sắc nét
+         */
+        function resizeCanvas() {
+            viewW = window.innerWidth;
+            viewH = window.innerHeight;
+            const dpr = window.devicePixelRatio || 1;
+
+            canvas.width = viewW * dpr;
+            canvas.height = viewH * dpr;
+
+            scaleFactor = Math.min(viewW / BASE_W, viewH / BASE_H);
+            const offsetX = (viewW - BASE_W * scaleFactor) / 2;
+            const offsetY = (viewH - BASE_H * scaleFactor) / 2;
+
+            ctx.setTransform(
+                scaleFactor * dpr, 0,
+                0, scaleFactor * dpr,
+                offsetX * dpr, offsetY * dpr
+            );
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function animate() {
+            state.flamePhase += 0.12;
+            render();
+            requestAnimationFrame(animate);
+        }
+
+        window.onload = function () {
+            resizeCanvas();
+            animate();
+        };
+    </script>
+</body>
+</html>
